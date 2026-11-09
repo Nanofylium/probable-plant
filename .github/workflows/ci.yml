@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Formatação
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - run: go vet ./...
+      - run: go test ./...
+      - name: Sites de exemplo
+        run: |
+          go build -o nep ./cmd/nep
+          ./nep check exemplos/padaria/site.nep.html
+          ./nep check exemplos/mural/site.nep.html
+
+  executaveis:
+    needs: testes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64, nome: nep-linux-amd64 }
+          - { goos: linux, goarch: arm64, nome: nep-linux-arm64 }
+          - { goos: windows, goarch: amd64, nome: nep-windows-amd64.exe }
+          - { goos: darwin, goarch: arm64, nome: nep-macos-arm64 }
+          - { goos: darwin, goarch: amd64, nome: nep-macos-amd64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Compilar ${{ matrix.nome }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: go build -trimpath -ldflags "-s -w" -o ${{ matrix.nome }} ./cmd/nep
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.nome }}
+          path: ${{ matrix.nome }}

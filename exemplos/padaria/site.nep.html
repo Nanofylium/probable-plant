@@ -1,0 +1,209 @@
+<!doctype html>
+<!--
+  Site completo em um único arquivo, escrito em Nepenthes Web.
+  Tudo que está fora de <page> é o layout comum (cabeçalho, rodapé).
+  Cada <page route="..."> é uma página do site.
+-->
+<nep-config timezone="America/Sao_Paulo" movimento="true" progresso>
+
+<data name="produtos">
+[
+  {"slug": "pao-de-mel", "nome": "Pão de mel", "preco": 6.5, "categoria": "Doces", "desc": "Massa de especiarias com cobertura de chocolate meio amargo."},
+  {"slug": "sonho", "nome": "Sonho de creme", "preco": 7.9, "categoria": "Doces", "desc": "Recheado com creme de baunilha feito na casa."},
+  {"slug": "pao-italiano", "nome": "Pão italiano", "preco": 18.0, "categoria": "Pães", "desc": "Fermentação natural de 24 horas, casca crocante."},
+  {"slug": "baguete", "nome": "Baguete", "preco": 9.5, "categoria": "Pães", "desc": "Assada três vezes ao dia."},
+  {"slug": "bolo-cenoura", "nome": "Bolo de cenoura", "preco": 32.0, "categoria": "Bolos", "desc": "Com calda de brigadeiro. Serve 10 pessoas."}
+]
+</data>
+
+<nep>
+  # Código global: roda em todas as páginas
+  let site = {nome: "Padaria Pão de Mel", fone: "(11) 4002-8922", cidade: "São Paulo"}
+  let categorias = produtos |> pluck("categoria") |> unique
+  fn ativo(rota) do
+    if page.route == rota do return "ativo" end
+    return ""
+  end
+</nep>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }} · {{ site.nome }}</title>
+  <style>
+    :root { --cor: #8a4b14; --fundo: #fffaf3; --texto: #2e2117; --borda: #ecdcc8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--fundo); color: var(--texto); }
+    header, main, footer { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding-top: 18px; padding-bottom: 18px; }
+    .marca { font-weight: 800; font-size: 1.25rem; color: var(--cor); text-decoration: none; }
+    nav a { margin-left: 18px; color: var(--texto); text-decoration: none; }
+    nav a.ativo { color: var(--cor); font-weight: 700; }
+    .hero { padding: 56px 0 28px; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; margin: 0 0 12px; }
+    .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 18px; }
+    .card h3 { margin: 0 0 4px; }
+    .card a { color: inherit; text-decoration: none; }
+    .preco { color: var(--cor); font-weight: 700; }
+    .tag { display: inline-block; font-size: .8rem; background: #f6e7d3; border-radius: 99px; padding: 1px 10px; }
+    .botao, button { display: inline-block; background: var(--cor); color: #fff; border: 0; border-radius: 10px; padding: 10px 18px; font: inherit; cursor: pointer; text-decoration: none; }
+    form { display: grid; gap: 12px; max-width: 520px; }
+    label { display: grid; gap: 4px; font-weight: 600; }
+    input, textarea, select { font: inherit; padding: 10px; border: 1px solid var(--borda); border-radius: 10px; background: #fff; }
+    .nep-ok { background: #e7f6ea; border: 1px solid #b9e2c2; padding: 10px 14px; border-radius: 10px; }
+    .nep-erros { background: #fdeceb; border: 1px solid #f3c4c0; padding: 6px 14px; border-radius: 10px; }
+    .nep-erros ul { margin: 6px 0; padding-left: 18px; }
+    .numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 8px 0 40px; text-align: center; }
+    .numeros strong { display: block; font-size: 2.2rem; color: var(--cor); }
+    .numeros span { font-size: .9rem; }
+    footer { margin-top: 64px; padding-top: 24px; padding-bottom: 40px; border-top: 1px solid var(--borda); font-size: .95rem; }
+    footer form { grid-template-columns: 1fr auto; max-width: 440px; }
+    footer .nep-ok, footer .nep-erros { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="marca" href="{{ url('/') }}">🥐 {{ site.nome }}</a>
+    <nav>
+      <a href="{{ url('/') }}" class="{{ ativo('/') }}">Início</a>
+      <a href="{{ url('/produtos') }}" class="{{ ativo('/produtos') }}">Produtos</a>
+      <a href="{{ url('/encomenda') }}" class="{{ ativo('/encomenda') }}">Encomendas</a>
+      <a href="{{ url('/contato') }}" class="{{ ativo('/contato') }}">Contato</a>
+    </nav>
+  </header>
+
+  <main>
+    <page route="/" title="Início">
+      <section class="hero">
+        <h1 nep-digitar="Pão quentinho desde 1998.|Fermentação natural de verdade.|Entrega no seu bairro.">Pão quentinho desde 1998.</h1>
+        <p>Fermentação natural, receitas de família e entrega no bairro. Hoje é {{ date(nil, "d/m/Y") }}.</p>
+        <a class="botao" nep-magnetico href="{{ url('/encomenda') }}">Fazer uma encomenda</a>
+      </section>
+
+      <div class="numeros">
+        <div><strong nep-contar>27</strong><span>anos de forno</span></div>
+        <div><strong nep-contar>1.200+</strong><span>pães por dia</span></div>
+        <div><strong nep-contar>4,9</strong><span>nota dos clientes</span></div>
+      </div>
+
+      <h2>Mais pedidos</h2>
+      <div class="grade">
+        <each p in="produtos |> sort_by('preco') |> take(3)">
+          <div class="card" nep-inclinar>
+            <a href="{{ url('/produto/' + p.slug) }}"><h3>{{ p.nome }}</h3></a>
+            <span class="preco">{{ p.preco |> money }}</span>
+          </div>
+        </each>
+      </div>
+    </page>
+
+    <page route="/produtos" title="Produtos">
+      <nep>
+        let filtro = request.query.categoria
+        let lista = produtos
+        if filtro do
+          lista = produtos |> where("categoria", filtro)
+        end
+      </nep>
+      <h1>Produtos</h1>
+      <p>
+        <a href="{{ url('/produtos') }}">Todos</a>
+        <each c in="categorias"> · <a href="{{ url('/produtos?categoria=' + c) }}">{{ c }}</a></each>
+      </p>
+      <if test="len(lista) == 0">
+        <p>Nenhum produto nessa categoria.</p>
+      <else>
+        <div class="grade">
+          <each p in="lista">
+            <div class="card">
+              <span class="tag">{{ p.categoria }}</span>
+              <a href="{{ url('/produto/' + p.slug) }}"><h3>{{ p.nome }}</h3></a>
+              <p>{{ p.desc |> truncate(60) }}</p>
+              <span class="preco">{{ p.preco |> money }}</span>
+            </div>
+          </each>
+        </div>
+      </if>
+    </page>
+
+    <page route="/produto/:slug" title="Produto">
+      <nep>
+        let p = produtos |> find(fn(x) do x.slug == params.slug end)
+        if not p do not_found() end
+        page.title = p.nome
+      </nep>
+      <p><a href="{{ url('/produtos') }}">← Todos os produtos</a></p>
+      <h1>{{ p.nome }}</h1>
+      <p><span class="tag">{{ p.categoria }}</span></p>
+      <p>{{ p.desc }}</p>
+      <p class="preco" style="font-size:1.4rem">{{ p.preco |> money }}</p>
+      <a class="botao" href="{{ url('/encomenda') }}">Encomendar</a>
+    </page>
+
+    <page route="/encomenda" title="Encomendas">
+      <h1>Encomendas</h1>
+      <p>Peça com 24 horas de antecedência. Confirmamos pelo WhatsApp.</p>
+      <form save="encomendas" success="Encomenda recebida! Vamos confirmar pelo WhatsApp em breve.">
+        <label>Seu nome <input name="nome" required maxlength="80"></label>
+        <label>WhatsApp <input name="whatsapp" type="tel" required></label>
+        <label>Produto
+          <select name="produto" required>
+            <option value="">Escolha…</option>
+            <option>Pão de mel</option>
+            <option>Sonho de creme</option>
+            <option>Pão italiano</option>
+            <option>Baguete</option>
+            <option>Bolo de cenoura</option>
+          </select>
+        </label>
+        <label>Quantidade <input name="quantidade" type="number" min="1" max="50" value="1" required></label>
+        <label>Para quando? <input name="data" type="date" required></label>
+        <label>Observações <textarea name="obs" rows="3" maxlength="500"></textarea></label>
+        <button>Enviar encomenda</button>
+      </form>
+    </page>
+
+    <page route="/contato" title="Contato">
+      <h1>Fale com a gente</h1>
+      <p>Ou ligue: {{ site.fone }}</p>
+      <form save="contatos" success="Mensagem enviada! Respondemos em até 1 dia útil.">
+        <label>Nome <input name="nome" required maxlength="80"></label>
+        <label>E-mail <input name="email" type="email" required></label>
+        <label>Mensagem <textarea name="mensagem" rows="5" required maxlength="2000"></textarea></label>
+        <label style="display:flex;gap:8px;font-weight:400"><input type="checkbox" name="aceite" required data-label="Autorização de contato"> Autorizo o uso dos meus dados para responder este contato.</label>
+        <button>Enviar</button>
+      </form>
+    </page>
+
+    <page route="/painel" title="Painel" auth>
+      <nep>
+        let enc = db.all("encomendas")
+        let por_produto = enc |> group_by("produto")
+      </nep>
+      <h1>Resumo da padaria</h1>
+      <p>{{ db.count("contatos") }} contato(s) e {{ len(enc) }} encomenda(s). <a href="{{ url('/_admin') }}">Abrir painel completo</a></p>
+      <h2>Encomendas por produto</h2>
+      <ul>
+        <each nome, itens in="por_produto">
+          <li>{{ nome }}: {{ itens |> pluck("quantidade") |> sum }} unidade(s)</li>
+        </each>
+      </ul>
+    </page>
+
+    <page route="404" title="Não encontrado">
+      <h1>Ops, essa página saiu do forno antes da hora.</h1>
+      <p><a href="{{ url('/') }}">Voltar ao início</a></p>
+    </page>
+  </main>
+
+  <footer>
+    <p><strong>{{ site.nome }}</strong> · {{ site.cidade }} · {{ site.fone }}</p>
+    <p>Receba as fornadas especiais por e-mail:</p>
+    <form save="newsletter" success="Inscrição feita!" limit="3">
+      <input name="email" type="email" required placeholder="seu@email.com" data-label="E-mail">
+      <button>Quero</button>
+    </form>
+  </footer>
+</body>
+</html>

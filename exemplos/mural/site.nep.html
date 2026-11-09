@@ -1,0 +1,138 @@
+<!doctype html>
+<!--
+  Mural da Vila: um site completo em um único arquivo.
+  Rode com:  nep dev exemplos/mural/site.nep.html
+  Abra em duas abas: o recado publicado numa aparece na outra sozinho (<live>),
+  sem uma linha de JavaScript escrita por você.
+-->
+<nep-config movimento="suave">
+
+<nep>
+  let site = {nome: "Mural da Vila", lema: "Recados do bairro, ao vivo."}
+
+  # sessão do visitante (cookie assinado): lembra quantas vezes ele abriu o site
+  # (request.live é true quando é só uma região <live> se atualizando)
+  if not request.live do
+    session.visitas = default(session.visitas, 0) + 1
+  end
+
+  fn quando(d) do
+    return date(d, "d/m H:i")
+  end
+
+  # chamada pelo formulário <form run="curtir">: os dados chegam já validados
+  fn curtir(dados) do
+    let r = db.find("recados", dados.id)
+    if not r do recusar("Esse recado não existe mais.") end
+    let ja = default(session.curtidos, [])
+    if contains(ja, r.id) do recusar("Você já curtiu esse recado.") end
+    db.incr("recados", r.id, "curtidas")
+    session.curtidos = push(ja, r.id)
+  end
+</nep>
+
+<!-- API JSON no mesmo arquivo: GET /api/recados e GET /api/recados/3 -->
+<api route="/api/recados">
+  return db.all("recados", 50) |> map(fn(r) do
+    {id: r.id, autor: r.autor, texto: r.texto, curtidas: default(r.curtidas, 0), quando: r.created_at}
+  end)
+</api>
+
+<api route="/api/recados/:id">
+  let r = db.find("recados", params.id)
+  if not r do abort(404, "recado não existe") end
+  return r
+</api>
+
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }} · {{ site.nome }}</title>
+  <style>
+    :root { --cor: #1f6f5c; --fundo: #f4f7f5; --texto: #17251f; --borda: #d7e2dc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--fundo); color: var(--texto); }
+    header, main { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-top: 18px; padding-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+    header a { color: var(--texto); text-decoration: none; margin-left: 14px; }
+    .marca { font-weight: 800; color: var(--cor); margin: 0; }
+    form { display: grid; gap: 10px; }
+    label { display: grid; gap: 4px; font-weight: 600; }
+    input, textarea { font: inherit; padding: 10px; border: 1px solid var(--borda); border-radius: 10px; background: #fff; }
+    button { font: inherit; background: var(--cor); color: #fff; border: 0; border-radius: 10px; padding: 9px 16px; cursor: pointer; }
+    .recado { background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 14px 16px; margin: 12px 0; }
+    .recado p { margin: 6px 0 10px; overflow-wrap: anywhere; }
+    .recado time { color: #5d6e66; font-size: .85rem; margin-left: 6px; }
+    .recado form { display: inline; }
+    .recado button { background: #fff; color: var(--cor); border: 1px solid var(--borda); padding: 4px 12px; }
+    .nep-ok { background: #e3f4ec; border-radius: 10px; padding: 8px 12px; }
+    .nep-erros { background: #fde9e7; border-radius: 10px; padding: 4px 12px; }
+    .muted { color: #5d6e66; font-size: .9rem; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--borda); }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="marca">{{ site.nome }}</p>
+    <nav>
+      <a href="{{ url('/') }}">Mural</a>
+      <a href="{{ url('/numeros') }}">Números</a>
+      <a href="{{ url('/api/recados') }}">API</a>
+    </nav>
+  </header>
+
+  <main>
+    <page route="/" title="Mural">
+      <h1>{{ site.lema }}</h1>
+      <p class="muted">Esta é a sua visita número {{ session.visitas }}.</p>
+
+      <form save="recados" success="Recado publicado!" limit="5">
+        <label>Seu nome <input name="autor" required maxlength="40"></label>
+        <label>Recado <textarea name="texto" rows="3" required maxlength="280"></textarea></label>
+        <button>Publicar</button>
+      </form>
+
+      <live>
+        <h2>{{ db.count("recados") }} recado(s)</h2>
+        <each r in="db.all('recados', 30)">
+          <article class="recado">
+            <strong>{{ r.autor }}</strong><time>{{ quando(r.created_at) }}</time>
+            <p>{{ r.texto |> nl2br }}</p>
+            <form run="curtir" success="" limit="60">
+              <input type="hidden" name="id" value="{{ r.id }}">
+              <button>♥ {{ default(r.curtidas, 0) }}</button>
+            </form>
+          </article>
+        <else>
+          <p class="muted">Ainda não há recados. Seja o primeiro!</p>
+        </each>
+      </live>
+    </page>
+
+    <page route="/numeros" title="Números">
+      <nep>
+        let recados = db.all("recados")
+        let por_autor = recados |> count_by("autor")
+      </nep>
+      <h1>Números do mural</h1>
+      <live every="5">
+        <p class="muted">Atualizado às {{ date(nil, "H:i:s") }}</p>
+        <p>{{ len(recados) }} recado(s), {{ recados |> pluck("curtidas") |> sum }} curtida(s).</p>
+      </live>
+      <table>
+        <tr><th>Autor</th><th>Recados</th></tr>
+        <each autor, n in="por_autor">
+          <tr><td>{{ loop.index }}. {{ autor }}</td><td>{{ n }}</td></tr>
+        </each>
+      </table>
+    </page>
+
+    <page route="404" title="Não encontrado">
+      <h1>Essa página não existe.</h1>
+      <p><a href="{{ url('/') }}">Voltar ao mural</a></p>
+    </page>
+  </main>
+</body>
+</html>

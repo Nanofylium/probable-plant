@@ -1,6 +1,6 @@
 # Especificação da linguagem Nepenthes — versão 1 (rascunho 0.1)
 
-Este documento define o que um programa Nepenthes significa. Qualquer implementação (o executável `nep` em Go, o runtime web em PHP) deve seguir estas regras. Onde uma implementação ainda diverge, isso está marcado como **[divergência]**.
+Este documento define o que um programa Nepenthes significa e como um arquivo `.nep.html` vira um site (seção 10). Qualquer implementação (o executável `nep` em Go, o runtime web antigo em PHP) deve seguir estas regras. Onde uma implementação ainda diverge, isso está marcado como **[divergência]**.
 
 ## 1. Arquivos e codificação
 
@@ -36,6 +36,7 @@ Este documento define o que um programa Nepenthes significa. Qualquer implementa
 | `table` | `{nome: "Ana", "com espaço": 1}` | dicionário mutável que **preserva a ordem de inserção** |
 | `fn` | `fn(x) do x * 2 end`, `print` | funções são valores |
 | `module` | resultado de `import` | só leitura |
+| `html` | `raw("<b>oi</b>")` | texto marcado como HTML seguro; só existe em sites (seção 10); `html + html` é `html` |
 
 **Referência**: listas e tabelas são passadas por referência. `let b = a` faz `b` e `a` apontarem para a mesma lista. Use `copy(a)` para uma cópia rasa. **[divergência]** o runtime web em PHP 0.1 copia por valor.
 
@@ -220,7 +221,94 @@ Formato de datas (letras do PHP, iguais no runtime web): `d j m n Y y H G i s D 
 
 - Escrita em Go, sem dependências externas: um único executável.
 - O código é lido, transformado em árvore, compilado para **bytecode** e executado numa **máquina virtual de pilha** com closures e upvalues (o mesmo modelo da Lua). `nep disasm arquivo.nep` mostra o bytecode.
-- Comandos: `nep` (interativo), `nep arquivo.nep`, `nep check`, `nep test`, `nep disasm`, `nep version`.
+- Comandos: `nep` (interativo), `nep arquivo.nep`, `nep check`, `nep test`, `nep disasm`, `nep version`, e para sites `nep novo`, `nep dev`, `nep serve`, `nep cgi`.
+
+## 10. Nepenthes Web: um arquivo `.nep.html` é um site
+
+Um arquivo `.nep.html` é HTML comum com algumas tags a mais. O `nep` lê o arquivo, traduz o HTML para código Nepenthes e executa na mesma máquina virtual da linguagem. Não há PHP, Node nem banco de dados para instalar: o executável `nep` é o servidor, o banco e o painel.
+
+```
+nep novo meu-site              cria meu-site/site.nep.html
+nep dev meu-site/site.nep.html desenvolvimento: http://localhost:8000, erros com a linha do arquivo
+nep serve site.nep.html        produção (VPS), atrás de um proxy com HTTPS
+nep.cgi                        hospedagem compartilhada (Apache + CGI), ver hospedagem/.htaccess
+```
+
+### 10.1 Estrutura
+
+Tudo fora de `<page>` é o **layout** (cabeçalho, rodapé), comum a todas as páginas. A `<page>` cuja rota bate com o endereço aparece no lugar onde está escrita; as outras somem.
+
+| Tag | Significado |
+|---|---|
+| `<page route="/x/:id" title="T" auth>` | uma página. `:nome` captura um trecho (`params.nome`); `*` captura o resto (`params.resto`). `route="404"` é a página de não encontrado. `auth` exige o login do painel. Em português: `<pagina rota titulo restrita>` |
+| `{{ expressão }}` | mostra o valor, **sempre escapado** (proteção contra XSS). Vale em texto e atributos. Valores `html` (de `raw`, `nl2br`, `json`) não são escapados |
+| `<nep> código </nep>` | código Nepenthes. Fora de `<each>`/`<if>`/`<live>` roda **antes** do HTML, na ordem do arquivo (o global e depois o da página pedida), por isso uma página pode mudar `page.title`. Dentro de `<each>` roda a cada volta. `print` escreve no HTML (escapado) |
+| `<each x in="lista">` / `<each k, v in="tabela">` | repete o conteúdo. `loop.index` (1, 2…), `loop.first`, `loop.last`, `loop.count`. Um `<else>` dentro mostra o conteúdo quando a lista está vazia. Em português: `<cada x em="...">` |
+| `<if test="cond"> … <else> … </if>` | condição. Em português: `<se teste>` e `<senao>` |
+| `<data name="nome">JSON</data>` | dados fixos, viram a variável `nome` |
+| `<nep-config ...>` | `movimento="true\|suave\|forte"` (anima a página, seção 10.6), `progresso`, `cor`, `csp="..."` |
+| `<form save="col">` / `<form run="funcao">` | formulário que valida e salva sozinho (10.3) |
+| `<live>` / `<live every="10">` | região que se atualiza sozinha no navegador (10.4). Em português: `<vivo cada="10">` |
+| `<api route="/api/x" method="GET">código</api>` | rota que devolve JSON (10.5) |
+
+Cada linha de código gerada fica na mesma linha do `.nep.html`: um erro aponta a linha do arquivo do site.
+
+### 10.2 Variáveis e funções disponíveis no site
+
+- `page` (`route`, `title`, `path`), `params`, `request` (`method`, `path`, `query`, `live`; nas APIs também `json` e `form`), `admin` (bool), `session` (tabela do visitante, 10.7).
+- `db`: `all(col, limite)` (mais novos primeiro), `find(col, id)`, `where(col, campo, valor)`, `count(col)`, `insert(col, tabela)` → id, `update(col, id, tabela)` (mistura os campos), `incr(col, id, campo, n)` (soma sem condição de corrida), `delete(col, id)`. Cada registro ganha `id`, `created_at` e `updated_at`.
+- `url("/caminho")` (funciona em subpasta), `raw(texto)`, `nl2br(texto)`, `json(valor)`, `urlencode(texto)`.
+- `not_found()`, `redirect("/caminho")` (só caminhos do próprio site), `abort(código, mensagem)`, `recusar(mensagem)` (ou `reject`). Essas quatro **param** o pedido e não são capturadas por `try`.
+- Módulos `fs`, `os` e `http` e a função `input` não existem no site. `load_csv` só lê arquivos dentro da pasta do site, nunca de `data/`.
+- Cada pedido pode executar no máximo 40 milhões de instruções; um laço infinito vira erro 500, não trava o servidor.
+
+### 10.3 Formulários
+
+```html
+<form save="contatos" success="Mensagem enviada!" redirect="/obrigado" limit="5">
+  <label>Nome <input name="nome" required maxlength="80"></label>
+  <label>E-mail <input name="email" type="email" required></label>
+  <button>Enviar</button>
+</form>
+```
+- O servidor valida as regras escritas no próprio HTML: `required`, `type=email|url|number|range|date|tel|checkbox`, `min`, `max`, `maxlength` (padrão 500, ou 5000 em `textarea`), opções de `<select>` e de radio/checkbox. Campos `nome[]` viram listas. `number` vira `int` ou `float`; checkbox vira `bool`.
+- Só os campos que existem no formulário são guardados; o resto é ignorado.
+- Proteções automáticas: token CSRF, armadilha anti-robô, limite de envios aceitos por visitante (`limit`, padrão 5 a cada 10 minutos; o IP é guardado só como hash com sal).
+- Com erro, a página volta com status 422, as mensagens em português e o que a pessoa digitou. Com sucesso, redireciona (303) e mostra `success` uma vez (`success=""` não mostra nada).
+- `run="funcao"` chama uma função do site com a tabela de dados já validada. `recusar("motivo")` devolve o motivo como erro do formulário; se a função devolver um caminho (`"/obrigado"`), o visitante vai para lá. Com `save` e `run`, a função roda antes e pode alterar os dados que serão salvos.
+- Um formulário só é aceito na página onde aparece (ou no layout).
+
+### 10.4 Regiões ao vivo
+
+O conteúdo de `<live>` é renderizado no servidor como o resto da página, e o navegador o atualiza sozinho, sem recarregar:
+- `<live>` atualiza quando qualquer dado do site muda (no `nep serve`, por Server-Sent Events; no CGI, consultando `/_nep/versao` a cada 4 s);
+- `<live every="10">` atualiza a cada 10 segundos (mínimo 2);
+- formulários dentro de um `<live>` são enviados sem recarregar a página, e a região volta já com a mensagem ou os erros (`nep-recarregar` no `<form>` desliga isso);
+- sem JavaScript, tudo continua funcionando com recarga normal.
+
+O script `/_nep/vivo.js` é colocado na página automaticamente quando ela tem `<live>`.
+
+### 10.5 APIs JSON
+
+```html
+<api route="/api/produtos/:id" method="GET">
+  let p = db.find("produtos", params.id)
+  if not p do abort(404, "produto não existe") end
+  return p
+</api>
+```
+O valor devolvido vira JSON (status 200). `abort(código, msg)` responde `{"erro": msg}`. O código global do site (os `<nep>` fora das páginas) roda antes, então as funções dele estão disponíveis. Em `POST`, `PUT` e `DELETE`, `request.json` traz o corpo JSON e `request.form` os campos de formulário; pedidos de outro site com corpo de formulário são recusados. `method="*"` aceita qualquer método.
+
+### 10.6 Movimento
+
+`<nep-config movimento="true">` coloca o script `/_nep/movimento.js` (o mesmo `nepenthes.js` que funciona sozinho em qualquer HTML): elementos surgem ao rolar, transição entre páginas e os atributos `nep-anim`, `nep-contar`, `nep-digitar`, `nep-paralaxe`, `nep-inclinar`, `nep-magnetico`, `nep-letreiro`, entre outros.
+
+### 10.7 Sessão, painel e dados
+
+- `session` é uma tabela guardada num cookie assinado (HMAC-SHA256, `HttpOnly`, `SameSite=Lax`): o visitante não consegue alterá-la. Só valores que viram JSON; máximo de 3,8 KB.
+- `/_admin`: no primeiro acesso pede o código do arquivo `data/SETUP_TOKEN.txt` e cria a senha (PBKDF2-SHA256). Depois: coleções, busca, exclusão, exportação CSV para o Excel brasileiro (`;`, BOM, proteção contra fórmulas) e a página **LGPD**, que acha e apaga todos os dados de uma pessoa. Login com no máximo 5 erros a cada 15 minutos; a sessão do painel expira após 8 horas parada.
+- Os dados ficam em `data/nep.db` (um registro JSON por linha, compactado de tempos em tempos), com trava de arquivo para vários processos ao mesmo tempo. A pasta `data/` nunca é entregue pela web.
+- Cabeçalhos de segurança em toda resposta: `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e HSTS em HTTPS.
 
 ## 9. Fora da versão 1 (planejado)
 
