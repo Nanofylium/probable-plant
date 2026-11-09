@@ -1,0 +1,11 @@
+0 a operação '+' não funciona entre int e nil
+1 variável não definida: nada_definido
+2 índice de lista precisa ser inteiro (recebeu string)
+3 tentou chamar um valor string, que não é uma função
+4 a função anônima recebe 1 argumento(s), mas recebeu 2
+5 tentou ler o campo 'y' de nil
+6 um não é dois
+7 divisão por zero
+8 sort: não sei comparar string com int
+9 variável não definida: json_inexistente
+recursão: recursão profunda demais (mais de 4000 chamadas)

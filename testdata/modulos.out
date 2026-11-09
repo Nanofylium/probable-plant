@@ -1,0 +1,13 @@
+util carregado
+1.0 42 true
+4.0 1024 true
+{b: 1, a: [1, 2.5, true, nil], c: {x: "y"}} ["b", "a", "c"]
+{"b":1,"a":[1,2.5,true,null],"c":{"x":"y"}}
+["linha1", "linha2"]
+pegou: divisão por zero 15
+valor: 42
+aninhado: tentou ler o campo 'campo' de nil
+através de nativa: dentro do map 1
+try no laço 0
+try no laço 2
+voltou

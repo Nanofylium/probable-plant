@@ -1,0 +1,6 @@
+/nep
+/nep.exe
+/dist/
+data/
+*.test
+relatorio.json

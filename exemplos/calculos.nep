@@ -1,0 +1,7 @@
+# Módulo de exemplo, usado por calculos_test.nep
+fn media(lista) do
+  if len(lista) == 0 do error("lista vazia") end
+  sum(lista) / len(lista)
+end
+
+fn desconto(preco, pct) do round(preco * (1 - pct / 100), 2) end

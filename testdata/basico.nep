@@ -1,0 +1,63 @@
+# básico
+let x = 10
+let y = 3
+print(x + y, x - y, x * y, x / y, x // y, x % y, 7 / 7, -7 // 2, -7 % 3)
+print(0.1 + 0.2, 2.0, 1e3, 3.5 * 2, "a" + 1, "ab" * 3)
+print(1 == 1.0, [1, [2]] == [1, [2]], {a: 1} == {a: 1}, "a" < "b", nil == false)
+let t = {nome: "Ana", idade: 30}
+t.cidade = "SP"
+t["idade"] += 1
+print(t, len(t), t.nada)
+let l = [1, 2, 3]
+l[3] = 4
+l[0] = 100
+push(l, 5)
+print(l, l[-1], len(l), pop(l), l)
+fn fat(n) do
+  if n <= 1 do return 1 end
+  n * fat(n - 1)
+end
+print(fat(20))
+fn contador() do
+  let n = 0
+  fn() do
+    n += 1
+    n
+  end
+end
+let c = contador()
+c()
+c()
+print("contador", c())
+let fs = []
+for i in range(3) do push(fs, fn() do i * 10 end) end
+print(map(fs, fn(f) do f() end))
+let s = 0
+for i in range(10) do
+  if i % 2 == 0 do continue end
+  if i > 7 do break end
+  s += i
+end
+print("soma ímpares", s)
+for k, v in {a: 1, b: 2} do print(k, v) end
+for i, ch in "ação" do print(i, ch) end
+let n = 0
+while true do
+  n += 1
+  if n >= 5 do break end
+end
+print("while", n)
+if n > 10 do print("grande") elif n > 3 do print("médio") else print("pequeno") end
+print([1, 2, 3] |> map(fn(x) do x * x end) |> sum, 19.9 |> money, "Olá" |> upper)
+fn soma(...nums) do sum(nums) end
+print(soma(1, 2, 3, 4), soma())
+fn opcional(a, b) do default(b, "padrão") end
+print(opcional(1))
+print(type(1), type(1.5), type("x"), type([]), type({}), type(print), type(nil), type(fat))
+print(sort([3, 1, 2]), sort(["b", "a"], "desc"), sort_by([{p: 3}, {p: 1}], "p"))
+print(format("Olá, {}! {} anos", "Ana", 30), format("{nome}", {nome: "Bia"}))
+print(split("a,b,c"), join([1, 2], "-"), replace("aaa", "a", "b"), slug("Pão de Mel!"), substr("Nepenthes", 0, 3))
+print(date("2026-11-08", "d/m/Y"), round(3.14159, 2), round(2.5), number(1234567.891, 2))
+print(group_by([{c: "x", v: 1}, {c: "y", v: 2}, {c: "x", v: 3}], "c"))
+print(summarize([1, 2, 3, 4]))
+print(not nil, nil or "x", 0 and "y", [] or "vazio")

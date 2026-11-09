@@ -1,0 +1,23 @@
+# cada caso imprime a mensagem de erro capturada
+let casos = [
+  fn() do 1 + nil end,
+  fn() do nada_definido end,
+  fn() do [1, 2]["x"] end,
+  fn() do "abc"() end,
+  fn() do fn(a) do a end(1, 2) end,
+  fn() do {}.x.y end,
+  fn() do assert(1 == 2, "um não é dois") end,
+  fn() do 5 % 0 end,
+  fn() do sort([1, "a"]) end,
+  fn() do json_inexistente.x end,
+]
+for i, f in casos do
+  try do
+    f()
+    print(i, "sem erro")
+  catch e do
+    print(i, e.message)
+  end
+end
+fn infinita(n) do infinita(n + 1) end
+try do infinita(0) catch e do print("recursão:", e.message) end

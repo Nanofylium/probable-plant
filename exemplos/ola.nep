@@ -1,0 +1,4 @@
+# Primeiro programa: nep ola.nep
+let nome = input("Qual o seu nome? ")
+if not nome do nome = "mundo" end
+print(format("Olá, {}! Bem-vindo ao Nepenthes {}.", nome, "0.1"))

@@ -1,0 +1,25 @@
+# Exemplo de uso geral: lê um JSON, calcula e grava um relatório.
+import json
+import fs
+
+let produtos = json.decode('[
+  {"nome": "Pão de mel", "preco": 6.5, "qtd": 40, "categoria": "Doces"},
+  {"nome": "Baguete", "preco": 9.5, "qtd": 12, "categoria": "Pães"},
+  {"nome": "Sonho", "preco": 7.9, "qtd": 0, "categoria": "Doces"},
+  {"nome": "Pão italiano", "preco": 18.0, "qtd": 7, "categoria": "Pães"}
+]')
+
+fn valor_em_estoque(p) do p.preco * p.qtd end
+
+let em_falta = produtos |> filter(fn(p) do p.qtd == 0 end) |> pluck("nome")
+let por_categoria = produtos |> group_by("categoria")
+
+print("Valor total em estoque:", produtos |> map(valor_em_estoque) |> sum |> money)
+print("Em falta:", join(em_falta))
+for categoria, itens in por_categoria do
+  print(format("  {}: {} produto(s), {}", categoria, len(itens), itens |> map(valor_em_estoque) |> sum |> money))
+end
+
+let relatorio = {gerado_em: now(), em_falta: em_falta, total: produtos |> map(valor_em_estoque) |> sum}
+fs.write("relatorio.json", json.pretty(relatorio))
+print("Relatório gravado em relatorio.json")

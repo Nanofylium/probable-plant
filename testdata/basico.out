@@ -1,0 +1,28 @@
+13 7 30 3.3333333333333335 3 1 1 -4 2
+0.30000000000000004 2.0 1000.0 7.0 a1 ababab
+true true true true false
+{nome: "Ana", idade: 31, cidade: "SP"} 3 nil
+[100, 2, 3, 4] 5 5 5 [100, 2, 3, 4]
+2432902008176640000
+contador 3
+[0, 10, 20]
+soma ímpares 16
+a 1
+b 2
+0 a
+1 ç
+2 ã
+3 o
+while 5
+médio
+14 R$ 19,90 OLÁ
+10 0
+padrão
+int float string list table fn nil fn
+[1, 2, 3] ["b", "a"] [{p: 1}, {p: 3}]
+Olá, Ana! 30 anos Bia
+["a", "b", "c"] 1-2 bbb pao-de-mel Nep
+08/11/2026 3.14 3 1.234.567,89
+{x: [{c: "x", v: 1}, {c: "x", v: 3}], y: [{c: "y", v: 2}]}
+{count: 4, sum: 10.0, mean: 2.5, min: 1.0, max: 4.0}
+true x 0 vazio

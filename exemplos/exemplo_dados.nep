@@ -1,0 +1,26 @@
+
+# Exemplo de processamento de dados em Nepenthes
+
+print("--- Iniciando análise de neurônios ---")
+
+let data = load_csv("neurons.csv")
+
+fn is_excitatory(n) do
+    return n.type == "excitatory"
+end
+
+fn get_rate(n) do
+    return n.rate
+end
+
+let excit_rates = data 
+    |> filter(is_excitatory) 
+    |> map(get_rate)
+
+print("Taxas de disparo (excitatory):", excit_rates)
+print("Total de neurônios processados:", len(data))
+
+let stats = excit_rates |> summarize()
+print("Resumo estatístico:", stats)
+
+print("--- Fim da análise ---")

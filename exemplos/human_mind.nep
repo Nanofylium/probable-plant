@@ -1,0 +1,56 @@
+# Adaptado do original: só as linhas abaixo foram acrescentadas.
+import cerebro
+let WorkingMemory = cerebro.WorkingMemory
+let AttentionGate = cerebro.AttentionGate
+let DecisionMaker = cerebro.DecisionMaker
+let MetaCognition = cerebro.MetaCognition
+
+# Implementação do HumanMind em Nepenthes
+
+print("==========================================")
+print("  NEPENTHES COGNITIVE RUNTIME (HumanMind) ")
+print("==========================================")
+
+# 1. Inicialização dos Módulos
+let wm = WorkingMemory(7)
+let gate = AttentionGate(1.5, 0.5)
+let dm = DecisionMaker(100.0)
+
+# 2. Simulação de Entrada de Dados (Assemblies de Neurônios)
+let assemblies = [
+    {name: "Visual Cortex", rate: 85.0},
+    {name: "Motor Control", rate: 42.0},
+    {name: "Auditory Path", rate: 120.0},
+    {name: "Memory Recall", rate: 15.0}
+]
+
+print("Estímulos Neurais Recebidos:", len(assemblies))
+
+# 3. Processamento via Attention Gate (Pipe Operator)
+let attended_data = assemblies |> gate.process()
+
+print("\n--- Relatório de Atenção ---")
+for a in attended_data do
+    print("Assembly:", a.name, "| Status:", a.status, "| Taxa Impulsionada:", a.boosted_rate)
+end
+
+# 4. Tomada de Decisão
+let decision = attended_data |> dm.decide()
+print("\nResultado da Decisão:", decision)
+
+# 5. Atualização da Memória de Trabalho
+if decision == "Ação: Executar" do
+    for a in attended_data do
+        if a.status == "Attended" do
+            wm.add(a.name)
+        end
+    end
+end
+
+print("\n--- Estado da Working Memory ---")
+let current_memory = wm.get_all()
+print("Itens em foco:", current_memory)
+
+print("\n==========================================")
+print("  SIMULAÇÃO CONCLUÍDA COM SUCESSO")
+print("==========================================")

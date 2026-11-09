@@ -1,0 +1,17 @@
+# Rode com: nep test exemplos
+import "calculos"
+
+fn test_media() do
+  assert(calculos.media([2, 4, 6]) == 4, "média de 2, 4, 6 deveria ser 4")
+end
+
+fn test_media_vazia_da_erro() do
+  let deu_erro = false
+  try do calculos.media([]) catch e do deu_erro = e.message == "lista vazia" end
+  assert(deu_erro, "esperava erro para lista vazia")
+end
+
+fn test_desconto() do
+  assert(calculos.desconto(100, 15) == 85, "15% de 100")
+  assert(calculos.desconto(19.9, 10) == 17.91)
+end

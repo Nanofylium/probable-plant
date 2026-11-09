@@ -1,0 +1,74 @@
+# Módulo cerebro: modelos cognitivos inspirados no projeto Fly Brain / HumanMind.
+# Escrito na própria linguagem Nepenthes (porta do cognition.py original).
+
+# Memória de trabalho com número limitado de "vagas" (o clássico 7 ± 2).
+fn WorkingMemory(slots) do
+  slots = default(slots, 7)
+  let memoria = []
+  {
+    add: fn(item) do
+      if len(memoria) >= slots do remove(memoria, 0) end
+      push(memoria, item)
+      "Item '" + str(item) + "' adicionado à Working Memory."
+    end,
+    get_all: fn() do memoria end,
+    slots: slots,
+  }
+end
+
+# Portão de atenção: reforça os conjuntos de neurônios mais ativos e inibe o resto.
+fn AttentionGate(alpha, gamma) do
+  alpha = default(alpha, 1.4)
+  gamma = default(gamma, 0.6)
+  {
+    process: fn(assemblies) do
+      if not assemblies do return [] end
+      let max_rate = assemblies |> pluck("rate") |> max
+      let resultado = []
+      for a in assemblies do
+        if a.rate >= max_rate * 0.8 do
+          a.boosted_rate = a.rate * alpha
+          a.status = "Attended"
+        else
+          a.boosted_rate = a.rate * gamma
+          a.status = "Inhibited"
+        end
+        push(resultado, a)
+      end
+      resultado
+    end,
+    alpha: alpha,
+    gamma: gamma,
+  }
+end
+
+# Decide agir quando a evidência acumulada passa do limiar.
+fn DecisionMaker(threshold) do
+  threshold = default(threshold, 50.0)
+  {
+    decide: fn(dados) do
+      let evidencia = dados
+        |> filter(fn(a) do a.status == "Attended" end)
+        |> pluck("boosted_rate")
+        |> sum
+      if evidencia > threshold do return "Ação: Executar" end
+      "Ação: Aguardar"
+    end,
+    threshold: threshold,
+  }
+end
+
+# Metacognição: mede a "surpresa", a mudança da média de atividade entre ciclos.
+fn MetaCognition() do
+  let estado = {surprise: 0.0, last_rate: 0.0}
+  {
+    evaluate: fn(dados) do
+      if not dados do return 0.0 end
+      let media = dados |> pluck("rate") |> avg
+      estado.surprise = abs(media - estado.last_rate) / 100.0
+      estado.last_rate = media
+      estado.surprise
+    end,
+    estado: estado,
+  }
+end

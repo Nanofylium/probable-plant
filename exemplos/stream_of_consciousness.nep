@@ -1,0 +1,55 @@
+# Adaptado do original: só as linhas abaixo foram acrescentadas.
+import cerebro
+let WorkingMemory = cerebro.WorkingMemory
+let AttentionGate = cerebro.AttentionGate
+let DecisionMaker = cerebro.DecisionMaker
+let MetaCognition = cerebro.MetaCognition
+
+# Fluxo de Consciência em Nepenthes
+
+print(">>> INICIANDO STREAM OF CONSCIOUSNESS <<<")
+
+let wm = WorkingMemory(5)
+let gate = AttentionGate(1.4, 0.6)
+let meta = MetaCognition()
+let dm = DecisionMaker(80.0)
+
+fn run_cycle(stimulus_name, assemblies) do
+    print("\n--- Ciclo de Estímulo:", stimulus_name, "---")
+    
+    let attended = assemblies |> gate.process()
+    let surprise = attended |> meta.evaluate()
+    let decision = attended |> dm.decide()
+    
+    print("Nível de Surpresa:", surprise)
+    print("Decisão:", decision)
+    
+    if surprise > 0.5 do
+        print("ALERTA: Mudança súbita detectada na entrada sensorial!")
+    end
+    
+    if decision == "Ação: Executar" do
+        for a in attended do
+            if a.status == "Attended" do
+                wm.add(a.name)
+            end
+        end
+    end
+end
+
+# Simulação de múltiplos ciclos
+let cycle1 = [
+    {name: "Sabor Doce", rate: 95.0},
+    {name: "Som Ambiente", rate: 20.0}
+]
+
+let cycle2 = [
+    {name: "Sabor Doce", rate: 90.0},
+    {name: "Som de Alarme", rate: 150.0}
+]
+
+run_cycle("Refeição", cycle1)
+run_cycle("Perigo", cycle2)
+
+print("\n>>> MEMÓRIA FINAL DO SISTEMA <<<")
+print(wm.get_all())

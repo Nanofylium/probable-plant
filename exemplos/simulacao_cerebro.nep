@@ -1,0 +1,34 @@
+
+# Simulação simplificada do HumanMind em Nepenthes
+
+print("--- Simulando Camada de Cognição Humana ---")
+
+let threshold = 15.0
+
+fn process_spikes(rate) do
+    if rate > threshold do
+        return "Ativo"
+    else do
+        return "Inativo"
+    end
+end
+
+let neuron_rates = [10.2, 18.5, 5.4, 22.1, 14.9]
+let states = neuron_rates |> map(process_spikes)
+
+print("Taxas de entrada:", neuron_rates)
+print("Estados resultantes:", states)
+
+let active_count = states 
+    |> filter(fn(s) do return s == "Ativo" end) 
+    |> len()
+
+print("Total de neurônios ativos acima do limiar:", active_count)
+
+if active_count > 2 do
+    print("Decisão: Estímulo forte detectado!")
+else do
+    print("Decisão: Estímulo insuficiente.")
+end
+
+print("--- Simulação concluída ---")

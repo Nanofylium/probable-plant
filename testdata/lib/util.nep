@@ -1,0 +1,3 @@
+let versao = "1.0"
+fn dobro(x) do x * 2 end
+print("util carregado")

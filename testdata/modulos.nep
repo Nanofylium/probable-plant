@@ -1,0 +1,43 @@
+import "lib/util"
+import "lib/util" as u2
+import math
+import json
+import fs
+import os
+print(util.versao, util.dobro(21), u2 == util)
+print(math.sqrt(16), math.pow(2, 10), math.pi > 3)
+let dados = json.decode('{"b": 1, "a": [1, 2.5, true, null], "c": {"x": "y"}}')
+print(dados, keys(dados))
+print(json.encode(dados))
+fs.write(os.env("NEP_TMP", "/tmp") + "/nep_x.txt", "linha1\nlinha2\n")
+print(fs.lines("" + os.env("NEP_TMP", "/tmp") + "/nep_x.txt"))
+try do
+  let r = 1 / 0
+catch e do
+  print("pegou:", e.message, e.line)
+end
+try do
+  error({codigo: 42})
+catch e do
+  print("valor:", e.codigo)
+end
+fn falha() do
+  let x = nil
+  x.campo
+end
+try do falha() catch e do print("aninhado:", e.message) end
+try do
+  map([1, 2], fn(x) do error("dentro do map " + str(x)) end)
+catch e do
+  print("através de nativa:", e.message)
+end
+for i in range(3) do
+  try do
+    if i == 1 do continue end
+    print("try no laço", i)
+  catch e do end
+end
+fn comtry() do
+  try do return "voltou" catch e do end
+end
+print(comtry())
