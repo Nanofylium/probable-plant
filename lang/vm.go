@@ -19,6 +19,24 @@ const (
 type RuntimeError struct {
 	Value Value
 	Trace []string
+	// Halt vem de uma parada que try/catch não captura (ex.: redirect() no servidor web).
+	Halt any
+}
+
+// Halt interrompe o programa sem passar por try/catch. Funções nativas devolvem
+// &Halt{...} como erro; quem chamou a VM recebe RuntimeError com Halt preenchido.
+type Halt struct{ Reason any }
+
+func (h *Halt) Error() string { return fmt.Sprint(h.Reason) }
+
+func isHalt(err error) bool {
+	switch e := err.(type) {
+	case *Halt:
+		return true
+	case *RuntimeError:
+		return e.Halt != nil
+	}
+	return false
 }
 
 func (e *RuntimeError) Error() string {
@@ -78,6 +96,21 @@ type VM struct {
 	In       io.Reader
 	Args     []string
 	loading  map[string]bool
+	// MaxSteps limita quantas instruções podem rodar (0 = sem limite). Usado no servidor web.
+	MaxSteps int64
+	steps    int64
+}
+
+// StepLimit é o motivo de Halt quando MaxSteps é ultrapassado.
+type StepLimit struct{}
+
+func (StepLimit) String() string { return "limite de execução atingido (laço infinito?)" }
+
+// RemoveStdModules impede import desses módulos da biblioteca padrão (ex.: fs e os no servidor web).
+func (vm *VM) RemoveStdModules(names ...string) {
+	for _, n := range names {
+		delete(vm.stdmods, n)
+	}
 }
 
 func NewVM() *VM {
@@ -238,6 +271,9 @@ func (vm *VM) wrap(err error) *RuntimeError {
 	if re, ok := err.(*RuntimeError); ok {
 		return re
 	}
+	if h, ok := err.(*Halt); ok {
+		return &RuntimeError{Value: h.Error(), Halt: h.Reason}
+	}
 	var val Value = err.Error()
 	if t, ok := err.(*thrown); ok {
 		val = t.val
@@ -294,6 +330,12 @@ func (vm *VM) run(base int) (Value, error) {
 
 	for {
 		var err error
+		if vm.MaxSteps > 0 {
+			vm.steps++
+			if vm.steps > vm.MaxSteps {
+				return nil, vm.wrap(&Halt{Reason: StepLimit{}})
+			}
+		}
 		op := code[fr.ip]
 		fr.ip++
 		switch op {
@@ -563,7 +605,7 @@ func (vm *VM) run(base int) (Value, error) {
 
 		if err != nil {
 			// procura um try/catch dentro desta execução
-			if len(vm.handlers) > 0 && vm.handlers[len(vm.handlers)-1].frame >= base {
+			if len(vm.handlers) > 0 && vm.handlers[len(vm.handlers)-1].frame >= base && !isHalt(err) {
 				h := vm.handlers[len(vm.handlers)-1]
 				vm.handlers = vm.handlers[:len(vm.handlers)-1]
 				val := errValue(err)
@@ -773,7 +815,12 @@ func arith(op byte, a, b Value) (Value, error) {
 		}
 		_, as := a.(string)
 		_, bs := b.(string)
-		if as || bs {
+		_, ah := a.(HTML)
+		_, bh := b.(HTML)
+		if ah && bh {
+			return HTML(string(a.(HTML)) + string(b.(HTML))), nil
+		}
+		if as || bs || ah || bh {
 			return Str(a) + Str(b), nil
 		}
 	}

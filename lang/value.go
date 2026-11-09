@@ -14,6 +14,9 @@ type Value = any
 
 type List struct{ Items []Value }
 
+// HTML é um texto já seguro para ir direto na página (não é escapado na saída).
+type HTML string
+
 // Table é um dicionário que preserva a ordem de inserção.
 type Table struct {
 	keys  []Value
@@ -155,6 +158,8 @@ func TypeName(v Value) string {
 		return "fn"
 	case *Module:
 		return "module"
+	case HTML:
+		return "html"
 	default:
 		return fmt.Sprintf("%T", x)
 	}
@@ -171,6 +176,8 @@ func Truthy(v Value) bool {
 	case float64:
 		return x != 0
 	case string:
+		return x != ""
+	case HTML:
 		return x != ""
 	case *List:
 		return len(x.Items) > 0
@@ -388,6 +395,11 @@ func show(v Value, repr bool, depth int) string {
 		return "<fn nativa " + x.Name + ">"
 	case *Module:
 		return "<módulo " + x.Name + ">"
+	case HTML:
+		if repr {
+			return quote(string(x))
+		}
+		return string(x)
 	}
 	return fmt.Sprint(v)
 }

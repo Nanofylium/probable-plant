@@ -20,7 +20,12 @@ Uso:
   nep                      abre o modo interativo
   nep arquivo.nep [args]   executa um programa
   nep run arquivo.nep      o mesmo que acima
-  nep check arquivo.nep    só verifica a sintaxe
+  nep check arquivo.nep    só verifica a sintaxe (também aceita um site .nep.html)
+  nep novo pasta           cria um site inicial (pasta/site.nep.html)
+  nep dev site.nep.html    roda o site no computador, com erros detalhados
+  nep serve site.nep.html  roda o site em produção (VPS): --porta 8000 --dados pasta --base /sub
+  nep cgi [site.nep.html]  atende um pedido CGI (hospedagem compartilhada; automático se o
+                           executável for chamado pelo Apache)
   nep test [pasta]         roda os testes (arquivos *_test.nep, funções test_*)
   nep disasm arquivo.nep   mostra o bytecode gerado
   nep version              mostra a versão
@@ -28,6 +33,9 @@ Uso:
 
 func main() {
 	args := os.Args[1:]
+	if os.Getenv("GATEWAY_INTERFACE") != "" && (len(args) == 0 || args[0] != "cgi") {
+		os.Exit(cgiMode(""))
+	}
 	if len(args) == 0 {
 		os.Exit(repl())
 	}
@@ -45,7 +53,25 @@ func main() {
 		if len(args) < 2 {
 			fail("informe o arquivo: nep check arquivo.nep")
 		}
+		if isSite(args[1]) {
+			os.Exit(checkSite(args[1]))
+		}
 		os.Exit(check(args[1:]))
+	case "serve", "servir":
+		os.Exit(serve(args[1:], false))
+	case "novo", "new":
+		if len(args) < 2 {
+			fail("informe a pasta: nep novo meu-site")
+		}
+		os.Exit(novo(args[1]))
+	case "dev":
+		os.Exit(serve(args[1:], true))
+	case "cgi":
+		f := ""
+		if len(args) > 1 {
+			f = args[1]
+		}
+		os.Exit(cgiMode(f))
 	case "test":
 		dir := "."
 		if len(args) > 1 {
@@ -58,6 +84,9 @@ func main() {
 		}
 		os.Exit(disasm(args[1]))
 	default:
+		if isSite(args[0]) {
+			os.Exit(serve(args, true))
+		}
 		os.Exit(run(args[0], args[1:]))
 	}
 }
