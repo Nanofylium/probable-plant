@@ -84,17 +84,19 @@ type Page struct {
 
 // Form é um <form save="..."> ou <form run="...">.
 type Form struct {
-	ID       int
-	Save     string
-	Run      string
-	Success  string
-	Redirect string
-	Notify   string
-	Limit    int
-	Line     int
-	Fields   []*Field
-	HasFile  bool // tem <input type="file">: o envio é multipart
-	start    int
+	ID             int
+	Save           string
+	Run            string
+	Success        string
+	Redirect       string
+	Notify         string // avisar="email@..." ou "dono": manda um aviso a cada envio
+	Confirm        string // confirmar="texto": responde para o e-mail digitado
+	ConfirmSubject string
+	Limit          int
+	Line           int
+	Fields         []*Field
+	HasFile        bool // tem <input type="file">: o envio é multipart
+	start          int
 }
 
 type Field struct {
@@ -544,7 +546,22 @@ func ParseSite(file, src string) (*Site, error) {
 				}
 			}
 			f := &Form{ID: len(s.Forms), Save: save, Run: run, Success: success, Redirect: first(a, "redirect", "redirecionar"),
-				Notify: first(a, "notify", "avisar"), Limit: limit, Line: ln, start: end}
+				Notify: first(a, "notify", "avisar"), Confirm: first(a, "confirmar", "confirm"), ConfirmSubject: first(a, "confirmar-assunto", "confirm-subject"),
+				Limit: limit, Line: ln, start: end}
+			if f.Notify == "" {
+				if _, has := a["avisar"]; has {
+					f.Notify = "dono"
+				} else if _, has := a["notify"]; has {
+					f.Notify = "dono"
+				}
+			}
+			if f.Notify != "" && f.Notify != "dono" && f.Notify != "owner" && f.Notify != "painel" {
+				for _, x := range splitAddrs(f.Notify) {
+					if _, err := cleanAddr(x); err != nil {
+						return nil, fail(ln, "avisar=%q: %q não é um e-mail válido (use avisar=\"dono\" para o endereço do painel)", f.Notify, x)
+					}
+				}
+			}
 			s.Forms = append(s.Forms, f)
 			n := &node{kind: kForm, line: ln, id: f.ID}
 			clean := formAttrStrip.ReplaceAllString(" "+attrs, "")
@@ -646,7 +663,7 @@ func ParseSite(file, src string) (*Site, error) {
 
 var (
 	eachRe        = regexp.MustCompile(`^\s*([\pL_][\pL\pN_]*)(?:\s*,\s*([\pL_][\pL\pN_]*))?\s+(?:in|em)\s*=\s*("([^"]*)"|'([^']*)')\s*/?\s*$`)
-	formAttrStrip = regexp.MustCompile(`(?i)\s(save|salvar|run|executar|success|sucesso|redirect|redirecionar|notify|avisar|limit|limite|method|action)(\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?`)
+	formAttrStrip = regexp.MustCompile(`(?i)\s(save|salvar|run|executar|success|sucesso|redirect|redirecionar|notify|avisar|confirmar-assunto|confirm-subject|confirmar|confirm|limit|limite|method|action)(\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?`)
 	identRe       = regexp.MustCompile(`^[\pL_][\pL\pN_]*$`)
 )
 

@@ -401,6 +401,27 @@ Quem programa escreve o tema à mão, no próprio `.nep.html`. Quem cuida do sit
 
 **markdown(texto)** gera HTML seguro: `# título` (vira `<h2>`; `##` vira `<h3>`), `**negrito**`, `*itálico*`, `` `código` ``, `[texto](https://...)`, `![descrição](/imagem.jpg)`, listas com `-` ou `1.`, `> citação`, `---` e blocos com três crases. HTML digitado aparece como texto, e links só aceitam `http`, `https`, `mailto`, `tel` e endereços do próprio site.
 
+### 10.12 E-mail
+
+O site manda e-mail de verdade, sem biblioteca nem serviço de fora.
+
+```html
+<form save="pedidos" avisar="contato@empresa.com.br"
+      confirmar="Recebemos seu pedido. Respondemos em até 1 dia útil."
+      confirmar-assunto="Pedido recebido">
+  <label>Nome <input name="nome" required></label>
+  <label>E-mail <input name="email" type="email" required></label>
+  <button>Enviar</button>
+</form>
+```
+
+- `avisar="a@x.com, b@y.com"`: a cada envio aceito, os endereços recebem um e-mail com todos os campos e o link do painel. O "Responder" vai direto para o e-mail que a pessoa digitou. `avisar` sem valor (ou `avisar="dono"`) usa o endereço configurado no painel, em **E-mail**. Endereço inválido é erro de `nep check`.
+- `confirmar="texto"`: responde para o primeiro campo `type=email` preenchido. O texto é sempre o do autor do site, nunca o que foi digitado, para o formulário não virar caminho de spam. `confirmar-assunto` troca o assunto.
+- No código: `enviar_email({para: "a@x.com", assunto: "Oi", texto: "…", html: "<p>…</p>", responder_para: "b@y.com"})` ou `enviar_email(para, assunto, texto)`. `para` aceita lista ou "a@x.com, b@y.com" (até 20). Devolve `true` se o e-mail saiu.
+- Por onde sai: pelo SMTP configurado no painel (porta 587 com STARTTLS ou 465 com TLS; ou variáveis `NEP_SMTP_HOST`, `NEP_SMTP_PORTA`, `NEP_SMTP_USUARIO`, `NEP_SMTP_SENHA`, `NEP_EMAIL_DE`); sem SMTP, pelo `sendmail` da hospedagem (cPanel e a maioria das VPS); sem nenhum dos dois, como no computador com `nep dev`, o e-mail fica guardado em `data/emails/*.eml`.
+- Remetente padrão: `nao-responda@<domínio do site>`. Para cair menos no spam, use um e-mail do próprio domínio.
+- Segurança: quebras de linha em endereço ou assunto são recusadas; limites de 300 avisos, 60 confirmações e 200 envios pelo código por hora; o formulário continua com o limite por visitante. Falha no envio não perde o formulário: tudo fica no histórico **E-mail** do painel (só o dono vê).
+
 ## 9. Fora da versão 1 (planejado)
 
-`match`, classes/protótipos, gerenciador de pacotes, formatador (`nep fmt`), servidor de linguagem para editores (já existe a extensão de cores para VS Code em `editor/vscode`), login de visitantes, aviso de formulário por e-mail, e o módulo `mosca` para simulação do conectoma da Drosophila, usando dados de um repositório público com licença que permite uso comercial (candidato: hemibrain da Janelia, CC BY 4.0, com atribuição). Os dados do FlyWire não serão usados.
+`match`, classes/protótipos, gerenciador de pacotes, formatador (`nep fmt`), servidor de linguagem para editores (já existe a extensão de cores para VS Code em `editor/vscode`), login de visitantes e o módulo `mosca` para simulação do conectoma da Drosophila, usando dados de um repositório público com licença que permite uso comercial (candidato: hemibrain da Janelia, CC BY 4.0, com atribuição). Os dados do FlyWire não serão usados.

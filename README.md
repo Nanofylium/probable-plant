@@ -150,6 +150,10 @@ A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as t
 
 Na mesma máquina, `fib(30)` recursivo leva cerca de 0,2 s, na mesma faixa do Python 3. Uma página típica de site é gerada em poucos milissegundos.
 
+## E-mail
+
+`<form save="pedidos" avisar="contato@empresa.com.br" confirmar="Recebemos!">` avisa o dono e responde para quem enviou; no código, `enviar_email({para:, assunto:, texto:, html:})`. Sai pelo SMTP configurado no painel ou pelo `sendmail` da hospedagem, sem configurar nada no cPanel. No computador, fica guardado em `data/emails/`. Detalhes na SPEC, seção 10.12.
+
 ## Próximos passos
 
-Login de visitantes, e-mail de aviso de formulário, gerenciador de pacotes, `nep fmt`, extensão para VS Code e o módulo `mosca` (simulação do conectoma da Drosophila com dados públicos do hemibrain da Janelia, CC BY 4.0; sem dados do FlyWire).
+Login de visitantes, gerenciador de pacotes, `nep fmt`, extensão para VS Code e o módulo `mosca` (simulação do conectoma da Drosophila com dados públicos do hemibrain da Janelia, CC BY 4.0; sem dados do FlyWire).
