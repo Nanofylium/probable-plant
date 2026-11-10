@@ -141,6 +141,12 @@ func checkSite(f string) int {
 		} else if fm.Run != "" {
 			dest += " e chama " + fm.Run + "()"
 		}
+		if fm.Notify != "" {
+			dest += " · avisa " + fm.Notify + " por e-mail"
+		}
+		if fm.Confirm != "" {
+			dest += " · confirma por e-mail"
+		}
 		fmt.Printf("  form    %s · campos: %s\n", dest, strings.Join(names, ", "))
 	}
 	for _, d := range site.Data {

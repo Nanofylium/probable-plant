@@ -225,6 +225,8 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	})
 	// campo vazio (nil) não vira o texto "nil" na página
 	def("markdown", func(a []lang.Value) (lang.Value, error) { return lang.HTML(Markdown(strOrEmpty(argv(a, 0)))), nil })
+	def("enviar_email", s.emailBuiltin(rq))
+	def("send_email", s.emailBuiltin(rq))
 	def("visual", func(a []lang.Value) (lang.Value, error) { return Visual(strOrEmpty(argv(a, 0))), nil })
 	// textos editáveis (editavel="chave")
 	def("__edhas", func(a []lang.Value) (lang.Value, error) {
@@ -693,6 +695,7 @@ func (s *Server) handlePost(rq *request) (bool, error) {
 		}
 	}
 	keep = f.Save != "" || f.Run != "" // com run=, a função decide o que fazer com os arquivos
+	s.formEmails(rq, f, data)
 	if f.Success != "" {
 		rq.sess.setFlash(id, inst, f.Success)
 	}

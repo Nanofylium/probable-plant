@@ -146,6 +146,8 @@ func (s *Server) admin(rq *request) error {
 		return a.statsPage()
 	case "/usuarios":
 		return a.usersPage(post)
+	case "/email":
+		return a.emailPage(post)
 	case "/construtor/arquivo":
 		return a.uploadBuilder()
 	case "/":
@@ -174,7 +176,7 @@ func (a *adminPage) out(title, body string, nav bool) error {
 	if nav {
 		links := a.navCMS()
 		if a.rq.sess.isOwner() {
-			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a>`
+			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a><a href="` + a.base + `/email">E-mail</a>`
 		}
 		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div>` + links +
 			`<a href="` + esc(a.s.opt.Base+"/") + `">Ver site</a></div>` +
