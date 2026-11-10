@@ -32,6 +32,26 @@ func (s *Server) sitemap(rq *request) {
 	day := time.Now().Format("2006-01-02")
 	for _, p := range rq.site.Pages {
 		r := "/" + strings.Trim(p.Route, "/")
+		if p.Conteudo != "" && !p.Auth && !p.NoIndex { // um endereço por item publicado
+			for _, rec := range s.Store.All(p.Conteudo, 0) {
+				t := rec.ToValue()
+				if !published(t) {
+					continue
+				}
+				u := rq.site.itemURL(p.Conteudo, t)
+				mod := rec.Updated
+				if mod == "" {
+					mod = rec.Created
+				}
+				if len(mod) >= 10 {
+					mod = mod[:10]
+				} else {
+					mod = day
+				}
+				b.WriteString("  <url><loc>" + html.EscapeString(base+"/"+strings.Trim(u, "/")) + "</loc><lastmod>" + mod + "</lastmod></url>\n")
+			}
+			continue
+		}
 		if p.Auth || p.Route == "404" || strings.ContainsAny(r, ":*") || p.NoIndex {
 			continue
 		}

@@ -223,6 +223,37 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	def("nl2br", func(a []lang.Value) (lang.Value, error) {
 		return lang.HTML(strings.ReplaceAll(html.EscapeString(lang.Str(argv(a, 0))), "\n", "<br>\n")), nil
 	})
+	def("markdown", func(a []lang.Value) (lang.Value, error) { return lang.HTML(Markdown(lang.Str(argv(a, 0)))), nil })
+	// textos editáveis (editavel="chave")
+	def("__edhas", func(a []lang.Value) (lang.Value, error) {
+		_, ok := s.edGet(lang.Str(argv(a, 0)))
+		return ok, nil
+	})
+	def("__ed", func(a []lang.Value) (lang.Value, error) {
+		k := lang.Str(argv(a, 0))
+		v, _ := s.edGet(k)
+		kind := "texto"
+		if e := site.Editable(k); e != nil {
+			kind = e.Kind
+		}
+		return edHTML(kind, v), nil
+	})
+	def("__edsrc", func(a []lang.Value) (lang.Value, error) {
+		k := lang.Str(argv(a, 0))
+		if v, ok := s.edGet(k); ok && v != "" {
+			return v, nil
+		}
+		if e := site.Editable(k); e != nil {
+			return e.Default, nil
+		}
+		return "", nil
+	})
+	def("texto", func(a []lang.Value) (lang.Value, error) { // texto("chave", "padrão") no código
+		if v, ok := s.edGet(lang.Str(argv(a, 0))); ok {
+			return v, nil
+		}
+		return argv(a, 1), nil
+	})
 	def("urlencode", func(a []lang.Value) (lang.Value, error) { return url.QueryEscape(lang.Str(argv(a, 0))), nil })
 	def("json", func(a []lang.Value) (lang.Value, error) {
 		j, err := lang.ToJSON(argv(a, 0), "")
@@ -271,7 +302,7 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	}
 
 	// ---------- variáveis prontas ----------
-	mod.Define("db", s.dbTable())
+	mod.Define("db", s.dbTable(rq))
 	pt := lang.NewTable()
 	if page >= 0 {
 		pg := site.Pages[page]
@@ -287,6 +318,27 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 		pv.SetStr("image", pg.Image)
 		pv.SetStr("path", rq.path)
 		mod.Define("page", pv)
+		if pg.Conteudo != "" { // <page conteudo="artigos">: o item vem pelo endereço
+			c := site.Content(pg.Conteudo)
+			var key lang.Value
+			if len(params) > 0 {
+				key = params[0]
+			}
+			it := s.findItem(c.Name, key)
+			if it == nil || (!published(it) && !rq.sess.isAdmin()) {
+				return stop(halt{kind: "not_found"})
+			}
+			mod.Define("item", it)
+			if pg.Title == "" {
+				pv.SetStr("title", itemTitle(c, it))
+			}
+			if d := itemDescription(c, it); d != "" && pg.Description == "" {
+				pv.SetStr("description", d)
+			}
+			if im := itemImage(c, it); im != "" && pg.Image == "" {
+				pv.SetStr("image", im)
+			}
+		}
 	}
 	mod.Define("params", pt)
 	req := lang.NewTable()
@@ -350,8 +402,27 @@ func (s *Server) inside(p string) (string, bool) {
 }
 
 // dbTable é o objeto `db` que o código do site usa.
-func (s *Server) dbTable() *lang.Table {
+func (s *Server) dbTable(rq *request) *lang.Table {
 	t := lang.NewTable()
+	// rascunhos de <conteudo> só aparecem para quem está logado no painel
+	hide := func(c string) bool {
+		return rq != nil && rq.site != nil && rq.site.Content(c) != nil && (rq.sess == nil || !rq.sess.isAdmin())
+	}
+	visible := func(c string, limit int) []*Record {
+		if !hide(c) {
+			return s.Store.All(c, limit)
+		}
+		var out []*Record
+		for _, r := range s.Store.All(c, 0) {
+			if published(r.ToValue()) {
+				out = append(out, r)
+				if limit > 0 && len(out) == limit {
+					break
+				}
+			}
+		}
+		return out
+	}
 	col := func(fn string, v lang.Value) (string, error) {
 		c, _ := v.(string)
 		if !ValidCol(c) {
@@ -373,21 +444,18 @@ func (s *Server) dbTable() *lang.Table {
 			return nil, err
 		}
 		n, _ := toInt(argv(a, 1))
-		return list(s.Store.All(c, int(n))), nil
+		return list(visible(c, int(n))), nil
 	})
 	def("find", func(a []lang.Value) (lang.Value, error) {
 		c, err := col("find", argv(a, 0))
 		if err != nil {
 			return nil, err
 		}
-		id, ok := toInt(argv(a, 1))
-		if !ok {
+		it := s.findItem(c, argv(a, 1)) // número ou endereço (slug)
+		if it == nil || (hide(c) && !published(it)) {
 			return nil, nil
 		}
-		if r := s.Store.Find(c, id); r != nil {
-			return r.ToValue(), nil
-		}
-		return nil, nil
+		return it, nil
 	})
 	def("where", func(a []lang.Value) (lang.Value, error) {
 		c, err := col("where", argv(a, 0))
@@ -396,7 +464,7 @@ func (s *Server) dbTable() *lang.Table {
 		}
 		field, want := argv(a, 1), argv(a, 2)
 		l := lang.NewList()
-		for _, r := range s.Store.All(c, 0) {
+		for _, r := range visible(c, 0) {
 			v := r.ToValue()
 			if fv, _ := v.Get(field); lang.Equal(fv, want) {
 				l.Items = append(l.Items, v)
@@ -408,6 +476,9 @@ func (s *Server) dbTable() *lang.Table {
 		c, err := col("count", argv(a, 0))
 		if err != nil {
 			return nil, err
+		}
+		if hide(c) {
+			return int64(len(visible(c, 0))), nil
 		}
 		return int64(s.Store.Count(c)), nil
 	})
@@ -751,6 +822,9 @@ func contains(list []string, v string) bool {
 	return false
 }
 
+// checkedMark marca uma caixa de seleção como marcada em refill, qualquer que seja seu value.
+const checkedMark = "\x00marcado"
+
 // refill recoloca no formulário o que a pessoa digitou quando o envio volta com erro.
 func refill(h string, old map[string][]string) string {
 	h = inputRe.ReplaceAllStringFunc(h, func(tag string) string {
@@ -773,7 +847,7 @@ func refill(h string, old map[string][]string) string {
 				val = "on"
 			}
 			body = checkedRe.ReplaceAllString(body, "")
-			if contains(vals, val) {
+			if contains(vals, val) || (typ == "checkbox" && contains(vals, checkedMark)) {
 				return "<input" + body + " checked>"
 			}
 			return "<input" + body + ">"
@@ -795,16 +869,32 @@ func refill(h string, old map[string][]string) string {
 		if !ok {
 			return tag
 		}
-		opts := optionRe.ReplaceAllStringFunc(m[3], func(o string) string {
-			om := optionRe.FindStringSubmatch(o)
-			at := parseAttrs(om[1])
-			body := selectedRe.ReplaceAllString(om[1], "")
+		inner := m[3]
+		var ob strings.Builder
+		last := 0
+		for _, loc := range optionRe.FindAllStringSubmatchIndex(inner, -1) {
+			ob.WriteString(inner[last:loc[0]])
+			last = loc[1]
+			attrs := inner[loc[2]:loc[3]]
+			at := parseAttrs(attrs)
+			body := selectedRe.ReplaceAllString(attrs, "")
 			v, has := at["value"]
-			if has && contains(vals, v) {
-				return "<option" + body + " selected>"
+			v = html.UnescapeString(v)
+			if !has { // <option>Texto</option>: o valor é o próprio texto
+				rest := inner[loc[1]:]
+				if e := strings.IndexByte(rest, '<'); e >= 0 {
+					rest = rest[:e]
+				}
+				v, has = strings.TrimSpace(html.UnescapeString(rest)), true
 			}
-			return "<option" + body + ">"
-		})
+			if has && contains(vals, v) {
+				ob.WriteString("<option" + body + " selected>")
+			} else {
+				ob.WriteString("<option" + body + ">")
+			}
+		}
+		ob.WriteString(inner[last:])
+		opts := ob.String()
 		return m[1] + opts + m[4]
 	})
 	return h

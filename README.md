@@ -37,10 +37,36 @@ Isso já é um site no ar: o formulário valida no servidor as regras do própri
 | Formulário valida e salva a partir do próprio HTML | plugin | não | não | não | **sim** |
 | Partes da página ao vivo sem escrever JavaScript | não | não | parcial | sim | **sim (`<live>`)** |
 | Painel admin, CSV e LGPD embutidos | plugins | não | não | não | **sim** |
+| Tema escrito à mão e conteúdo gerenciado pelo painel (CMS), no mesmo arquivo | tema PHP + plugins | CMS separado | não | não | **sim (`<conteudo>`, `editavel`)** |
+| Cliente edita os textos clicando na própria página, sem construtor visual | plugin | não | não | não | **sim** |
 | Estatísticas de visitas sem cookies, no próprio painel | plugin | serviço externo | não | não | **sim** |
 | Upload de arquivos validado pelo conteúdo, apagado junto com o registro | plugin | manual | não | manual | **sim** |
 | SEO automático (sitemap, prévia em redes sociais) | plugin | manual | não | não | **sim** |
 | Roda em hospedagem compartilhada barata | sim | não | sim | não | **sim (CGI)** |
+
+## Site gerenciável, com tema seu
+
+Você escreve o tema à mão; quem cuida do site publica e troca o conteúdo sem mexer em código:
+
+```html
+<conteudo nome="artigos" titulo="Artigos">
+  <label>Título <input name="titulo" required></label>
+  <label>Texto <textarea name="corpo" data-editor></textarea></label>
+  <label>Capa <input type="file" name="capa" accept="image/*" data-publico></label>
+</conteudo>
+
+<page route="/" title="Início">
+  <h1 editavel="capa.titulo">Notícias do bairro</h1>
+  <each a in="db.all('artigos')"><a href="{{ url('/artigos/' + a.slug) }}">{{ a.titulo }}</a></each>
+</page>
+
+<page route="/artigos/:slug" conteudo="artigos">
+  <h1>{{ item.titulo }}</h1>
+  {{ markdown(item.corpo) }}
+</page>
+```
+
+No painel aparecem "Artigos" (criar, editar, rascunho ou publicado, endereço) e "Textos do site". Logado, o dono clica no título da página e escreve ali mesmo. Título, prévia no WhatsApp, 404 e sitemap de cada artigo saem sozinhos. Exemplo completo: [`exemplos/revista`](exemplos/revista/site.nep.html).
 
 ## Instalar
 
@@ -105,15 +131,15 @@ let nome = "Ana"
 print(`Olá, {nome}! Você comprou {len(itens)} itens: {itens.map(fn(i) do i.nome end).join(", ")}.`)
 ```
 
-A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as tags de site (`<page>`, `{{ }}`, `<nep>`, `<each>`, `<if>`, `<data>`, `<form save|run>`, `<live>`, `<api>`, `<nep-config>`), uploads, SEO e as estatísticas de visitas.
+A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as tags de site (`<page>`, `{{ }}`, `<nep>`, `<each>`, `<if>`, `<data>`, `<form save|run>`, `<live>`, `<api>`, `<conteudo>`, `editavel`, `<nep-config>`), uploads, SEO, as estatísticas de visitas e o lado CMS.
 
 ## O que tem nesta pasta
 
 - `SPEC.md`: a especificação da linguagem e do formato `.nep.html`.
 - `lang/`: a implementação de referência em Go: lexer, parser, compilador para bytecode, máquina virtual e biblioteca padrão. `lang/std/cerebro.nep` é um módulo escrito na própria Nepenthes.
-- `web/`: o lado site: leitura do `.nep.html` e tradução para Nepenthes, servidor HTTP, banco de dados embutido, sessões, formulários, painel e os scripts `movimento.js` e `vivo.js`.
+- `web/`: o lado site: leitura do `.nep.html` e tradução para Nepenthes, servidor HTTP, banco de dados embutido, sessões, formulários, painel e os scripts `movimento.js`, `vivo.js` e `editar.js`.
 - `cmd/nep/`: o comando `nep`.
-- `exemplos/`: programas `.nep` e dois sites completos: `exemplos/padaria` (loja com encomendas) e `exemplos/mural` (mural ao vivo com curtidas e API).
+- `exemplos/`: programas `.nep` e três sites completos: `exemplos/padaria` (loja com encomendas), `exemplos/mural` (mural ao vivo com curtidas e API) e `exemplos/revista` (revista com artigos e páginas gerenciados pelo painel).
 - `hospedagem/.htaccess`: configuração para hospedagem compartilhada.
 - `editor/vscode`: extensão do VS Code com as cores da sintaxe e atalhos (`.vsix` gerado pela CI).
 - `testdata/`: programas com a saída esperada, usados nos testes automáticos.

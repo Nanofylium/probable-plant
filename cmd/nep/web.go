@@ -149,5 +149,23 @@ func checkSite(f string) int {
 	if n := len(site.Lives); n > 0 {
 		fmt.Printf("  vivo    %d região(ões) <live>\n", n)
 	}
+	for _, c := range site.Contents {
+		var names []string
+		for _, f := range c.Fields {
+			names = append(names, f.Name)
+		}
+		fmt.Printf("  conteúdo %-12s linha %d · campos: %s\n", c.Name, c.Line, strings.Join(names, ", "))
+	}
+	seen := map[string]bool{}
+	var keys []string
+	for _, e := range site.Editables {
+		if !seen[e.Key] {
+			seen[e.Key] = true
+			keys = append(keys, e.Key)
+		}
+	}
+	if len(keys) > 0 {
+		fmt.Printf("  editável %d trecho(s): %s\n", len(keys), strings.Join(keys, ", "))
+	}
 	return 0
 }

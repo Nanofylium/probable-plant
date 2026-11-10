@@ -253,14 +253,16 @@ Tudo fora de `<page>` é o **layout** (cabeçalho, rodapé), comum a todas as p�
 | `<form save="col">` / `<form run="funcao">` | formulário que valida e salva sozinho (10.3) |
 | `<live>` / `<live every="10">` | região que se atualiza sozinha no navegador (10.4). Em português: `<vivo cada="10">` |
 | `<api route="/api/x" method="GET">código</api>` | rota que devolve JSON (10.5) |
+| `<conteudo nome="artigos">campos</conteudo>` | tipo de conteúdo que quem cuida do site cria e edita no painel (10.11) |
+| `editavel="chave"` em qualquer tag | texto ou imagem que quem cuida do site troca no painel ou direto na página (10.11) |
 
 Cada linha de código gerada fica na mesma linha do `.nep.html`: um erro aponta a linha do arquivo do site.
 
 ### 10.2 Variáveis e funções disponíveis no site
 
 - `page` (`route`, `title`, `path`), `params`, `request` (`method`, `path`, `query`, `live`; nas APIs também `json` e `form`), `admin` (bool), `session` (tabela do visitante, 10.7).
-- `db`: `all(col, limite)` (mais novos primeiro), `find(col, id)`, `where(col, campo, valor)`, `count(col)`, `insert(col, tabela)` → id, `update(col, id, tabela)` (mistura os campos), `incr(col, id, campo, n)` (soma sem condição de corrida), `delete(col, id)`. Cada registro ganha `id`, `created_at` e `updated_at`.
-- `url("/caminho")` (funciona em subpasta), `raw(texto)`, `nl2br(texto)`, `json(valor)`, `urlencode(texto)`.
+- `db`: `all(col, limite)` (mais novos primeiro), `find(col, id)` (ou `find(col, "endereco")` nos tipos de `<conteudo>`), `where(col, campo, valor)`, `count(col)`, `insert(col, tabela)` → id, `update(col, id, tabela)` (mistura os campos), `incr(col, id, campo, n)` (soma sem condição de corrida), `delete(col, id)`. Cada registro ganha `id`, `created_at` e `updated_at`.
+- `url("/caminho")` (funciona em subpasta), `raw(texto)`, `nl2br(texto)`, `markdown(texto)` (10.11), `json(valor)`, `urlencode(texto)`, `texto("chave", "padrão")` (um texto editável usado no código).
 - `not_found()`, `redirect("/caminho")` (só caminhos do próprio site), `abort(código, mensagem)`, `recusar(mensagem)` (ou `reject`). Essas quatro **param** o pedido e não são capturadas por `try`.
 - Módulos `fs`, `os` e `http` e a função `input` não existem no site. `load_csv` só lê arquivos dentro da pasta do site, nunca de `data/`.
 - Cada pedido pode executar no máximo 40 milhões de instruções; um laço infinito vira erro 500, não trava o servidor.
@@ -332,6 +334,46 @@ O valor devolvido vira JSON (status 200). `abort(código, msg)` responde `{"erro
 ### 10.10 Visitas sem cookies
 
 Toda página vista é contada em `data/visitas-AAAA-MM.log` com dia, caminho, site de origem (só o domínio) e se foi no celular. Visitantes únicos são estimados com um hash de IP e navegador misturado a um sal aleatório **trocado todo dia** e nunca guardado depois: não há cookie, IP nem identificação, e não dá para seguir alguém entre dias. Robôs, quem envia Do Not Track ou GPC e o dono logado no painel não contam. O painel mostra em `/_admin/visitas` o gráfico de 7, 30 ou 90 dias, as páginas mais vistas e de onde vieram os visitantes. `<nep-config estatisticas="false">` desliga a contagem.
+
+### 10.11 Site gerenciável: conteúdo e textos editáveis (CMS)
+
+Quem programa escreve o tema à mão, no próprio `.nep.html`. Quem cuida do site (sem saber código) publica e troca conteúdo em `/_admin`. Não há construtor de arrastar e soltar, e o layout continua sendo só o que o programador escreveu.
+
+**Tipos de conteúdo.** Os campos são declarados como num formulário comum, com as mesmas regras de validação (10.3) e de upload (10.8):
+
+```html
+<conteudo nome="artigos" titulo="Artigos" item="artigo">
+  <label>Título <input name="titulo" required maxlength="120"></label>
+  <label>Resumo <textarea name="resumo" maxlength="300"></textarea></label>
+  <label>Texto <textarea name="corpo" data-editor></textarea></label>
+  <label>Capa <input type="file" name="capa" accept="image/*" data-publico></label>
+</conteudo>
+
+<page route="/artigos/:slug" conteudo="artigos">
+  <h1>{{ item.titulo }}</h1>
+  {{ markdown(item.corpo) }}
+</page>
+```
+- `<conteudo>` fica fora das outras tags e não aparece na página. O painel ganha um menu com o `titulo`, com lista, **criar**, **editar** (com os valores já preenchidos, trocar ou remover arquivos), **apagar**, **rascunho/publicado** e o **endereço** (`slug`), criado a partir do título (`"Pão de Queijo!"` → `pao-de-queijo`), sem repetir. Em inglês: `<content name>`.
+- Cada item guarda os campos mais `slug` e `publicado` (esses nomes, `id`, `created_at` e `updated_at` são reservados).
+- **Rascunhos não aparecem para visitantes**: `db.all`, `db.find`, `db.where` e `db.count` os escondem, e a página do item responde 404. Quem está logado no painel vê tudo, para conferir antes de publicar.
+- `<page conteudo="artigos">` precisa de uma rota com parte variável (`:slug`). A variável `item` chega pronta (achada pelo endereço ou pelo número); se não existir, a página 404 aparece sozinha. O título da página vem do campo `titulo` (ou `nome`), a descrição do `resumo` (ou do primeiro texto longo), a imagem de prévia do primeiro arquivo público de imagem, e cada item publicado entra no `/sitemap.xml`. `title`, `description` e `image` escritos na `<page>` têm prioridade.
+- `data-editor` num `textarea` mostra a caixa grande, com a ajuda de formatação. Mostre o texto com `markdown(...)`.
+
+**Textos editáveis.** `editavel="chave"` em qualquer tag deixa o conteúdo dela trocável, mantendo a tag, as classes e o layout do programador:
+
+```html
+<h1 editavel="capa.titulo">O que está acontecendo perto de você</h1>
+<div editavel="sobre"><p>Texto padrão, com <strong>HTML</strong>.</p></div>
+<img editavel="capa.imagem" src="/img/capa.jpg" alt="">
+```
+- O que está escrito no HTML é o padrão, e vale até alguém trocar. Em `/_admin/textos` cada trecho tem sua caixa e um botão para voltar ao original.
+- Tags de texto (`h1`, `p`, `span`, `a`…) recebem texto simples (quebras de linha viram `<br>`). Tags de bloco (`div`, `section`, `article`, `aside`, `header`, `footer`, `blockquote`, `figure`…) recebem markdown. Em `img`, troca-se a imagem por upload.
+- **Edição na própria página**: quem está logado no painel vê o botão "Editar textos" no canto do site; os trechos ficam contornados, e um clique num texto simples permite escrever ali mesmo (Enter salva, Esc cancela). Blocos e imagens abrem o painel no trecho certo. Visitantes não recebem nada disso.
+- A chave usa letras minúsculas, números, `.`, `-` e `_`. A mesma chave pode aparecer em mais de um lugar (o texto é o mesmo). Um trecho editável não pode ter outro dentro, e `{{ }}` dentro dele vale só no texto padrão.
+- No código, `texto("chave", "padrão")` devolve o texto trocado no painel (útil para atributos e títulos).
+
+**markdown(texto)** gera HTML seguro: `# título` (vira `<h2>`; `##` vira `<h3>`), `**negrito**`, `*itálico*`, `` `código` ``, `[texto](https://...)`, `![descrição](/imagem.jpg)`, listas com `-` ou `1.`, `> citação`, `---` e blocos com três crases. HTML digitado aparece como texto, e links só aceitam `http`, `https`, `mailto`, `tel` e endereços do próprio site.
 
 ## 9. Fora da versão 1 (planejado)
 
