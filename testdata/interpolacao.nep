@@ -1,0 +1,21 @@
+# textos com crases e métodos com ponto
+let nome = "Ana"
+let itens = [3, 1, 2]
+print(`Olá, {nome}! Você tem {len(itens)} itens.`)
+print(`total: {itens |> sum |> money}`)
+print(`chaves literais: {{ e }}`)
+print(`expressão com texto: {"x" + "y"} e tabela { {a: 1}.a }`)
+print(`duas
+linhas {nome.upper()}`)
+print(``)
+print(itens.sort().map(fn(x) do x * 10 end))
+print("ana maria".upper().split(" ").join("-"))
+fn dobro(l) do l.map(fn(x) do x * 2 end) end
+print(itens.dobro(), itens.len(), (19.9).money())
+try do
+  itens.nao_existe()
+catch e do
+  print(e.message)
+end
+let t = {lista: [1]}
+print(t.lista.len())

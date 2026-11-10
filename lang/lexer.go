@@ -161,6 +161,23 @@ func Lex(src, file string) ([]Token, error) {
 			i = j
 			continue
 		}
+		if c == '`' {
+			// texto com interpolação: `Olá, {nome}!` vira ("" + "Olá, " + __str(nome) + "!")
+			start := line
+			parts, j, nl, err := lexTemplate(src, i+1, line, file)
+			if err != nil {
+				return nil, err
+			}
+			toks = append(toks, Token{Kind: TOp, Lit: "(", Line: start}, Token{Kind: TString, Lit: "", Line: start})
+			for _, p := range parts {
+				toks = append(toks, Token{Kind: TOp, Lit: "+", Line: start})
+				toks = append(toks, p...)
+			}
+			toks = append(toks, Token{Kind: TOp, Lit: ")", Line: start})
+			line = nl
+			i = j
+			continue
+		}
 		if c == '"' || c == '\'' {
 			q := c
 			start := line
@@ -244,3 +261,108 @@ func Lex(src, file string) ([]Token, error) {
 }
 
 func isDigit(c byte) bool { return c >= '0' && c <= '9' }
+
+// lexTemplate lê um texto entre crases a partir de i (depois da crase de abertura).
+// Devolve as partes já como tokens: textos fixos e __str(expressão).
+func lexTemplate(src string, i, line int, file string) (parts [][]Token, end, endLine int, err error) {
+	n := len(src)
+	start := line
+	var b strings.Builder
+	flush := func() {
+		if b.Len() > 0 {
+			parts = append(parts, []Token{{Kind: TString, Lit: b.String(), Line: start}})
+			b.Reset()
+		}
+	}
+	for {
+		if i >= n {
+			return nil, 0, 0, &SyntaxError{File: file, Line: start, Msg: "texto com ` sem a crase de fechamento", Incomplete: true}
+		}
+		d := src[i]
+		switch {
+		case d == '`':
+			flush()
+			return parts, i + 1, line, nil
+		case d == '\\' && i+1 < n:
+			e := src[i+1]
+			i += 2
+			switch e {
+			case 'n':
+				b.WriteByte('\n')
+			case 't':
+				b.WriteByte('\t')
+			case '`', '\\', '{', '}':
+				b.WriteByte(e)
+			default:
+				b.WriteByte('\\')
+				b.WriteByte(e)
+			}
+		case d == '{' && i+1 < n && src[i+1] == '{':
+			b.WriteByte('{')
+			i += 2
+		case d == '}' && i+1 < n && src[i+1] == '}':
+			b.WriteByte('}')
+			i += 2
+		case d == '{':
+			flush()
+			exprLine := line
+			j, depth := i+1, 1
+			var q byte
+			for ; j < n; j++ {
+				c := src[j]
+				if c == '\n' {
+					line++
+				}
+				if q != 0 {
+					if c == '\\' {
+						j++
+					} else if c == q {
+						q = 0
+					}
+					continue
+				}
+				if c == '"' || c == '\'' {
+					q = c
+				} else if c == '{' {
+					depth++
+				} else if c == '}' {
+					depth--
+					if depth == 0 {
+						break
+					}
+				} else if c == '`' {
+					return nil, 0, 0, &SyntaxError{File: file, Line: exprLine, Msg: "{ sem } dentro do texto com crases"}
+				}
+			}
+			if j >= n {
+				return nil, 0, 0, &SyntaxError{File: file, Line: exprLine, Msg: "{ sem } dentro do texto com crases", Incomplete: true}
+			}
+			expr := src[i+1 : j]
+			if strings.TrimSpace(expr) == "" {
+				return nil, 0, 0, &SyntaxError{File: file, Line: exprLine, Msg: "{} vazio dentro do texto com crases (use {{ para escrever {)"}
+			}
+			et, lerr := Lex(expr, file)
+			if lerr != nil {
+				if se, ok := lerr.(*SyntaxError); ok {
+					se.Line += exprLine - 1
+				}
+				return nil, 0, 0, lerr
+			}
+			et = et[:len(et)-1] // sem o TEOF
+			for k := range et {
+				et[k].Line += exprLine - 1
+			}
+			p := []Token{{Kind: TIdent, Lit: "__str", Line: start}, {Kind: TOp, Lit: "(", Line: start}}
+			p = append(p, et...)
+			p = append(p, Token{Kind: TOp, Lit: ")", Line: start})
+			parts = append(parts, p)
+			i = j + 1
+		default:
+			if d == '\n' {
+				line++
+			}
+			b.WriteByte(d)
+			i++
+		}
+	}
+}

@@ -1,0 +1,40 @@
+{
+  "name": "nepenthes",
+  "displayName": "Nepenthes",
+  "description": "Cores e atalhos para a linguagem Nepenthes (.nep) e para sites .nep.html",
+  "version": "0.2.0",
+  "publisher": "nanofylium",
+  "license": "SEE LICENSE IN README.md",
+  "repository": { "type": "git", "url": "https://github.com/Nanofylium/probable-plant" },
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Programming Languages", "Snippets"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "nepenthes",
+        "aliases": ["Nepenthes", "nep"],
+        "extensions": [".nep"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "nepenthes-html",
+        "aliases": ["Nepenthes HTML", "nep.html"],
+        "extensions": [".nep.html"],
+        "configuration": "./language-configuration-html.json"
+      }
+    ],
+    "grammars": [
+      { "language": "nepenthes", "scopeName": "source.nep", "path": "./syntaxes/nepenthes.tmLanguage.json" },
+      {
+        "language": "nepenthes-html",
+        "scopeName": "text.html.nep",
+        "path": "./syntaxes/nepenthes-html.tmLanguage.json",
+        "embeddedLanguages": { "source.nep": "nepenthes", "source.css": "css", "source.js": "javascript" }
+      }
+    ],
+    "snippets": [
+      { "language": "nepenthes", "path": "./snippets/nep.json" },
+      { "language": "nepenthes-html", "path": "./snippets/nep-html.json" }
+    ]
+  }
+}

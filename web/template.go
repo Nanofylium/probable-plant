@@ -61,14 +61,18 @@ func (n *node) add(c *node) {
 
 // Page é uma <page route="...">.
 type Page struct {
-	ID     int
-	Route  string
-	Title  string
-	Auth   bool
-	Line   int
-	re     *regexp.Regexp
-	params []string
-	node   *node
+	ID    int
+	Route string
+	Title string
+	Auth  bool
+	Line  int
+	// Description e Image viram as etiquetas de busca e de prévia em redes sociais.
+	Description string
+	Image       string
+	NoIndex     bool
+	re          *regexp.Regexp
+	params      []string
+	node        *node
 }
 
 // Form é um <form save="..."> ou <form run="...">.
@@ -82,6 +86,7 @@ type Form struct {
 	Limit    int
 	Line     int
 	Fields   []*Field
+	HasFile  bool // tem <input type="file">: o envio é multipart
 	start    int
 }
 
@@ -94,6 +99,10 @@ type Field struct {
 	MaxLen   int
 	Min, Max *float64
 	Options  []string // nil: qualquer valor
+	// campos de arquivo
+	Accept string
+	MaxMB  float64
+	Public bool
 }
 
 // API é um <api route="/api/x" method="GET"> com código que devolve JSON.
@@ -238,6 +247,11 @@ func ParseSite(file, src string) (*Site, error) {
 					}
 					f := s.Forms[top.id]
 					f.Fields = extractFields(src[f.start:at])
+					for _, fd := range f.Fields {
+						if fd.Type == "file" {
+							f.HasFile = true
+						}
+					}
 					stack = stack[:len(stack)-1]
 					pos, textStart = end, end
 					continue
@@ -329,7 +343,9 @@ func ParseSite(file, src string) (*Site, error) {
 				re, params := routeRegex(route)
 				_, auth := a["auth"]
 				_, restr := a["restrita"]
-				s.Pages = append(s.Pages, &Page{ID: n.id, Route: route, Title: first(a, "title", "titulo"), Auth: auth || restr, Line: ln, re: re, params: params, node: n})
+				_, noindex := a["noindex"]
+				s.Pages = append(s.Pages, &Page{ID: n.id, Route: route, Title: first(a, "title", "titulo"), Auth: auth || restr, Line: ln, re: re, params: params, node: n,
+					Description: first(a, "description", "descricao"), Image: first(a, "image", "imagem"), NoIndex: noindex})
 				page = n
 			case "each":
 				m := eachRe.FindStringSubmatch(attrs)
@@ -775,10 +791,10 @@ func extractFields(html string) []*Field {
 			continue
 		}
 		switch typ {
-		case "submit", "button", "reset", "image", "file":
+		case "submit", "button", "reset", "image":
 			continue
 		}
-		multi := strings.HasSuffix(name, "[]")
+		multi := strings.HasSuffix(name, "[]") && typ != "file"
 		key := strings.TrimSuffix(name, "[]")
 		if !keyRe.MatchString(key) {
 			continue
@@ -804,6 +820,16 @@ func extractFields(html string) []*Field {
 		}
 		if _, ok := at["required"]; ok {
 			f.Required = true
+		}
+		if typ == "file" {
+			f.Accept = strings.ToLower(at["accept"])
+			f.MaxMB = 5
+			if v, err := strconv.ParseFloat(first(at, "data-max-mb", "data-max"), 64); err == nil && v > 0 {
+				f.MaxMB = min(v, 20)
+			}
+			_, pub := at["data-publico"]
+			_, pub2 := at["data-public"]
+			f.Public = pub || pub2
 		}
 		if v, err := strconv.Atoi(at["maxlength"]); err == nil {
 			f.MaxLen = v
@@ -895,4 +921,18 @@ func (s *Site) formOn(page, form int) bool {
 		return false
 	}
 	return walk(s.root.children)
+}
+
+func (s *Site) hasRoute(path string) bool {
+	for _, p := range s.Pages {
+		if p.re != nil && p.re.MatchString(path) {
+			return true
+		}
+	}
+	for _, a := range s.APIs {
+		if a.re.MatchString(path) {
+			return true
+		}
+	}
+	return false
 }

@@ -108,6 +108,8 @@ func (s *Server) admin(rq *request) error {
 		return a.csv(r.URL.Query().Get("c"))
 	case "/lgpd":
 		return a.lgpd(post)
+	case "/visitas":
+		return a.statsPage()
 	case "/":
 		return a.dash()
 	default:
@@ -131,7 +133,7 @@ func (a *adminPage) tok() string {
 func (a *adminPage) out(title, body string, nav bool) error {
 	n := ""
 	if nav {
-		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div><a href="` + a.base + `">Coleções</a><a href="` + a.base + `/lgpd">LGPD</a>` +
+		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div><a href="` + a.base + `">Coleções</a><a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a>` +
 			`<a href="` + esc(a.s.opt.Base+"/") + `">Ver site</a></div>` +
 			`<form method="post" action="` + a.base + `/logout">` + a.tok() + `<button class="ghost">Sair</button></form></nav>`
 	}
@@ -220,6 +222,11 @@ func (a *adminPage) login(post bool) error {
 }
 
 func cell(v lang.Value) string {
+	if t, ok := v.(*lang.Table); ok {
+		if u, ok := t.Get("url"); ok {
+			return lang.Str(u)
+		}
+	}
 	if l, ok := v.(*lang.List); ok {
 		parts := make([]string, len(l.Items))
 		for i, x := range l.Items {
@@ -300,6 +307,13 @@ func (a *adminPage) dash() error {
 		b.WriteString("<tr><td>" + lang.Str(id) + "</td><td>" + esc(when) + "</td>")
 		for _, k := range keys {
 			v, _ := t.Get(k)
+			if ft, ok := v.(*lang.Table); ok {
+				if u, ok := ft.Get("url"); ok {
+					nm, _ := ft.Get("nome")
+					b.WriteString(`<td><a href="` + esc(lang.Str(u)) + `" target="_blank" rel="noopener">` + esc(lang.Str(nm)) + `</a></td>`)
+					continue
+				}
+			}
 			b.WriteString("<td>" + strings.ReplaceAll(esc(cell(v)), "\n", "<br>") + "</td>")
 		}
 		b.WriteString(`<td><form method="post" action="` + a.base + `/delete" onsubmit="return confirm('Apagar este registro?')">` + a.tok() +

@@ -21,6 +21,8 @@ Este documento define o que um programa Nepenthes significa e como um arquivo `.
 
 **Textos**: entre `"` ou `'`, podendo ocupar várias linhas. Escapes: `\n \t \r \0 \\ \" \' \uXXXX`.
 
+**Textos com valores** (interpolação): entre crases, cada `{expressão}` é trocada pelo valor mostrado como em `str`: `` `Olá, {nome}! Total: {itens |> sum |> money}` ``. Use `{{` e `}}` para escrever chaves. Escapes: `` \n \t \` \\ \{ \} ``. Um texto com crases equivale a `"" + "Olá, " + str(nome) + "!"` e pode ocupar várias linhas.
+
 **Operadores e pontuação**: `+ - * / // % == != < > <= >= = += -= *= /= |> . , : ( ) [ ] { } ...`
 
 ## 3. Tipos
@@ -85,6 +87,7 @@ Operadores binários de mesmo nível associam à esquerda.
 ### 4.6 Acesso
 
 - `t.nome` lê o campo de uma tabela (ou `nil` se não existe) ou um nome exportado de um módulo (erro se não existe). Ler campo de `nil` é erro.
+- **Métodos**: em listas, textos e números, `v.f(a, b)` é o mesmo que `f(v, a, b)`, onde `f` é uma função do módulo atual ou da biblioteca padrão: `lista.sort().map(fn(x) do x * 2 end)`, `"ana".upper()`, `(19.9).money()`. Em tabelas, o ponto continua lendo campos (use `|>` ou chame a função).
 - `l[i]` em lista ou texto: `i` inteiro; negativo conta do fim (`l[-1]` é o último). Fora dos limites devolve `nil`.
 - `t[k]` em tabela: qualquer chave válida.
 
@@ -310,6 +313,26 @@ O valor devolvido vira JSON (status 200). `abort(código, msg)` responde `{"erro
 - Os dados ficam em `data/nep.db` (um registro JSON por linha, compactado de tempos em tempos), com trava de arquivo para vários processos ao mesmo tempo. A pasta `data/` nunca é entregue pela web.
 - Cabeçalhos de segurança em toda resposta: `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e HSTS em HTTPS.
 
+### 10.8 Upload de arquivos
+
+`<input type="file" name="foto" accept="image/*">` dentro de um `<form save>` ou `<form run>` funciona sem configurar nada: o formulário passa a enviar em `multipart/form-data` e o servidor confere cada arquivo.
+- Tipos aceitos: JPEG, PNG, GIF, WebP e PDF, conferidos **pelo conteúdo**, não pelo nome (um HTML disfarçado de `.png` é recusado). `accept` restringe mais (`image/*`, `.pdf`, `application/pdf`).
+- Tamanho: `data-max-mb="2"` (padrão 5, máximo 20; o envio inteiro tem até 25 MB). `required` vale para arquivos.
+- O valor salvo é uma tabela `{nome, tipo, tamanho, url}`. Os arquivos ficam em `data/arquivos/` com nome aleatório e são entregues por `/_nep/arquivo/...` com `Content-Security-Policy: sandbox`.
+- Por padrão o arquivo é **restrito**: só quem está logado no painel abre (currículos, documentos). Com `data-publico`, qualquer um abre (fotos do site).
+- Apagar o registro (no painel, na página LGPD ou com `db.delete`) apaga o arquivo junto.
+
+### 10.9 Busca e redes sociais (SEO)
+
+- `<page description="..." image="/capa.jpg">`, ou `page.description` e `page.image` no código, viram `<meta name="description">`, a prévia em redes sociais (Open Graph e Twitter) e o endereço canônico. Etiquetas que o HTML já tem não são repetidas.
+- `/sitemap.xml` lista as páginas públicas sem parâmetros; `/robots.txt` esconde `/_admin` e aponta o sitemap. Uma `<page>` com essas rotas, ou um arquivo de verdade, tem prioridade.
+- `<page noindex>` pede aos buscadores para não indexar (páginas `auth` também) e fica fora do sitemap.
+- `<nep-config url="https://www.exemplo.com.br">` fixa o endereço público usado nos links absolutos.
+
+### 10.10 Visitas sem cookies
+
+Toda página vista é contada em `data/visitas-AAAA-MM.log` com dia, caminho, site de origem (só o domínio) e se foi no celular. Visitantes únicos são estimados com um hash de IP e navegador misturado a um sal aleatório **trocado todo dia** e nunca guardado depois: não há cookie, IP nem identificação, e não dá para seguir alguém entre dias. Robôs, quem envia Do Not Track ou GPC e o dono logado no painel não contam. O painel mostra em `/_admin/visitas` o gráfico de 7, 30 ou 90 dias, as páginas mais vistas e de onde vieram os visitantes. `<nep-config estatisticas="false">` desliga a contagem.
+
 ## 9. Fora da versão 1 (planejado)
 
-Interpolação de texto, métodos em textos e listas (`lista.map(...)`), `match`, classes/protótipos, gerenciador de pacotes, formatador (`nep fmt`), servidor de linguagem para editores, e o módulo `mosca` para simulação do conectoma da Drosophila, usando dados de um repositório público com licença que permite uso comercial (candidato: hemibrain da Janelia, CC BY 4.0, com atribuição). Os dados do FlyWire não serão usados.
+`match`, classes/protótipos, gerenciador de pacotes, formatador (`nep fmt`), servidor de linguagem para editores (já existe a extensão de cores para VS Code em `editor/vscode`), login de visitantes, aviso de formulário por e-mail, e o módulo `mosca` para simulação do conectoma da Drosophila, usando dados de um repositório público com licença que permite uso comercial (candidato: hemibrain da Janelia, CC BY 4.0, com atribuição). Os dados do FlyWire não serão usados.

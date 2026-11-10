@@ -1,0 +1,60 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Nepenthes HTML",
+  "scopeName": "text.html.nep",
+  "patterns": [
+    { "include": "#nep-block" },
+    { "include": "#api-block" },
+    { "include": "#interpolation" },
+    { "include": "#nep-tag" },
+    { "include": "text.html.basic" }
+  ],
+  "repository": {
+    "nep-block": {
+      "begin": "(<)(nep)(>)",
+      "end": "(</)(nep)(>)",
+      "beginCaptures": { "1": { "name": "punctuation.definition.tag.begin.html" }, "2": { "name": "entity.name.tag.nep.html" }, "3": { "name": "punctuation.definition.tag.end.html" } },
+      "endCaptures": { "1": { "name": "punctuation.definition.tag.begin.html" }, "2": { "name": "entity.name.tag.nep.html" }, "3": { "name": "punctuation.definition.tag.end.html" } },
+      "contentName": "meta.embedded.block.nep source.nep",
+      "patterns": [{ "include": "source.nep" }]
+    },
+    "api-block": {
+      "begin": "(<)(api)\\b([^>]*)(>)",
+      "end": "(</)(api)(>)",
+      "beginCaptures": { "1": { "name": "punctuation.definition.tag.begin.html" }, "2": { "name": "entity.name.tag.nep.html" }, "3": { "patterns": [{ "include": "#attributes" }] }, "4": { "name": "punctuation.definition.tag.end.html" } },
+      "endCaptures": { "1": { "name": "punctuation.definition.tag.begin.html" }, "2": { "name": "entity.name.tag.nep.html" }, "3": { "name": "punctuation.definition.tag.end.html" } },
+      "contentName": "meta.embedded.block.nep source.nep",
+      "patterns": [{ "include": "source.nep" }]
+    },
+    "interpolation": {
+      "name": "meta.embedded.expression.nep",
+      "begin": "\\{\\{",
+      "end": "\\}\\}",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.nep" } },
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.nep" } },
+      "patterns": [{ "include": "source.nep" }]
+    },
+    "nep-tag": {
+      "begin": "(</?)(page|pagina|each|cada|if|se|else|senao|live|vivo|data|nep-config)\\b",
+      "end": "(/?>)",
+      "beginCaptures": { "1": { "name": "punctuation.definition.tag.begin.html" }, "2": { "name": "keyword.control.tag.nep.html" } },
+      "endCaptures": { "1": { "name": "punctuation.definition.tag.end.html" } },
+      "patterns": [{ "include": "#attributes" }]
+    },
+    "attributes": {
+      "patterns": [
+        {
+          "begin": "\\b(test|teste|in|em)\\s*(=)\\s*(\")",
+          "end": "\"",
+          "beginCaptures": { "1": { "name": "entity.other.attribute-name.nep.html" }, "2": { "name": "punctuation.separator.key-value.html" }, "3": { "name": "punctuation.definition.string.begin.html" } },
+          "endCaptures": { "0": { "name": "punctuation.definition.string.end.html" } },
+          "contentName": "meta.embedded.expression.nep",
+          "patterns": [{ "include": "source.nep" }]
+        },
+        { "name": "entity.other.attribute-name.html", "match": "[^\\s=/>\"']+" },
+        { "name": "string.quoted.double.html", "match": "\"[^\"]*\"" },
+        { "name": "string.quoted.single.html", "match": "'[^']*'" }
+      ]
+    }
+  }
+}

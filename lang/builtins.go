@@ -238,6 +238,7 @@ func coreBuiltins() map[string]Value {
 	})
 	def("type", func(vm *VM, a []Value) (Value, error) { return TypeName(arg(a, 0)), nil })
 	def("str", func(vm *VM, a []Value) (Value, error) { return Str(arg(a, 0)), nil })
+	def("__str", func(vm *VM, a []Value) (Value, error) { return Str(arg(a, 0)), nil }) // usado pelos textos com crases
 	def("repr", func(vm *VM, a []Value) (Value, error) { return Repr(arg(a, 0)), nil })
 	def("int", func(vm *VM, a []Value) (Value, error) {
 		v := arg(a, 0)

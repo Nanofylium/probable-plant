@@ -383,8 +383,13 @@ func (vm *VM) run(base int) (Value, error) {
 			fr.cl.Proto.Module.Define(consts[u16()].(string), vm.pop())
 		case OpGetField:
 			name := consts[u16()].(string)
+			obj := vm.pop()
 			var v Value
-			v, err = getField(vm.pop(), name)
+			if m := vm.method(obj, name, fr.cl.Proto.Module); m != nil {
+				vm.push(m)
+				break
+			}
+			v, err = getField(obj, name)
 			if err == nil {
 				vm.push(v)
 			}
@@ -647,6 +652,35 @@ func (vm *VM) errorTable(msg string) *Table {
 	return t
 }
 
+// method faz lista.map(f) valer map(lista, f) e texto.upper() valer upper(texto):
+// em listas e textos, um nome depois do ponto é uma função (do módulo ou da
+// biblioteca padrão) que recebe o próprio valor como primeiro argumento.
+func (vm *VM) method(obj Value, name string, mod *Module) Value {
+	switch obj.(type) {
+	case *List, string, HTML, int64, float64:
+	default:
+		return nil
+	}
+	var f Value
+	if g, ok := mod.Globals[name]; ok {
+		switch g.(type) {
+		case *Closure, *Native:
+			f = g
+		}
+	}
+	if f == nil {
+		if b, ok := vm.Builtins[name]; ok {
+			f = b
+		}
+	}
+	if f == nil {
+		return nil
+	}
+	return &Native{Name: name, Fn: func(vm *VM, a []Value) (Value, error) {
+		return vm.Call(f, append([]Value{obj}, a...))
+	}}
+}
+
 func getField(obj Value, name string) (Value, error) {
 	switch o := obj.(type) {
 	case *Table:
@@ -660,6 +694,10 @@ func getField(obj Value, name string) (Value, error) {
 		return v, nil
 	case nil:
 		return nil, fmt.Errorf("tentou ler o campo '%s' de nil", name)
+	}
+	switch obj.(type) {
+	case *List, string, int64, float64:
+		return nil, fmt.Errorf("%s não tem o método '%s' (não existe função com esse nome)", TypeName(obj), name)
 	}
 	return nil, fmt.Errorf("%s não tem campos (tentou ler '%s')", TypeName(obj), name)
 }

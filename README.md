@@ -37,6 +37,9 @@ Isso já é um site no ar: o formulário valida no servidor as regras do própri
 | Formulário valida e salva a partir do próprio HTML | plugin | não | não | não | **sim** |
 | Partes da página ao vivo sem escrever JavaScript | não | não | parcial | sim | **sim (`<live>`)** |
 | Painel admin, CSV e LGPD embutidos | plugins | não | não | não | **sim** |
+| Estatísticas de visitas sem cookies, no próprio painel | plugin | serviço externo | não | não | **sim** |
+| Upload de arquivos validado pelo conteúdo, apagado junto com o registro | plugin | manual | não | manual | **sim** |
+| SEO automático (sitemap, prévia em redes sociais) | plugin | manual | não | não | **sim** |
 | Roda em hospedagem compartilhada barata | sim | não | sim | não | **sim (CGI)** |
 
 ## Instalar
@@ -95,7 +98,14 @@ for mes, itens in por_mes do
 end
 ```
 
-A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as tags de site: `<page>`, `{{ }}`, `<nep>`, `<each>`, `<if>`, `<data>`, `<form save|run>`, `<live>`, `<api>` e `<nep-config>`.
+Textos com valores usam crases, e listas, textos e números aceitam métodos com ponto:
+
+```nep
+let nome = "Ana"
+print(`Olá, {nome}! Você comprou {len(itens)} itens: {itens.map(fn(i) do i.nome end).join(", ")}.`)
+```
+
+A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as tags de site (`<page>`, `{{ }}`, `<nep>`, `<each>`, `<if>`, `<data>`, `<form save|run>`, `<live>`, `<api>`, `<nep-config>`), uploads, SEO e as estatísticas de visitas.
 
 ## O que tem nesta pasta
 
@@ -105,6 +115,7 @@ A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as t
 - `cmd/nep/`: o comando `nep`.
 - `exemplos/`: programas `.nep` e dois sites completos: `exemplos/padaria` (loja com encomendas) e `exemplos/mural` (mural ao vivo com curtidas e API).
 - `hospedagem/.htaccess`: configuração para hospedagem compartilhada.
+- `editor/vscode`: extensão do VS Code com as cores da sintaxe e atalhos (`.vsix` gerado pela CI).
 - `testdata/`: programas com a saída esperada, usados nos testes automáticos.
 
 ## Desempenho
@@ -113,4 +124,4 @@ Na mesma máquina, `fib(30)` recursivo leva cerca de 0,2 s, na mesma faixa do Py
 
 ## Próximos passos
 
-Interpolação de texto, métodos (`lista.map(...)`), upload de arquivos em formulários, login de visitantes, e-mail de aviso de formulário, gerenciador de pacotes, `nep fmt`, extensão para VS Code e o módulo `mosca` (simulação do conectoma da Drosophila com dados públicos do hemibrain da Janelia, CC BY 4.0; sem dados do FlyWire).
+Login de visitantes, e-mail de aviso de formulário, gerenciador de pacotes, `nep fmt`, extensão para VS Code e o módulo `mosca` (simulação do conectoma da Drosophila com dados públicos do hemibrain da Janelia, CC BY 4.0; sem dados do FlyWire).

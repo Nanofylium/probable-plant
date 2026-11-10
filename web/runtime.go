@@ -283,6 +283,8 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 		pv := lang.NewTable()
 		pv.SetStr("route", pg.Route)
 		pv.SetStr("title", pg.Title)
+		pv.SetStr("description", pg.Description)
+		pv.SetStr("image", pg.Image)
 		pv.SetStr("path", rq.path)
 		mod.Define("page", pv)
 	}
@@ -470,6 +472,9 @@ const honeypot = `<div style="position:absolute;left:-10000px;width:1px;height:1
 
 func (s *Server) formHTML(rq *request, id, inst int, attrs, inner string) string {
 	var b strings.Builder
+	if rq.site.Forms[id].HasFile && !strings.Contains(strings.ToLower(attrs), "enctype") {
+		attrs += ` enctype="multipart/form-data"`
+	}
 	b.WriteString(`<form method="post"` + attrs + `>`)
 	b.WriteString(`<input type="hidden" name="_nep_form" value="` + strconv.Itoa(id) + `">`)
 	if inst > 0 {
@@ -507,9 +512,17 @@ func (s *Server) ipKey(r *http.Request) string {
 // handlePost processa um formulário. done=true quando a resposta (redirecionamento) já foi enviada.
 func (s *Server) handlePost(rq *request) (bool, error) {
 	r := rq.r
-	r.Body = http.MaxBytesReader(rq.w, r.Body, 1<<20)
-	if err := r.ParseForm(); err != nil {
-		return false, stop(halt{kind: "abort", status: 400, msg: "Envio inválido ou grande demais."})
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		r.Body = http.MaxBytesReader(rq.w, r.Body, maxUpload)
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			return false, stop(halt{kind: "abort", status: 400, msg: "Envio inválido ou arquivos grandes demais (máximo 25 MB no total)."})
+		}
+		defer r.MultipartForm.RemoveAll()
+	} else {
+		r.Body = http.MaxBytesReader(rq.w, r.Body, 1<<20)
+		if err := r.ParseForm(); err != nil {
+			return false, stop(halt{kind: "abort", status: 400, msg: "Envio inválido ou grande demais."})
+		}
 	}
 	id, err := strconv.Atoi(r.PostForm.Get("_nep_form"))
 	if err != nil || id < 0 || id >= len(rq.site.Forms) || !rq.site.formOn(rq.page.ID, id) {
@@ -548,9 +561,21 @@ func (s *Server) handlePost(rq *request) (bool, error) {
 		return fail("Muitos envios em pouco tempo. Tente de novo em alguns minutos.")
 	}
 	data, errs := validate(f.Fields, r.PostForm)
+	files, ferrs := checkFiles(f.Fields, r)
+	errs = append(errs, ferrs...)
 	if len(errs) > 0 {
 		return fail(errs...)
 	}
+	saved, err := s.saveFiles(files, data)
+	if err != nil {
+		return false, err
+	}
+	keep := false
+	defer func() {
+		if !keep {
+			s.Store.removeFiles(saved)
+		}
+	}()
 	if f.Run != "" {
 		fn, has := rq.module.Globals[f.Run]
 		if !has {
@@ -573,6 +598,7 @@ func (s *Server) handlePost(rq *request) (bool, error) {
 			return false, err
 		}
 	}
+	keep = f.Save != "" || f.Run != "" // com run=, a função decide o que fazer com os arquivos
 	if f.Success != "" {
 		rq.sess.setFlash(id, inst, f.Success)
 	}
@@ -594,6 +620,9 @@ func validate(fields []*Field, in url.Values) (*lang.Table, []string) {
 	var errs []string
 	for _, f := range fields {
 		label := f.Label
+		if f.Type == "file" {
+			continue // conferidos em checkFiles
+		}
 		if f.Multi {
 			var vals []lang.Value
 			bad := false
