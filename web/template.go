@@ -110,6 +110,8 @@ type Field struct {
 	Accept string
 	MaxMB  float64
 	Public bool
+	// textarea com data-construtor: montado no construtor visual do painel
+	Builder bool
 }
 
 // API é um <api route="/api/x" method="GET"> com código que devolve JSON.
@@ -140,7 +142,7 @@ type Content struct {
 // quem cuida do site pode trocá-lo no painel ou direto na página.
 type Editable struct {
 	Key     string
-	Kind    string // texto, rico (markdown), imagem ou menu
+	Kind    string // texto, rico (markdown), imagem, menu ou visual (construtor)
 	Tag     string
 	Line    int
 	Default string
@@ -190,7 +192,7 @@ var tagAlias = map[string]string{"pagina": "page", "cada": "each", "se": "if", "
 
 var (
 	edKeyRe  = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,63}$`)
-	edAttrRe = regexp.MustCompile(`(?i)\s(editavel|editable|menu-editavel|editable-menu)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+	edAttrRe = regexp.MustCompile(`(?i)\s(editavel|editable|menu-editavel|editable-menu|construtor|builder)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
 	srcAttr  = regexp.MustCompile(`(?i)\ssrc\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
 	voidTags = map[string]bool{"img": true, "br": true, "hr": true, "input": true, "meta": true, "link": true, "source": true, "wbr": true}
 	richTags = map[string]bool{"div": true, "section": true, "article": true, "aside": true, "main": true, "header": true, "footer": true, "blockquote": true, "figure": true, "details": true}
@@ -573,6 +575,11 @@ func ParseSite(file, src string) (*Site, error) {
 			}
 			kind := "texto"
 			switch {
+			case strings.EqualFold(m[1], "construtor") || strings.EqualFold(m[1], "builder"):
+				if voidTags[lname] {
+					return nil, fail(ln, "construtor precisa de uma tag com conteúdo, como <section>")
+				}
+				kind = "visual"
 			case strings.Contains(strings.ToLower(m[1]), "menu"):
 				if voidTags[lname] {
 					return nil, fail(ln, "menu-editavel precisa de uma tag com conteúdo, como <nav>")
@@ -1033,6 +1040,11 @@ func extractFields(html string) []*Field {
 		}
 		if v, err := strconv.Atoi(at["maxlength"]); err == nil {
 			f.MaxLen = v
+		}
+		if typ == "textarea" {
+			_, b1 := at["data-construtor"]
+			_, b2 := at["data-builder"]
+			f.Builder = b1 || b2
 		}
 		if v, err := strconv.ParseFloat(at["min"], 64); err == nil {
 			f.Min = &v

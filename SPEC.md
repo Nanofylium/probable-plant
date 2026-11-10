@@ -256,6 +256,7 @@ Tudo fora de `<page>` é o **layout** (cabeçalho, rodapé), comum a todas as p�
 | `<conteudo nome="artigos">campos</conteudo>` | tipo de conteúdo que quem cuida do site cria e edita no painel (10.11) |
 | `editavel="chave"` em qualquer tag | texto ou imagem que quem cuida do site troca no painel ou direto na página (10.11) |
 | `menu-editavel="nome"` | menu de links que quem cuida do site reorganiza no painel (10.11) |
+| `construtor="chave"` | área que quem cuida do site monta arrastando blocos no construtor visual (10.11) |
 
 Cada linha de código gerada fica na mesma linha do `.nep.html`: um erro aponta a linha do arquivo do site.
 
@@ -263,7 +264,7 @@ Cada linha de código gerada fica na mesma linha do `.nep.html`: um erro aponta 
 
 - `page` (`route`, `title`, `path`), `params`, `request` (`method`, `path`, `query`, `live`; nas APIs também `json` e `form`), `admin` (bool), `session` (tabela do visitante, 10.7).
 - `db`: `all(col, limite)` (mais novos primeiro), `find(col, id)` (ou `find(col, "endereco")` nos tipos de `<conteudo>`), `where(col, campo, valor)`, `count(col)`, `insert(col, tabela)` → id, `update(col, id, tabela)` (mistura os campos), `incr(col, id, campo, n)` (soma sem condição de corrida), `delete(col, id)`. Cada registro ganha `id`, `created_at` e `updated_at`.
-- `url("/caminho")` (funciona em subpasta), `raw(texto)`, `nl2br(texto)`, `markdown(texto)` e `menu("nome")` (10.11), `json(valor)`, `urlencode(texto)`, `texto("chave", "padrão")` (um texto editável usado no código).
+- `url("/caminho")` (funciona em subpasta), `raw(texto)`, `nl2br(texto)`, `markdown(texto)`, `visual(texto)` e `menu("nome")` (10.11), `json(valor)`, `urlencode(texto)`, `texto("chave", "padrão")` (um texto editável usado no código).
 - `not_found()`, `redirect("/caminho")` (só caminhos do próprio site), `abort(código, mensagem)`, `recusar(mensagem)` (ou `reject`). Essas quatro **param** o pedido e não são capturadas por `try`.
 - Módulos `fs`, `os` e `http` e a função `input` não existem no site. `load_csv` só lê arquivos dentro da pasta do site, nunca de `data/`.
 - Cada pedido pode executar no máximo 40 milhões de instruções; um laço infinito vira erro 500, não trava o servidor.
@@ -384,6 +385,17 @@ Quem programa escreve o tema à mão, no próprio `.nep.html`. Quem cuida do sit
 ```
 - Os links escritos no HTML são o menu padrão (links gerados por `<each>`/`<if>` aparecem no site, mas não entram na lista do painel). Depois de trocado, o menu usa os atributos do primeiro link do programador (classes etc.), marca o item da página atual com `aria-current="page"` e aceita endereços do site, `https://`, `mailto:` e `tel:`. O painel mostra os endereços disponíveis, incluindo os itens publicados de cada `<conteudo>`.
 - No código, `menu("principal")` devolve a lista `{texto, url, ativo}`, para montar menus com outro HTML.
+
+**Construtor visual (arrastar e soltar).** O programador escolhe onde o cliente pode montar blocos visualmente; o resto do tema continua sendo código:
+
+```html
+<section construtor="home.faixa">conteúdo padrão</section>          <!-- área numa página -->
+<textarea name="layout" data-construtor></textarea>                 <!-- campo num <conteudo> -->
+{{ visual(item.layout) }}                                           <!-- mostra o campo -->
+```
+- No painel, essas caixas viram o **GrapesJS** (código aberto, licença BSD-3-Clause, embutido no `nep`, sem depender de serviço externo e com a telemetria desligada), em português: blocos de colunas, texto, link, imagem, vídeo e mapa, gerenciador de estilos, prévia em tablet e celular, e envio de imagens (as mesmas regras do upload, 10.8).
+- O que é montado é guardado como `<style>css</style>html` e **limpo no servidor** ao mostrar: só tags e atributos de uma lista segura (sem `script`, eventos `on...`, formulários, `svg`, links `javascript:`), `iframe` só de YouTube, Vimeo e Google Maps (com `sandbox`), e o CSS fica preso dentro de `.nep-visual` (`body {}` vira o próprio bloco), então não estraga o tema. `@import` e `url()` perigosos são removidos.
+- Um campo `data-construtor` aceita até 300 mil caracteres (sem `maxlength`).
 
 **Usuários do painel.** Quem instalou o painel é o **dono** e vê tudo. Em `/_admin/usuarios` ele cria **editores** (usuário e senha, mín. 10 caracteres), troca a senha deles ou os remove. Editores entram com usuário e senha e só acessam o conteúdo, os textos e os menus: não veem coleções de formulários, arquivos restritos, visitas, a página LGPD, os usuários nem as páginas com `auth`. Trocar a senha ou remover um editor desconecta as sessões abertas dele. No site, `admin` é verdadeiro para o dono e para os editores (eles veem rascunhos).
 
