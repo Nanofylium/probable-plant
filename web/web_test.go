@@ -398,7 +398,7 @@ func TestPainel(t *testing.T) {
 	c2.c = &http.Client{Jar: jar, CheckRedirect: c.c.CheckRedirect}
 	tok = c2.csrf("/_admin/login")
 	code, body, _ = c2.post("/_admin/login", url.Values{"_nep_csrf": {tok}, "senha": {"errada"}})
-	if !strings.Contains(body, "Senha incorreta") {
+	if !strings.Contains(body, "Usuário ou senha incorretos") {
 		t.Errorf("senha errada: %d", code)
 	}
 	code, _, _ = c2.post("/_admin/login", url.Values{"_nep_csrf": {tok}, "senha": {"senha-muito-boa"}})

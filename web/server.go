@@ -230,6 +230,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rq.sess = loadSession(r, s.secret)
+	s.checkUser(rq.sess)
 
 	if rq.path == "/_admin" || strings.HasPrefix(rq.path, "/_admin/") {
 		if err := s.admin(rq); err != nil {
@@ -403,6 +404,10 @@ func (s *Server) route(rq *request) error {
 			s.simple(rq, 404, "Página não encontrada", "<p>O endereço <code>"+html.EscapeString(rq.path)+"</code> não existe.</p>")
 			return nil
 		}
+	}
+	if rq.page.Auth && rq.sess.isAdmin() && !rq.sess.isOwner() {
+		s.simple(rq, 403, "Só para o dono do site", "<p>Esta página é só para o dono do site.</p>")
+		return nil
 	}
 	if rq.page.Auth && !rq.sess.isAdmin() {
 		s.redirect(rq, s.opt.Base+"/_admin/login?next="+url.QueryEscape(rq.path), http.StatusFound)

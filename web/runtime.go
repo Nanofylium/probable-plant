@@ -235,8 +235,26 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 		kind := "texto"
 		if e := site.Editable(k); e != nil {
 			kind = e.Kind
+			if kind == "menu" {
+				return s.menuHTML(e, rq.path), nil
+			}
 		}
 		return edHTML(kind, v), nil
+	})
+	def("menu", func(a []lang.Value) (lang.Value, error) { // menu("principal") no código: [{texto, url, ativo}]
+		l := lang.NewList()
+		e := site.Editable(lang.Str(argv(a, 0)))
+		if e == nil || e.Kind != "menu" {
+			return l, nil
+		}
+		for _, it := range s.menuItems(e) {
+			t := lang.NewTable()
+			t.SetStr("texto", it.Text)
+			t.SetStr("url", s.menuHref(it.URL))
+			t.SetStr("ativo", samePath(it.URL, rq.path))
+			l.Items = append(l.Items, t)
+		}
+		return l, nil
 	})
 	def("__edsrc", func(a []lang.Value) (lang.Value, error) {
 		k := lang.Str(argv(a, 0))

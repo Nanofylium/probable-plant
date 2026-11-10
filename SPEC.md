@@ -255,6 +255,7 @@ Tudo fora de `<page>` é o **layout** (cabeçalho, rodapé), comum a todas as p�
 | `<api route="/api/x" method="GET">código</api>` | rota que devolve JSON (10.5) |
 | `<conteudo nome="artigos">campos</conteudo>` | tipo de conteúdo que quem cuida do site cria e edita no painel (10.11) |
 | `editavel="chave"` em qualquer tag | texto ou imagem que quem cuida do site troca no painel ou direto na página (10.11) |
+| `menu-editavel="nome"` | menu de links que quem cuida do site reorganiza no painel (10.11) |
 
 Cada linha de código gerada fica na mesma linha do `.nep.html`: um erro aponta a linha do arquivo do site.
 
@@ -262,7 +263,7 @@ Cada linha de código gerada fica na mesma linha do `.nep.html`: um erro aponta 
 
 - `page` (`route`, `title`, `path`), `params`, `request` (`method`, `path`, `query`, `live`; nas APIs também `json` e `form`), `admin` (bool), `session` (tabela do visitante, 10.7).
 - `db`: `all(col, limite)` (mais novos primeiro), `find(col, id)` (ou `find(col, "endereco")` nos tipos de `<conteudo>`), `where(col, campo, valor)`, `count(col)`, `insert(col, tabela)` → id, `update(col, id, tabela)` (mistura os campos), `incr(col, id, campo, n)` (soma sem condição de corrida), `delete(col, id)`. Cada registro ganha `id`, `created_at` e `updated_at`.
-- `url("/caminho")` (funciona em subpasta), `raw(texto)`, `nl2br(texto)`, `markdown(texto)` (10.11), `json(valor)`, `urlencode(texto)`, `texto("chave", "padrão")` (um texto editável usado no código).
+- `url("/caminho")` (funciona em subpasta), `raw(texto)`, `nl2br(texto)`, `markdown(texto)` e `menu("nome")` (10.11), `json(valor)`, `urlencode(texto)`, `texto("chave", "padrão")` (um texto editável usado no código).
 - `not_found()`, `redirect("/caminho")` (só caminhos do próprio site), `abort(código, mensagem)`, `recusar(mensagem)` (ou `reject`). Essas quatro **param** o pedido e não são capturadas por `try`.
 - Módulos `fs`, `os` e `http` e a função `input` não existem no site. `load_csv` só lê arquivos dentro da pasta do site, nunca de `data/`.
 - Cada pedido pode executar no máximo 40 milhões de instruções; um laço infinito vira erro 500, não trava o servidor.
@@ -372,6 +373,19 @@ Quem programa escreve o tema à mão, no próprio `.nep.html`. Quem cuida do sit
 - **Edição na própria página**: quem está logado no painel vê o botão "Editar textos" no canto do site; os trechos ficam contornados, e um clique num texto simples permite escrever ali mesmo (Enter salva, Esc cancela). Blocos e imagens abrem o painel no trecho certo. Visitantes não recebem nada disso.
 - A chave usa letras minúsculas, números, `.`, `-` e `_`. A mesma chave pode aparecer em mais de um lugar (o texto é o mesmo). Um trecho editável não pode ter outro dentro, e `{{ }}` dentro dele vale só no texto padrão.
 - No código, `texto("chave", "padrão")` devolve o texto trocado no painel (útil para atributos e títulos).
+
+**Menus editáveis.** `menu-editavel="nome"` numa tag com links (normalmente `<nav>`) deixa quem cuida do site reorganizar o menu em `/_admin/textos`, uma linha por item no formato `Texto | /endereço`:
+
+```html
+<nav menu-editavel="principal">
+  <a class="link" href="{{ url('/') }}">Início</a>
+  <a class="link" href="/contato">Contato</a>
+</nav>
+```
+- Os links escritos no HTML são o menu padrão (links gerados por `<each>`/`<if>` aparecem no site, mas não entram na lista do painel). Depois de trocado, o menu usa os atributos do primeiro link do programador (classes etc.), marca o item da página atual com `aria-current="page"` e aceita endereços do site, `https://`, `mailto:` e `tel:`. O painel mostra os endereços disponíveis, incluindo os itens publicados de cada `<conteudo>`.
+- No código, `menu("principal")` devolve a lista `{texto, url, ativo}`, para montar menus com outro HTML.
+
+**Usuários do painel.** Quem instalou o painel é o **dono** e vê tudo. Em `/_admin/usuarios` ele cria **editores** (usuário e senha, mín. 10 caracteres), troca a senha deles ou os remove. Editores entram com usuário e senha e só acessam o conteúdo, os textos e os menus: não veem coleções de formulários, arquivos restritos, visitas, a página LGPD, os usuários nem as páginas com `auth`. Trocar a senha ou remover um editor desconecta as sessões abertas dele. No site, `admin` é verdadeiro para o dono e para os editores (eles veem rascunhos).
 
 **markdown(texto)** gera HTML seguro: `# título` (vira `<h2>`; `##` vira `<h3>`), `**negrito**`, `*itálico*`, `` `código` ``, `[texto](https://...)`, `![descrição](/imagem.jpg)`, listas com `-` ou `1.`, `> citação`, `---` e blocos com três crases. HTML digitado aparece como texto, e links só aceitam `http`, `https`, `mailto`, `tel` e endereços do próprio site.
 

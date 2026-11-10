@@ -109,7 +109,7 @@ func TestConteudoNoPainel(t *testing.T) {
 	srv := c.srv.Config.Handler.(*Server)
 
 	_, body, _ := c.get("/_admin")
-	must(t, body, `/_admin/conteudo?c=artigos">Artigos</a>`, `/_admin/textos">Textos do site</a>`)
+	must(t, body, `/_admin/conteudo?c=artigos">Artigos</a>`, `/_admin/textos">Textos e menus</a>`)
 	_, body, _ = c.get("/_admin/conteudo/editar?c=artigos")
 	must(t, body, `name="titulo"`, `name="_slug"`, `name="_publicado" checked`, `enctype="multipart/form-data"`, "**negrito**")
 	tok := csrfRe.FindStringSubmatch(body)[1]
