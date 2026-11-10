@@ -7,7 +7,9 @@
     - escreve, edita, publica ou deixa em rascunho os artigos;
     - cria páginas como "Sobre" e "Contato", que entram sozinhas no menu;
     - troca os textos e a imagem marcados com editavel="...", no painel ou
-      direto na página (botão "Editar textos", que aparece só para quem está logado).
+      direto na página (botão "Editar textos", que aparece só para quem está logado);
+    - reorganiza o menu (menu-editavel="principal");
+    - e o dono cria logins de editores, que não veem os dados dos visitantes.
 
   Rode com:  nep dev exemplos/revista/site.nep.html
 -->
@@ -55,6 +57,7 @@
     .marca { font: 800 2rem/1 Georgia, serif; letter-spacing: -.02em; color: var(--tinta); text-decoration: none; }
     nav { font: 600 .95rem system-ui, sans-serif; display: flex; flex-wrap: wrap; gap: 6px 18px; }
     nav a { color: var(--tinta); text-decoration: none; }
+    nav a[aria-current] { color: var(--cor); }
     .capa { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: center; padding: 36px 0 28px; border-bottom: 1px solid var(--linha); }
     .capa h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.08; margin: 0 0 12px; }
     .capa p { color: var(--suave); font-size: 1.15rem; margin: 0; }
@@ -81,7 +84,7 @@
   <header>
     <div class="faixa">
       <a class="marca" href="{{ url('/') }}" editavel="marca">Revista do Bairro</a>
-      <nav>
+      <nav menu-editavel="principal">
         <a href="{{ url('/') }}">Início</a>
         <each p in="menu"><a href="{{ url('/p/' + p.slug) }}">{{ p.titulo }}</a></each>
       </nav>

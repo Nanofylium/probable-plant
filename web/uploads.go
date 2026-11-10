@@ -186,7 +186,7 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, name string) 
 		return
 	}
 	if name[0] == 'r' {
-		if !loadSession(r, s.secret).isAdmin() {
+		if !loadSession(r, s.secret).isOwner() { // dados de visitantes: só o dono
 			http.Error(w, "Arquivo restrito: entre no painel para ver.", http.StatusForbidden)
 			return
 		}

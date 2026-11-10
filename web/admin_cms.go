@@ -36,7 +36,7 @@ func (a *adminPage) navCMS() string {
 		n += `<a href="` + a.base + `/conteudo?c=` + url.QueryEscape(c.Name) + `">` + esc(c.Title) + `</a>`
 	}
 	if len(site.Editables) > 0 {
-		n += `<a href="` + a.base + `/textos">Textos do site</a>`
+		n += `<a href="` + a.base + `/textos">Textos e menus</a>`
 	}
 	return n
 }
@@ -381,6 +381,13 @@ func (a *adminPage) texts(post bool) error {
 					a.s.Store.removeFiles(saved)
 				}
 			}
+		case e.Kind == "menu":
+			items, bad := parseMenu(strings.ReplaceAll(r.PostForm.Get("valor"), "\r\n", "\n"))
+			if bad != "" {
+				msg = bad
+				break
+			}
+			err = a.s.edSet(key, formatMenu(items))
 		default:
 			v := strings.ReplaceAll(strings.ReplaceAll(r.PostForm.Get("valor"), "\r\n", "\n"), "\x00", "")
 			max := 2000
@@ -414,7 +421,7 @@ func (a *adminPage) texts(post bool) error {
 			}
 			v, ok := a.s.edGet(key)
 			out := map[string]string{}
-			if ok {
+			if ok && e.Kind != "menu" {
 				out["html"] = string(edHTML(e.Kind, v))
 			}
 			json.NewEncoder(w).Encode(out)
@@ -442,8 +449,12 @@ func (a *adminPage) texts(post bool) error {
 		v, changed := a.s.edGet(e.Key)
 		if !changed {
 			v = plainDefault(e)
+			if e.Kind == "menu" {
+				items, _ := menuDefaults(e)
+				v = formatMenu(items)
+			}
 		}
-		kind := map[string]string{"texto": "texto curto", "rico": "texto longo", "imagem": "imagem"}[e.Kind]
+		kind := map[string]string{"texto": "texto curto", "rico": "texto longo", "imagem": "imagem", "menu": "menu"}[e.Kind]
 		b.WriteString(`<div class="card" id="ed-` + esc(e.Key) + `"><h2>` + esc(e.Key) + ` <span class="muted">(` + kind + `)</span>`)
 		if changed {
 			b.WriteString(` <span class="tag">alterado</span>`)
@@ -459,6 +470,13 @@ func (a *adminPage) texts(post bool) error {
 			b.WriteString(`<img src="` + esc(a.s.url(v)) + `" alt=""><label>Nova imagem <input type="file" name="imagem" accept="image/*" required></label>`)
 		case "rico":
 			b.WriteString(`<textarea name="valor" data-editor rows="8">` + esc(v) + `</textarea>` + mdHint)
+		case "menu":
+			b.WriteString(`<textarea name="valor" data-editor rows="6" placeholder="Início | /">` + esc(v) + `</textarea>` +
+				`<p class="muted">Um item por linha, no formato <code>Texto | /endereço</code>. A ordem das linhas é a ordem do menu. Links de fora usam <code>https://</code>.</p>`)
+			if !changed && dynMenu(e) {
+				b.WriteString(`<p class="muted">Hoje este menu também mostra links automáticos (criados pelo código, como as páginas publicadas). Ao salvar aqui, vale só a sua lista: inclua os que quiser manter, copiando da lista de endereços abaixo.</p>`)
+			}
+			b.WriteString(a.addresses())
 		default:
 			rows := 2
 			if strings.Contains(v, "\n") || utf8.RuneCountInString(v) > 120 {
@@ -475,5 +493,44 @@ func (a *adminPage) texts(post bool) error {
 	if len(seen) == 0 {
 		b.WriteString(`<p class="muted">O site ainda não tem trechos editáveis. O programador marca com editavel="nome" na tag.</p>`)
 	}
-	return a.out("Textos do site", b.String(), true)
+	return a.out("Textos e menus", b.String(), true)
+}
+
+// addresses lista os endereços do site que dá para pôr num menu.
+func (a *adminPage) addresses() string {
+	site := a.site()
+	var l []string
+	for _, p := range site.Pages {
+		if p.Route == "404" || p.Auth || len(p.params) > 0 {
+			continue
+		}
+		t := p.Title
+		if t == "" {
+			t = p.Route
+		}
+		l = append(l, `<code>`+esc(t+" | "+"/"+strings.Trim(p.Route, "/"))+`</code>`)
+	}
+	for _, c := range site.Contents {
+		n := 0
+		for _, r := range a.s.Store.All(c.Name, 0) {
+			t := r.ToValue()
+			if u := site.itemURL(c.Name, t); u != "" && published(t) && n < 15 {
+				l = append(l, `<code>`+esc(itemTitle(c, t)+" | "+u)+`</code>`)
+				n++
+			}
+		}
+	}
+	if len(l) == 0 {
+		return ""
+	}
+	return `<details><summary class="muted">Endereços do site (copie e cole)</summary><p>` + strings.Join(l, "<br>") + `</p></details>`
+}
+
+func dynMenu(e *Editable) bool {
+	for _, re := range dynBlocks {
+		if re.MatchString(e.Default) {
+			return true
+		}
+	}
+	return false
 }

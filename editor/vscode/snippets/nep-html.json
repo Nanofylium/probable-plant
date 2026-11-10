@@ -8,5 +8,6 @@
   "API JSON": { "prefix": "api", "body": ["<api route=\"/api/${1:itens}\">", "\treturn ${2:db.all(\"itens\")}", "</api>"] },
   "Tipo de conteúdo (CMS)": { "prefix": "conteudo", "body": ["<conteudo nome=\"${1:artigos}\" titulo=\"${2:Artigos}\" item=\"${3:artigo}\">", "\t<label>Título <input name=\"titulo\" required maxlength=\"120\"></label>", "\t<label>Texto <textarea name=\"corpo\" data-editor></textarea></label>", "\t$0", "</conteudo>", "", "<page route=\"/${1:artigos}/:slug\" conteudo=\"${1:artigos}\">", "\t<h1>{{ item.titulo }}</h1>", "\t{{ markdown(item.corpo) }}", "</page>"] },
   "Texto editável": { "prefix": "editavel", "body": ["editavel=\"${1:chave}\""] },
+  "Menu editável": { "prefix": "menu", "body": ["<nav menu-editavel=\"${1:principal}\">", "\t<a href=\"{{ url('/') }}\">Início</a>", "\t$0", "</nav>"] },
   "Valor": { "prefix": "{{", "body": ["{{ ${1:valor} }}"] }
 }

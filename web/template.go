@@ -136,11 +136,11 @@ type Content struct {
 	Order  string // campo de ordenação no painel (padrão: mais novo primeiro)
 }
 
-// Editable é um trecho com editavel="chave": o texto padrão fica no HTML e
+// Editable é um trecho com editavel="chave" (ou um menu com menu-editavel="nome"): o texto padrão fica no HTML e
 // quem cuida do site pode trocá-lo no painel ou direto na página.
 type Editable struct {
 	Key     string
-	Kind    string // texto, rico (markdown) ou imagem
+	Kind    string // texto, rico (markdown), imagem ou menu
 	Tag     string
 	Line    int
 	Default string
@@ -190,7 +190,7 @@ var tagAlias = map[string]string{"pagina": "page", "cada": "each", "se": "if", "
 
 var (
 	edKeyRe  = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,63}$`)
-	edAttrRe = regexp.MustCompile(`(?i)\s(editavel|editable)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+	edAttrRe = regexp.MustCompile(`(?i)\s(editavel|editable|menu-editavel|editable-menu)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
 	srcAttr  = regexp.MustCompile(`(?i)\ssrc\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
 	voidTags = map[string]bool{"img": true, "br": true, "hr": true, "input": true, "meta": true, "link": true, "source": true, "wbr": true}
 	richTags = map[string]bool{"div": true, "section": true, "article": true, "aside": true, "main": true, "header": true, "footer": true, "blockquote": true, "figure": true, "details": true}
@@ -573,6 +573,11 @@ func ParseSite(file, src string) (*Site, error) {
 			}
 			kind := "texto"
 			switch {
+			case strings.Contains(strings.ToLower(m[1]), "menu"):
+				if voidTags[lname] {
+					return nil, fail(ln, "menu-editavel precisa de uma tag com conteúdo, como <nav>")
+				}
+				kind = "menu"
 			case lname == "img":
 				kind = "imagem"
 			case voidTags[lname]:

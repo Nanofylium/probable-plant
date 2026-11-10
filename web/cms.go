@@ -12,6 +12,7 @@ package web
 //     no painel e direto na página, para quem está logado.
 
 import (
+	"fmt"
 	"html"
 	"regexp"
 	"strconv"
@@ -213,3 +214,125 @@ func (site *Site) itemURL(col string, t *lang.Table) string {
 var tagRe = regexp.MustCompile(`<[^>]*>`)
 
 var paramRe = regexp.MustCompile(`:[A-Za-z_][A-Za-z0-9_]*|\*`)
+
+// ---------- menus editáveis (menu-editavel="principal") ----------
+
+type menuItem struct{ Text, URL string }
+
+var (
+	anchorRe  = regexp.MustCompile(`(?is)<a\b((?:[^>"']|"[^"]*"|'[^']*')*)>(.*?)</a>`)
+	urlCallRe = regexp.MustCompile(`^\{\{\s*url\(\s*['"]([^'"]*)['"]\s*\)\s*\}\}$`)
+	hrefRe    = regexp.MustCompile(`(?i)\s*\bhref\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+	dynBlocks = []*regexp.Regexp{regexp.MustCompile(`(?is)<each\b.*?</each>`), regexp.MustCompile(`(?is)<cada\b.*?</cada>`), regexp.MustCompile(`(?is)<if\b.*?</if>`), regexp.MustCompile(`(?is)<se\b.*?</se>`)}
+	ariaCurRe = regexp.MustCompile(`(?i)\s*\baria-current\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+)
+
+// menuDefaults lê os links fixos escritos pelo programador dentro do menu e
+// os atributos do primeiro link (classes etc.), usados em todos os itens.
+func menuDefaults(e *Editable) (items []menuItem, attrs string) {
+	src := e.Default
+	for _, re := range dynBlocks { // links gerados por <each>/<if> não são itens fixos
+		src = re.ReplaceAllString(src, "")
+	}
+	for i, m := range anchorRe.FindAllStringSubmatch(src, -1) {
+		if i == 0 {
+			attrs = ariaCurRe.ReplaceAllString(hrefRe.ReplaceAllString(m[1], ""), "")
+			if strings.Contains(attrs, "{{") {
+				attrs = ""
+			}
+		}
+		text := strings.TrimSpace(htmlUnescape(tagRe.ReplaceAllString(m[2], "")))
+		href := ""
+		if h := hrefRe.FindStringSubmatch(m[1]); h != nil {
+			href = strings.Trim(h[1], `"'`)
+		}
+		if strings.Contains(href, "{{") {
+			u := urlCallRe.FindStringSubmatch(strings.TrimSpace(href))
+			if u == nil {
+				continue
+			}
+			href = u[1]
+		}
+		if text == "" || strings.Contains(text, "{{") || href == "" {
+			continue
+		}
+		items = append(items, menuItem{text, htmlUnescape(href)})
+	}
+	return
+}
+
+// parseMenu lê o menu escrito no painel: uma linha por item, "Texto | /endereco".
+func parseMenu(v string) ([]menuItem, string) {
+	var out []menuItem
+	for n, l := range strings.Split(v, "\n") {
+		l = strings.TrimSpace(l)
+		if l == "" {
+			continue
+		}
+		i := strings.LastIndex(l, "|")
+		if i < 0 {
+			return nil, fmt.Sprintf("Linha %d do menu: use \"Texto | /endereço\".", n+1)
+		}
+		t, u := strings.TrimSpace(l[:i]), strings.TrimSpace(l[i+1:])
+		if t == "" || !safeURL(u) {
+			return nil, fmt.Sprintf("Linha %d do menu: o endereço precisa começar com / ou https://.", n+1)
+		}
+		out = append(out, menuItem{t, u})
+	}
+	if len(out) > 40 {
+		return nil, "O menu pode ter no máximo 40 itens."
+	}
+	return out, ""
+}
+
+func formatMenu(items []menuItem) string {
+	var l []string
+	for _, it := range items {
+		l = append(l, it.Text+" | "+it.URL)
+	}
+	return strings.Join(l, "\n")
+}
+
+// menuItems devolve os itens atuais do menu (trocados no painel ou os do HTML).
+func (s *Server) menuItems(e *Editable) []menuItem {
+	if v, ok := s.edGet(e.Key); ok {
+		items, _ := parseMenu(v)
+		return items
+	}
+	items, _ := menuDefaults(e)
+	return items
+}
+
+func (s *Server) menuHref(u string) string {
+	if strings.HasPrefix(u, "/") && !strings.HasPrefix(u, "//") {
+		return s.url(u)
+	}
+	return u
+}
+
+func samePath(u, path string) bool {
+	if !strings.HasPrefix(u, "/") {
+		return false
+	}
+	if i := strings.IndexAny(u, "?#"); i >= 0 {
+		u = u[:i]
+	}
+	return "/"+strings.Trim(u, "/") == path
+}
+
+// menuHTML monta os links do menu com os atributos do primeiro link do programador.
+func (s *Server) menuHTML(e *Editable, path string) lang.HTML {
+	_, attrs := menuDefaults(e)
+	var b strings.Builder
+	for i, it := range s.menuItems(e) {
+		if i > 0 {
+			b.WriteString("\n")
+		}
+		b.WriteString("<a" + attrs + ` href="` + html.EscapeString(s.menuHref(it.URL)) + `"`)
+		if samePath(it.URL, path) {
+			b.WriteString(` aria-current="page"`)
+		}
+		b.WriteString(">" + html.EscapeString(it.Text) + "</a>")
+	}
+	return lang.HTML(b.String())
+}

@@ -98,6 +98,21 @@ func (s *Server) admin(rq *request) error {
 		s.redirect(rq, base+"/login", http.StatusFound)
 		return nil
 	}
+	if !rq.sess.isOwner() { // editor: só conteúdo, textos e menus
+		c := r.PostForm.Get("c")
+		if !editorPaths[sub] || (sub == "/delete" && a.site() != nil && a.site().Content(c) == nil) {
+			a.out("Só para o dono do site", `<p>Esta parte do painel é só para o dono do site.</p>`, true)
+			return nil
+		}
+		if sub == "/" {
+			to := base + "/textos"
+			if st := a.site(); st != nil && len(st.Contents) > 0 {
+				to = base + "/conteudo?c=" + url.QueryEscape(st.Contents[0].Name)
+			}
+			s.redirect(rq, to, http.StatusFound)
+			return nil
+		}
+	}
 	switch sub {
 	case "/logout":
 		if post {
@@ -129,6 +144,8 @@ func (s *Server) admin(rq *request) error {
 		return a.lgpd(post)
 	case "/visitas":
 		return a.statsPage()
+	case "/usuarios":
+		return a.usersPage(post)
 	case "/":
 		return a.dash()
 	default:
@@ -153,7 +170,11 @@ func (a *adminPage) tok() string {
 func (a *adminPage) out(title, body string, nav bool) error {
 	n := ""
 	if nav {
-		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div><a href="` + a.base + `">Coleções</a>` + a.navCMS() + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a>` +
+		links := a.navCMS()
+		if a.rq.sess.isOwner() {
+			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a>`
+		}
+		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div>` + links +
 			`<a href="` + esc(a.s.opt.Base+"/") + `">Ver site</a></div>` +
 			`<form method="post" action="` + a.base + `/logout">` + a.tok() + `<button class="ghost">Sair</button></form></nav>`
 	}
@@ -194,7 +215,7 @@ func (a *adminPage) setup(post bool) error {
 				return err
 			}
 			_ = os.Remove(tf)
-			a.rq.sess.login()
+			a.rq.sess.login("", "")
 			a.s.redirect(a.rq, a.base, http.StatusSeeOther)
 			return nil
 		}
@@ -222,12 +243,12 @@ func (a *adminPage) login(post bool) error {
 		key := "login:" + a.s.ipKey(r)
 		if ok, _ := a.s.Store.Rate(key, 5, 900, false); !ok {
 			msg = "Muitas tentativas. Aguarde 15 minutos."
-		} else if !checkPassword(r.PostForm.Get("senha"), a.s.Store.Meta("admin_hash")) {
+		} else if user, ver, good := a.checkLogin(strings.ToLower(strings.TrimSpace(r.PostForm.Get("usuario"))), r.PostForm.Get("senha")); !good {
 			_, _ = a.s.Store.Rate(key, 1<<30, 900, true) // só erros contam
 			time.Sleep(300 * time.Millisecond)
-			msg = "Senha incorreta."
+			msg = "Usuário ou senha incorretos."
 		} else {
-			a.rq.sess.login()
+			a.rq.sess.login(user, ver)
 			to := a.base
 			if next != "" {
 				to = a.s.opt.Base + next
@@ -238,7 +259,21 @@ func (a *adminPage) login(post bool) error {
 	}
 	return a.out("Entrar no painel", errP(msg)+
 		`<form method="post" class="row">`+a.tok()+`<input type="hidden" name="next" value="`+esc(next)+`">`+
+		`<input name="usuario" placeholder="Usuário (vazio se for o dono)" autocomplete="username" autocapitalize="none">`+
 		`<input type="password" name="senha" placeholder="Senha" required autofocus autocomplete="current-password"><button>Entrar</button></form>`, false)
+}
+
+// checkLogin confere dono (usuário vazio) ou editor.
+func (a *adminPage) checkLogin(user, pw string) (string, string, bool) {
+	if user == "" {
+		return "", "", checkPassword(pw, a.s.Store.Meta("admin_hash"))
+	}
+	u, ok := a.s.users()[user]
+	if !ok {
+		checkPassword(pw, hashPassword("x")) // mesmo tempo de resposta
+		return "", "", false
+	}
+	return user, u.V, checkPassword(pw, u.Hash)
 }
 
 func cell(v lang.Value) string {

@@ -19,6 +19,8 @@ import (
 type Session struct {
 	CSRF    string            `json:"c"`
 	AdminAt int64             `json:"a,omitempty"`
+	U       string            `json:"u,omitempty"`  // editor logado ("" = o dono)
+	UV      string            `json:"uv,omitempty"` // versão do editor (senha trocada derruba a sessão)
 	Flash   map[string]string `json:"f,omitempty"`
 	Data    json.RawMessage   `json:"d,omitempty"` // a tabela `session` do código do site
 	changed bool
@@ -97,14 +99,19 @@ func (s *Session) isAdmin() bool {
 	return true
 }
 
-func (s *Session) login() {
+// isOwner: logado como dono do site (não editor).
+func (s *Session) isOwner() bool { return s.isAdmin() && s.U == "" }
+
+func (s *Session) login(user, ver string) {
 	s.CSRF = randHex(16) // token novo depois do login
+	s.U, s.UV = user, ver
 	s.AdminAt = time.Now().Unix()
 	s.changed = true
 }
 
 func (s *Session) logout() {
 	s.AdminAt = 0
+	s.U, s.UV = "", ""
 	s.CSRF = randHex(16)
 	s.changed = true
 }
