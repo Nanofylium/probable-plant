@@ -276,7 +276,13 @@ func (a *adminPage) contentEdit(post bool) error {
 			}
 		}
 	}
-	if hasText {
+	builder := false
+	for _, f := range c.Fields {
+		if f.Builder {
+			builder = true
+		}
+	}
+	if hasText && !builder {
 		b.WriteString(mdHint)
 	}
 	chk := ""
@@ -292,6 +298,9 @@ func (a *adminPage) contentEdit(post bool) error {
 		}
 	}
 	b.WriteString(`</p></form>`)
+	if builder {
+		b.WriteString(a.builderAssets())
+	}
 	title := "Novo " + c.Item
 	if cur != nil {
 		title = "Editar " + c.Item
@@ -381,6 +390,13 @@ func (a *adminPage) texts(post bool) error {
 					a.s.Store.removeFiles(saved)
 				}
 			}
+		case e.Kind == "visual":
+			v := strings.ReplaceAll(r.PostForm.Get("valor"), "\x00", "")
+			if !utf8.ValidString(v) || len(v) > 300000 {
+				msg = "O bloco ficou grande demais."
+				break
+			}
+			err = a.s.edSet(key, v)
 		case e.Kind == "menu":
 			items, bad := parseMenu(strings.ReplaceAll(r.PostForm.Get("valor"), "\r\n", "\n"))
 			if bad != "" {
@@ -421,7 +437,7 @@ func (a *adminPage) texts(post bool) error {
 			}
 			v, ok := a.s.edGet(key)
 			out := map[string]string{}
-			if ok && e.Kind != "menu" {
+			if ok && e.Kind != "menu" && e.Kind != "visual" {
 				out["html"] = string(edHTML(e.Kind, v))
 			}
 			json.NewEncoder(w).Encode(out)
@@ -441,6 +457,7 @@ func (a *adminPage) texts(post bool) error {
 	}
 	b.WriteString(`<p class="muted">Estes são os trechos que o programador deixou editáveis. Você também pode editar os textos direto no site: com o painel aberto, use o botão “Editar textos” no canto da página.</p>`)
 	seen := map[string]bool{}
+	builder := false
 	for _, e := range site.Editables {
 		if seen[e.Key] {
 			continue
@@ -453,8 +470,11 @@ func (a *adminPage) texts(post bool) error {
 				items, _ := menuDefaults(e)
 				v = formatMenu(items)
 			}
+			if e.Kind == "visual" {
+				v = e.Default
+			}
 		}
-		kind := map[string]string{"texto": "texto curto", "rico": "texto longo", "imagem": "imagem", "menu": "menu"}[e.Kind]
+		kind := map[string]string{"texto": "texto curto", "rico": "texto longo", "imagem": "imagem", "menu": "menu", "visual": "construtor visual"}[e.Kind]
 		b.WriteString(`<div class="card" id="ed-` + esc(e.Key) + `"><h2>` + esc(e.Key) + ` <span class="muted">(` + kind + `)</span>`)
 		if changed {
 			b.WriteString(` <span class="tag">alterado</span>`)
@@ -470,6 +490,9 @@ func (a *adminPage) texts(post bool) error {
 			b.WriteString(`<img src="` + esc(a.s.url(v)) + `" alt=""><label>Nova imagem <input type="file" name="imagem" accept="image/*" required></label>`)
 		case "rico":
 			b.WriteString(`<textarea name="valor" data-editor rows="8">` + esc(v) + `</textarea>` + mdHint)
+		case "visual":
+			builder = true
+			b.WriteString(`<textarea name="valor" data-construtor>` + esc(v) + `</textarea>`)
 		case "menu":
 			b.WriteString(`<textarea name="valor" data-editor rows="6" placeholder="Início | /">` + esc(v) + `</textarea>` +
 				`<p class="muted">Um item por linha, no formato <code>Texto | /endereço</code>. A ordem das linhas é a ordem do menu. Links de fora usam <code>https://</code>.</p>`)
@@ -489,6 +512,9 @@ func (a *adminPage) texts(post bool) error {
 			b.WriteString(`<button class="ghost" name="restaurar" value="1" formnovalidate>Voltar ao texto original</button>`)
 		}
 		b.WriteString(`</p></form></div>`)
+	}
+	if builder {
+		b.WriteString(a.builderAssets())
 	}
 	if len(seen) == 0 {
 		b.WriteString(`<p class="muted">O site ainda não tem trechos editáveis. O programador marca com editavel="nome" na tag.</p>`)
@@ -533,4 +559,14 @@ func dynMenu(e *Editable) bool {
 		}
 	}
 	return false
+}
+
+// builderAssets carrega o construtor visual (GrapesJS) na tela do painel.
+func (a *adminPage) builderAssets() string {
+	p := esc(a.s.opt.Base) + "/_nep/construtor/"
+	return `<style>.nep-box{max-width:1320px}.nep-gjs{border:1px solid #c9cfc5;border-radius:8px;overflow:hidden;margin:6px 0 12px}</style>` +
+		`<link rel="stylesheet" href="` + p + `grapes.min.css">` +
+		`<script src="` + p + `grapes.min.js"></script><script src="` + p + `blocks-basic.js"></script><script src="` + p + `pt.js"></script>` +
+		`<script src="` + p + `nep.js" data-base="` + esc(a.s.opt.Base) + `" data-csrf="` + esc(a.rq.sess.CSRF) + `"></script>` +
+		`<p class="muted">Construtor visual: arraste os blocos da direita para a página, clique para editar o texto e use a aba de estilos para cores e espaços. Ele é de código aberto (GrapesJS, licença BSD).</p>`
 }

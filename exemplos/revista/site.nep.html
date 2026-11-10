@@ -9,6 +9,8 @@
     - troca os textos e a imagem marcados com editavel="...", no painel ou
       direto na página (botão "Editar textos", que aparece só para quem está logado);
     - reorganiza o menu (menu-editavel="principal");
+    - monta faixas e páginas arrastando blocos no construtor visual
+      (construtor="..." e <textarea data-construtor>), dentro do espaço que o tema reservou;
     - e o dono cria logins de editores, que não veem os dados dos visitantes.
 
   Rode com:  nep dev exemplos/revista/site.nep.html
@@ -33,6 +35,7 @@
 <conteudo nome="paginas" titulo="Páginas" item="página">
   <label>Título <input name="titulo" required maxlength="80"></label>
   <label>Texto <textarea name="corpo" data-editor maxlength="40000"></textarea></label>
+  <label>Montagem visual (opcional: arraste blocos, fotos, vídeos e mapas) <textarea name="visual" data-construtor></textarea></label>
   <label>Posição no menu (menor vem antes) <input type="number" name="ordem" min="0" max="99" value="10"></label>
 </conteudo>
 
@@ -119,6 +122,14 @@
         </each>
       </section>
 
+      <!-- Faixa que o cliente monta no construtor visual (painel > Textos e menus) -->
+      <section construtor="home.faixa">
+        <div style="display:flex;flex-wrap:wrap;gap:16px;padding:20px 0">
+          <div style="flex:1 1 240px;background:#fff;border:1px solid #e6e1d8;padding:18px;border-radius:6px"><h3 style="margin:0 0 6px">Anuncie aqui</h3><p style="margin:0">O comércio do bairro na vitrine da revista.</p></div>
+          <div style="flex:1 1 240px;background:#fff;border:1px solid #e6e1d8;padding:18px;border-radius:6px"><h3 style="margin:0 0 6px">Mande sua pauta</h3><p style="margin:0">Viu algo acontecendo? Conte para a gente.</p></div>
+        </div>
+      </section>
+
       <div class="sobre" editavel="home.sobre">
         <p>A Revista do Bairro é feita por vizinhos, para vizinhos. Quer sugerir uma pauta? Fale com a gente.</p>
       </div>
@@ -144,6 +155,7 @@
         <h1>{{ item.titulo }}</h1>
         {{ markdown(item.corpo) }}
       </article>
+      {{ visual(item.visual) }}
     </page>
 
     <page route="404" title="Não encontrado">

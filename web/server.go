@@ -222,6 +222,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.events(w, r)
 		return
 	}
+	if strings.HasPrefix(rq.path, "/_nep/construtor/") {
+		serveConstrutor(w, r, strings.TrimPrefix(rq.path, "/_nep/construtor/"))
+		return
+	}
 	if strings.HasPrefix(rq.path, "/_nep/arquivo/") {
 		s.serveFile(w, r, strings.TrimPrefix(rq.path, "/_nep/arquivo/"))
 		return

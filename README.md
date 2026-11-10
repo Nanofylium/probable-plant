@@ -39,6 +39,7 @@ Isso já é um site no ar: o formulário valida no servidor as regras do própri
 | Painel admin, CSV e LGPD embutidos | plugins | não | não | não | **sim** |
 | Tema escrito à mão e conteúdo gerenciado pelo painel (CMS), no mesmo arquivo | tema PHP + plugins | CMS separado | não | não | **sim (`<conteudo>`, `editavel`)** |
 | Cliente edita os textos clicando na própria página, sem construtor visual | plugin | não | não | não | **sim** |
+| Construtor visual de arrastar só nas áreas que o tema libera, com HTML limpo no servidor | plugin (no site todo) | não | não | não | **sim (GrapesJS embutido)** |
 | Editores com acesso só ao conteúdo, separados dos dados dos visitantes | sim | manual | não | manual | **sim** |
 | Estatísticas de visitas sem cookies, no próprio painel | plugin | serviço externo | não | não | **sim** |
 | Upload de arquivos validado pelo conteúdo, apagado junto com o registro | plugin | manual | não | manual | **sim** |
@@ -67,7 +68,7 @@ Você escreve o tema à mão; quem cuida do site publica e troca o conteúdo sem
 </page>
 ```
 
-No painel aparecem "Artigos" (criar, editar, rascunho ou publicado, endereço) e "Textos e menus" (com `menu-editavel="principal"` num `<nav>`, o cliente reorganiza o menu). O dono cria logins de **editores**, que cuidam só do conteúdo e não veem os dados dos visitantes. Logado, o dono clica no título da página e escreve ali mesmo. Título, prévia no WhatsApp, 404 e sitemap de cada artigo saem sozinhos. Exemplo completo: [`exemplos/revista`](exemplos/revista/site.nep.html).
+No painel aparecem "Artigos" (criar, editar, rascunho ou publicado, endereço) e "Textos e menus" (com `menu-editavel="principal"` num `<nav>`, o cliente reorganiza o menu). O dono cria logins de **editores**, que cuidam só do conteúdo e não veem os dados dos visitantes. E onde o tema deixar (`construtor="home.faixa"` ou `<textarea data-construtor>`), o cliente monta blocos arrastando, no construtor visual de código aberto [GrapesJS](https://github.com/GrapesJS/grapesjs) (BSD-3-Clause), que vem embutido no `nep`. Logado, o dono clica no título da página e escreve ali mesmo. Título, prévia no WhatsApp, 404 e sitemap de cada artigo saem sozinhos. Exemplo completo: [`exemplos/revista`](exemplos/revista/site.nep.html).
 
 ## Instalar
 

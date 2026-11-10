@@ -50,7 +50,7 @@ func (s *Server) checkUser(sess *Session) {
 }
 
 // editorPaths são as telas do painel que um editor pode abrir.
-var editorPaths = map[string]bool{"/": true, "/logout": true, "/conteudo": true, "/conteudo/editar": true, "/textos": true, "/delete": true}
+var editorPaths = map[string]bool{"/": true, "/logout": true, "/conteudo": true, "/conteudo/editar": true, "/textos": true, "/delete": true, "/construtor/arquivo": true}
 
 // usersPage é /_admin/usuarios (só o dono).
 func (a *adminPage) usersPage(post bool) error {

@@ -146,6 +146,8 @@ func (s *Server) admin(rq *request) error {
 		return a.statsPage()
 	case "/usuarios":
 		return a.usersPage(post)
+	case "/construtor/arquivo":
+		return a.uploadBuilder()
 	case "/":
 		return a.dash()
 	default:
