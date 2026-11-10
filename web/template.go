@@ -12,6 +12,7 @@ package web
 
 import (
 	"fmt"
+	stdhtml "html"
 	"regexp"
 	"sort"
 	"strconv"
@@ -49,6 +50,10 @@ type node struct {
 	attrs        []*node
 	prerun       bool
 	capIdx       int
+	// texto editável (editavel="chave"): a tag que fecha o trecho
+	edTag   string
+	edDepth int
+	edIdx   int
 }
 
 func (n *node) add(c *node) {
@@ -70,9 +75,11 @@ type Page struct {
 	Description string
 	Image       string
 	NoIndex     bool
-	re          *regexp.Regexp
-	params      []string
-	node        *node
+	// Conteudo liga a página a um tipo de <conteudo>: o item vem pelo endereço.
+	Conteudo string
+	re       *regexp.Regexp
+	params   []string
+	node     *node
 }
 
 // Form é um <form save="..."> ou <form run="...">.
@@ -116,6 +123,30 @@ type API struct {
 	params []string
 }
 
+// Content é um tipo de conteúdo declarado com <conteudo nome="artigos">: o
+// programador escreve os campos (como num formulário) e quem cuida do site
+// cria, edita e publica os itens no painel, sem mexer no código.
+type Content struct {
+	Name   string
+	Title  string // nome no painel ("Artigos")
+	Item   string // um item ("artigo")
+	Line   int
+	Fields []*Field
+	HTML   string // os campos, do jeito que o programador escreveu
+	Order  string // campo de ordenação no painel (padrão: mais novo primeiro)
+}
+
+// Editable é um trecho com editavel="chave": o texto padrão fica no HTML e
+// quem cuida do site pode trocá-lo no painel ou direto na página.
+type Editable struct {
+	Key     string
+	Kind    string // texto, rico (markdown) ou imagem
+	Tag     string
+	Line    int
+	Default string
+	start   int
+}
+
 type Live struct {
 	ID    int
 	Every int // segundos; 0 = só quando os dados mudam
@@ -137,10 +168,13 @@ type Site struct {
 	Forms  []*Form
 	APIs   []*API
 	Lives  []*Live
-	texts  []string
-	root   *node
-	caps   int
-	cache  map[int][2]string
+	// CMS
+	Contents  []*Content
+	Editables []*Editable
+	texts     []string
+	root      *node
+	caps      int
+	cache     map[int][2]string
 }
 
 // TemplateError é um erro de estrutura no .nep.html.
@@ -152,7 +186,35 @@ type TemplateError struct {
 
 func (e *TemplateError) Error() string { return fmt.Sprintf("%s:%d: %s", e.File, e.Line, e.Msg) }
 
-var tagAlias = map[string]string{"pagina": "page", "cada": "each", "se": "if", "senao": "else", "vivo": "live"}
+var tagAlias = map[string]string{"pagina": "page", "cada": "each", "se": "if", "senao": "else", "vivo": "live", "content": "conteudo"}
+
+var (
+	edKeyRe  = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,63}$`)
+	edAttrRe = regexp.MustCompile(`(?i)\s(editavel|editable)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+	srcAttr  = regexp.MustCompile(`(?i)\ssrc\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+	voidTags = map[string]bool{"img": true, "br": true, "hr": true, "input": true, "meta": true, "link": true, "source": true, "wbr": true}
+	richTags = map[string]bool{"div": true, "section": true, "article": true, "aside": true, "main": true, "header": true, "footer": true, "blockquote": true, "figure": true, "details": true}
+)
+
+// Content devolve o tipo de conteúdo pelo nome.
+func (s *Site) Content(name string) *Content {
+	for _, c := range s.Contents {
+		if c.Name == name {
+			return c
+		}
+	}
+	return nil
+}
+
+// Editable devolve o trecho editável pela chave (a primeira declaração vale).
+func (s *Site) Editable(key string) *Editable {
+	for _, e := range s.Editables {
+		if e.Key == key {
+			return e
+		}
+	}
+	return nil
+}
 
 // ParseSite lê o .nep.html.
 func ParseSite(file, src string) (*Site, error) {
@@ -220,6 +282,23 @@ func ParseSite(file, src string) (*Site, error) {
 		top := stack[len(stack)-1]
 		end := at + tagEnd
 
+		if closing && top.edTag != "" && lname == top.edTag {
+			if top.edDepth > 0 {
+				top.edDepth--
+				pos = at + 1
+				continue
+			}
+			if err := flush(at); err != nil {
+				return nil, err
+			}
+			ed := s.Editables[top.edIdx]
+			if ed.Default == "" {
+				ed.Default = strings.TrimSpace(src[ed.start:at])
+			}
+			stack = stack[:len(stack)-1]
+			pos, textStart = end, at // a tag de fechamento continua no HTML
+			continue
+		}
 		if closing {
 			switch lname {
 			case "page", "each", "if", "live":
@@ -230,7 +309,7 @@ func ParseSite(file, src string) (*Site, error) {
 				if top.kind != want {
 					open := "nenhuma tag aberta"
 					if top.kind != kRoot {
-						open = fmt.Sprintf("<%s> aberta na linha %d", kindName(top.kind), top.line)
+						open = fmt.Sprintf("<%s> aberta na linha %d", nodeName(top), top.line)
 					}
 					return nil, fail(ln, "fechamento </%s> não combina (%s)", lname, open)
 				}
@@ -294,6 +373,50 @@ func ParseSite(file, src string) (*Site, error) {
 			pos = end + e + len(closeTag)
 			textStart = pos
 			continue
+		case "conteudo":
+			closeTag := "</" + strings.ToLower(name) + ">"
+			e := strings.Index(strings.ToLower(src[end:]), closeTag)
+			if e < 0 {
+				return nil, fail(ln, "<%s> sem %s", name, closeTag)
+			}
+			if top.kind != kRoot {
+				return nil, fail(ln, "<conteudo> precisa ficar fora das outras tags")
+			}
+			a := parseAttrs(attrs)
+			nm := first(a, "nome", "name")
+			if !ValidCol(nm) || strings.HasPrefix(nm, "_") {
+				return nil, fail(ln, `<conteudo> precisa de nome="colecao" (letras, números, - e _)`)
+			}
+			if s.Content(nm) != nil {
+				return nil, fail(ln, "o tipo de conteúdo %q já foi declarado", nm)
+			}
+			if err := flush(at); err != nil {
+				return nil, err
+			}
+			inner := src[end : end+e]
+			c := &Content{Name: nm, Title: first(a, "titulo", "title"), Item: first(a, "item"), Line: ln, Fields: extractFields(inner), HTML: inner, Order: first(a, "ordem", "order")}
+			if c.Title == "" {
+				c.Title = strings.ToUpper(nm[:1]) + nm[1:]
+			}
+			if c.Item == "" {
+				c.Item = "item"
+			}
+			for _, f := range c.Fields {
+				switch f.Name {
+				case "id", "slug", "publicado", "created_at", "updated_at":
+					return nil, fail(ln, "o campo %q é criado sozinho pelo Nepenthes; use outro nome", f.Name)
+				}
+			}
+			if len(c.Fields) == 0 {
+				return nil, fail(ln, "<conteudo nome=%q> não tem campos (use <input name=...>, <textarea name=...>…)", nm)
+			}
+			if strings.Contains(inner, "{{") {
+				return nil, fail(ln, "os campos de <conteudo> são HTML fixo: {{ }} não vale aqui")
+			}
+			s.Contents = append(s.Contents, c)
+			pos = end + e + len(closeTag)
+			textStart = pos
+			continue
 		case "data":
 			e := strings.Index(strings.ToLower(src[end:]), "</data>")
 			if e < 0 {
@@ -345,7 +468,10 @@ func ParseSite(file, src string) (*Site, error) {
 				_, restr := a["restrita"]
 				_, noindex := a["noindex"]
 				s.Pages = append(s.Pages, &Page{ID: n.id, Route: route, Title: first(a, "title", "titulo"), Auth: auth || restr, Line: ln, re: re, params: params, node: n,
-					Description: first(a, "description", "descricao"), Image: first(a, "image", "imagem"), NoIndex: noindex})
+					Description: first(a, "description", "descricao"), Image: first(a, "image", "imagem"), NoIndex: noindex, Conteudo: first(a, "conteudo", "content")})
+				if c := s.Pages[n.id].Conteudo; c != "" && len(params) == 0 {
+					return nil, fail(ln, `<page conteudo="%s"> precisa de um endereço com parte variável, como route="/%s/:slug"`, c, c)
+				}
 				page = n
 			case "each":
 				m := eachRe.FindStringSubmatch(attrs)
@@ -431,6 +557,63 @@ func ParseSite(file, src string) (*Site, error) {
 			pos, textStart = end, end
 			continue
 		}
+		if top.edTag != "" && lname == top.edTag {
+			top.edDepth++ // mesma tag aninhada dentro do trecho editável
+		}
+		if m := edAttrRe.FindStringSubmatch(attrs); m != nil {
+			key := strings.Trim(m[2], `"'`)
+			if !edKeyRe.MatchString(key) {
+				return nil, fail(ln, `editavel=%q: use letras minúsculas, números, ponto, - ou _ (ex.: editavel="capa.titulo")`, key)
+			}
+			if top.edTag != "" {
+				return nil, fail(ln, "um trecho editável não pode ficar dentro de outro (linha %d)", top.line)
+			}
+			if err := flush(at); err != nil {
+				return nil, err
+			}
+			kind := "texto"
+			switch {
+			case lname == "img":
+				kind = "imagem"
+			case voidTags[lname]:
+				return nil, fail(ln, "editavel não funciona em <%s>", lname)
+			case richTags[lname]:
+				kind = "rico"
+			}
+			if old := s.Editable(key); old != nil && old.Kind != kind {
+				return nil, fail(ln, "editavel=%q já foi usado na linha %d com outro tipo de tag", key, old.Line)
+			}
+			q := strconv.Quote(key)
+			open := strings.Replace(rest[:tagEnd], m[0], ` data-nep-ed=`+q+` data-nep-tipo="`+kind+`"`, 1)
+			ed := &Editable{Key: key, Kind: kind, Tag: lname, Line: ln, start: end}
+			idx := len(s.Editables)
+			s.Editables = append(s.Editables, ed)
+			if kind == "imagem" {
+				sm := srcAttr.FindStringSubmatch(open)
+				if sm == nil {
+					return nil, fail(ln, `<img editavel=%q> precisa de src="imagem-padrão"`, key)
+				}
+				ed.Default = strings.Trim(sm[1], `"'`)
+				open = strings.Replace(open, sm[0], ` src="{{ __edsrc(`+q+`) }}"`, 1)
+			}
+			ns, err := s.textNodes(open, ln)
+			if err != nil {
+				return nil, err
+			}
+			for _, c := range ns {
+				top.add(c)
+			}
+			pos, textStart = end, end
+			if kind == "imagem" {
+				continue
+			}
+			n := &node{kind: kIf, line: ln, expr: "__edhas(" + q + ")", edTag: lname, edIdx: idx}
+			n.children = []*node{{kind: kExpr, line: ln, text: "__ed(" + q + ")"}}
+			n.inElse = true
+			top.add(n)
+			stack = append(stack, n)
+			continue
+		}
 		pos = at + 1
 	}
 	if err := flush(len(src)); err != nil {
@@ -438,7 +621,12 @@ func ParseSite(file, src string) (*Site, error) {
 	}
 	if len(stack) > 1 {
 		t := stack[len(stack)-1]
-		return nil, fail(t.line, "a tag <%s> aberta na linha %d não foi fechada", kindName(t.kind), t.line)
+		return nil, fail(t.line, "a tag <%s> aberta na linha %d não foi fechada", nodeName(t), t.line)
+	}
+	for _, p := range s.Pages {
+		if p.Conteudo != "" && s.Content(p.Conteudo) == nil {
+			return nil, fail(p.Line, `<page conteudo="%s">: não existe <conteudo nome="%s"> neste arquivo`, p.Conteudo, p.Conteudo)
+		}
 	}
 	s.markPrerun(s.root)
 	return s, nil
@@ -451,6 +639,13 @@ var (
 )
 
 func isIdent(s string) bool { return identRe.MatchString(s) }
+
+func nodeName(n *node) string {
+	if n.edTag != "" {
+		return n.edTag + " editavel"
+	}
+	return kindName(n.kind)
+}
 
 func kindName(k nodeKind) string {
 	return map[nodeKind]string{kPage: "page", kEach: "each", kIf: "if", kForm: "form", kLive: "live"}[k]
@@ -865,14 +1060,14 @@ func extractFields(html string) []*Field {
 					for k, o := range idx {
 						oa := parseAttrs(body[o[2]:o[3]])
 						if v, ok := oa["value"]; ok {
-							opts = append(opts, v)
+							opts = append(opts, stdhtml.UnescapeString(v))
 							continue
 						}
 						end := len(body)
 						if k+1 < len(idx) {
 							end = idx[k+1][0]
 						}
-						opts = append(opts, stripTags(body[o[1]:end]))
+						opts = append(opts, stdhtml.UnescapeString(stripTags(body[o[1]:end])))
 					}
 					f.Options = opts
 				}

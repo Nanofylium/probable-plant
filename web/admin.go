@@ -72,8 +72,17 @@ func (s *Server) admin(rq *request) error {
 	}
 	post := r.Method == http.MethodPost
 	if post {
-		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
-		if err := r.ParseForm(); err != nil || !rq.sess.csrfOK(r.PostForm.Get("_nep_csrf")) {
+		var err error
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+			r.Body = http.MaxBytesReader(w, r.Body, maxUpload)
+			if err = r.ParseMultipartForm(8 << 20); err == nil {
+				defer r.MultipartForm.RemoveAll()
+			}
+		} else {
+			r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+			err = r.ParseForm()
+		}
+		if err != nil || !rq.sess.csrfOK(r.PostForm.Get("_nep_csrf")) {
 			s.simple(rq, 400, "Sessão expirada", `<p>Volte e tente de novo.</p>`)
 			return nil
 		}
@@ -103,7 +112,17 @@ func (s *Server) admin(rq *request) error {
 				return err
 			}
 		}
-		s.redirect(rq, base+"?c="+url.QueryEscape(c), http.StatusSeeOther)
+		back := base + "?c=" + url.QueryEscape(c)
+		if v := r.PostForm.Get("volta"); strings.HasPrefix(v, "conteudo?") {
+			back = base + "/" + v
+		}
+		s.redirect(rq, back, http.StatusSeeOther)
+	case "/conteudo":
+		return a.contentList()
+	case "/conteudo/editar":
+		return a.contentEdit(post)
+	case "/textos":
+		return a.texts(post)
 	case "/csv":
 		return a.csv(r.URL.Query().Get("c"))
 	case "/lgpd":
@@ -122,6 +141,7 @@ type adminPage struct {
 	s    *Server
 	rq   *request
 	base string
+	st   *Site
 }
 
 func esc(s string) string { return html.EscapeString(s) }
@@ -133,7 +153,7 @@ func (a *adminPage) tok() string {
 func (a *adminPage) out(title, body string, nav bool) error {
 	n := ""
 	if nav {
-		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div><a href="` + a.base + `">Coleções</a><a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a>` +
+		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div><a href="` + a.base + `">Coleções</a>` + a.navCMS() + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a>` +
 			`<a href="` + esc(a.s.opt.Base+"/") + `">Ver site</a></div>` +
 			`<form method="post" action="` + a.base + `/logout">` + a.tok() + `<button class="ghost">Sair</button></form></nav>`
 	}

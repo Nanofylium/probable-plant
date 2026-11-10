@@ -1,0 +1,158 @@
+<!doctype html>
+<!--
+  Revista do Bairro: o Nepenthes como CMS, com tema escrito à mão.
+
+  Quem programa escreve só este arquivo (o tema). Quem cuida do site, sem
+  saber código, entra em /_admin e:
+    - escreve, edita, publica ou deixa em rascunho os artigos;
+    - cria páginas como "Sobre" e "Contato", que entram sozinhas no menu;
+    - troca os textos e a imagem marcados com editavel="...", no painel ou
+      direto na página (botão "Editar textos", que aparece só para quem está logado).
+
+  Rode com:  nep dev exemplos/revista/site.nep.html
+-->
+<nep-config movimento="suave" lang="pt-BR">
+
+<!-- Tipos de conteúdo: os campos são um formulário comum, com as mesmas regras. -->
+<conteudo nome="artigos" titulo="Artigos" item="artigo">
+  <label>Título <input name="titulo" required maxlength="120"></label>
+  <label>Categoria
+    <select name="categoria" required>
+      <option value="">Escolha…</option>
+      <option>Notícias</option><option>Cultura</option><option>Comércio local</option><option>Receitas</option>
+    </select>
+  </label>
+  <label>Resumo (aparece na capa e na prévia do WhatsApp) <textarea name="resumo" maxlength="300" rows="2"></textarea></label>
+  <label>Texto <textarea name="corpo" data-editor required maxlength="40000"></textarea></label>
+  <label>Imagem de capa <input type="file" name="capa" accept="image/*" data-max-mb="5" data-publico></label>
+  <label>Autor <input name="autor" maxlength="60"></label>
+</conteudo>
+
+<conteudo nome="paginas" titulo="Páginas" item="página">
+  <label>Título <input name="titulo" required maxlength="80"></label>
+  <label>Texto <textarea name="corpo" data-editor maxlength="40000"></textarea></label>
+  <label>Posição no menu (menor vem antes) <input type="number" name="ordem" min="0" max="99" value="10"></label>
+</conteudo>
+
+<nep>
+  let menu = db.all("paginas") |> sort_by("ordem")
+  fn quando(d) do return date(d, "d/m/Y") end
+</nep>
+
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }} · Revista do Bairro</title>
+  <style>
+    :root { --tinta: #1c1b22; --papel: #fbfaf7; --cor: #b8432f; --linha: #e6e1d8; --suave: #6b6760; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--papel); color: var(--tinta); font: 18px/1.65 Georgia, "Times New Roman", serif; }
+    a { color: var(--cor); }
+    .faixa { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+    header { border-bottom: 3px double var(--tinta); }
+    header .faixa { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; padding-top: 22px; padding-bottom: 12px; }
+    .marca { font: 800 2rem/1 Georgia, serif; letter-spacing: -.02em; color: var(--tinta); text-decoration: none; }
+    nav { font: 600 .95rem system-ui, sans-serif; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+    nav a { color: var(--tinta); text-decoration: none; }
+    .capa { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: center; padding: 36px 0 28px; border-bottom: 1px solid var(--linha); }
+    .capa h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.08; margin: 0 0 12px; }
+    .capa p { color: var(--suave); font-size: 1.15rem; margin: 0; }
+    .capa img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 4px; }
+    .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 28px; padding: 28px 0; }
+    .card { text-decoration: none; color: inherit; display: block; }
+    .card img { width: 100%; aspect-ratio: 16/10; object-fit: cover; border-radius: 4px; background: var(--linha); }
+    .card h2 { font-size: 1.35rem; line-height: 1.2; margin: 10px 0 6px; }
+    .card p { margin: 0; color: var(--suave); font-size: 1rem; }
+    .chapeu { font: 700 .75rem system-ui, sans-serif; text-transform: uppercase; letter-spacing: .08em; color: var(--cor); }
+    .meta { font: .85rem system-ui, sans-serif; color: var(--suave); }
+    article.texto { max-width: 700px; margin: 0 auto; padding: 36px 0; }
+    article.texto h1 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); line-height: 1.1; margin: 8px 0 10px; }
+    article.texto .lead { font-size: 1.2rem; color: var(--suave); }
+    article.texto img { max-width: 100%; border-radius: 4px; }
+    article.texto blockquote { border-left: 3px solid var(--cor); margin: 1.2em 0; padding: .2em 1em; color: var(--suave); }
+    .rascunho { background: #fff3cd; border: 1px solid #f0d78a; padding: 8px 12px; font: .9rem system-ui, sans-serif; border-radius: 6px; }
+    .sobre { border-top: 1px solid var(--linha); padding: 24px 0 8px; color: var(--suave); }
+    footer { border-top: 3px double var(--tinta); margin-top: 32px; padding: 18px 0 40px; font: .9rem system-ui, sans-serif; color: var(--suave); }
+    @media (max-width: 720px) { .capa { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="faixa">
+      <a class="marca" href="{{ url('/') }}" editavel="marca">Revista do Bairro</a>
+      <nav>
+        <a href="{{ url('/') }}">Início</a>
+        <each p in="menu"><a href="{{ url('/p/' + p.slug) }}">{{ p.titulo }}</a></each>
+      </nav>
+    </div>
+  </header>
+
+  <main class="faixa">
+    <page route="/" title="Início" description="Notícias, cultura e comércio do nosso bairro.">
+      <nep>
+        let artigos = db.all("artigos")
+        let destaque = first(artigos)
+      </nep>
+      <section class="capa">
+        <div>
+          <span class="chapeu" editavel="capa.chapeu">Edição de hoje</span>
+          <h1 editavel="capa.titulo">O que está acontecendo perto de você</h1>
+          <p editavel="capa.subtitulo">Histórias do bairro contadas por quem mora nele.</p>
+        </div>
+        <img editavel="capa.imagem" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23e9e2d4'/%3E%3Crect y='190' width='400' height='110' fill='%23d8cdb8'/%3E%3Crect x='40' y='90' width='90' height='110' fill='%23b8432f'/%3E%3Crect x='150' y='60' width='110' height='140' fill='%231c1b22'/%3E%3Crect x='280' y='110' width='80' height='90' fill='%236b6760'/%3E%3Ccircle cx='330' cy='55' r='22' fill='%23f2c14e'/%3E%3C/svg%3E" alt="Ilustração de uma rua do bairro">
+      </section>
+
+      <section class="grade">
+        <each a in="artigos">
+          <a class="card" href="{{ url('/artigos/' + a.slug) }}">
+            <if test="a.capa"><img src="{{ a.capa.url }}" alt="" loading="lazy"></if>
+            <div class="chapeu">{{ a.categoria }}<if test="a.publicado == false"> · rascunho</if></div>
+            <h2>{{ a.titulo }}</h2>
+            <p>{{ default(a.resumo, "") |> truncate(140) }}</p>
+          </a>
+        <else>
+          <p class="meta">Nenhum artigo publicado ainda. Entre no painel para escrever o primeiro.</p>
+        </each>
+      </section>
+
+      <div class="sobre" editavel="home.sobre">
+        <p>A Revista do Bairro é feita por vizinhos, para vizinhos. Quer sugerir uma pauta? Fale com a gente.</p>
+      </div>
+    </page>
+
+    <!-- Página de cada artigo: `item` chega pronto; título, descrição, imagem, 404 e sitemap são automáticos. -->
+    <page route="/artigos/:slug" conteudo="artigos">
+      <article class="texto">
+        <if test="not item.publicado and admin"><p class="rascunho">Rascunho: só você, no painel, está vendo.</p></if>
+        <div class="chapeu">{{ item.categoria }}</div>
+        <h1>{{ item.titulo }}</h1>
+        <if test="item.resumo"><p class="lead">{{ item.resumo }}</p></if>
+        <p class="meta">{{ quando(item.created_at) }}<if test="item.autor"> · por {{ item.autor }}</if></p>
+        <if test="item.capa"><img src="{{ item.capa.url }}" alt=""></if>
+        {{ markdown(item.corpo) }}
+        <p><a href="{{ url('/') }}">← Voltar para a capa</a></p>
+      </article>
+    </page>
+
+    <!-- Páginas livres criadas no painel (Sobre, Contato…). -->
+    <page route="/p/:slug" conteudo="paginas">
+      <article class="texto">
+        <h1>{{ item.titulo }}</h1>
+        {{ markdown(item.corpo) }}
+      </article>
+    </page>
+
+    <page route="404" title="Não encontrado">
+      <article class="texto">
+        <h1>Essa página não existe.</h1>
+        <p><a href="{{ url('/') }}">Voltar para a capa</a></p>
+      </article>
+    </page>
+  </main>
+
+  <footer>
+    <div class="faixa" editavel="rodape">Revista do Bairro · Feito com Nepenthes</div>
+  </footer>
+</body>
+</html>

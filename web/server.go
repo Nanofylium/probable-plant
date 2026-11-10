@@ -29,6 +29,9 @@ var movimentoJS []byte
 //go:embed assets/vivo.js
 var vivoJS []byte
 
+//go:embed assets/editar.js
+var editarJS []byte
+
 // Options configura o servidor.
 type Options struct {
 	SiteFile string // o .nep.html
@@ -206,6 +209,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	case "/_nep/vivo.js":
 		asset(w, r, vivoJS)
+		return
+	case "/_nep/editar.js":
+		asset(w, r, editarJS)
 		return
 	case "/_nep/versao":
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -526,6 +532,15 @@ func (s *Server) inject(rq *request, out string) string {
 			sse = "1"
 		}
 		tags = append(tags, `<script src="`+html.EscapeString(s.opt.Base)+`/_nep/vivo.js" defer data-base="`+html.EscapeString(s.opt.Base)+`" data-sse="`+sse+`"></script>`)
+	}
+	var tail string
+	if rq.sess != nil && rq.sess.isAdmin() && strings.Contains(out, "data-nep-ed=") {
+		// quem está no painel edita os textos ali mesmo (rq.sess.CSRF só vai para o próprio admin)
+		tail = `<script src="` + html.EscapeString(s.opt.Base) + `/_nep/editar.js" defer data-base="` + html.EscapeString(s.opt.Base) + `" data-csrf="` + html.EscapeString(rq.sess.CSRF) + `"></script>`
+		rq.w.Header().Set("Cache-Control", "private, no-store")
+	}
+	if tail != "" {
+		tags = append(tags, tail)
 	}
 	if len(tags) == 0 {
 		return out

@@ -35,7 +35,7 @@
       "patterns": [{ "include": "source.nep" }]
     },
     "nep-tag": {
-      "begin": "(</?)(page|pagina|each|cada|if|se|else|senao|live|vivo|data|nep-config)\\b",
+      "begin": "(</?)(page|pagina|each|cada|if|se|else|senao|live|vivo|data|nep-config|conteudo|content)\\b",
       "end": "(/?>)",
       "beginCaptures": { "1": { "name": "punctuation.definition.tag.begin.html" }, "2": { "name": "keyword.control.tag.nep.html" } },
       "endCaptures": { "1": { "name": "punctuation.definition.tag.end.html" } },

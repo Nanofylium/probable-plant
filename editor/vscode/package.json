@@ -2,7 +2,7 @@
   "name": "nepenthes",
   "displayName": "Nepenthes",
   "description": "Cores e atalhos para a linguagem Nepenthes (.nep) e para sites .nep.html",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "nanofylium",
   "license": "SEE LICENSE IN README.md",
   "repository": { "type": "git", "url": "https://github.com/Nanofylium/probable-plant" },
