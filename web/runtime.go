@@ -223,8 +223,9 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	def("nl2br", func(a []lang.Value) (lang.Value, error) {
 		return lang.HTML(strings.ReplaceAll(html.EscapeString(lang.Str(argv(a, 0))), "\n", "<br>\n")), nil
 	})
-	def("markdown", func(a []lang.Value) (lang.Value, error) { return lang.HTML(Markdown(lang.Str(argv(a, 0)))), nil })
-	def("visual", func(a []lang.Value) (lang.Value, error) { return Visual(lang.Str(argv(a, 0))), nil })
+	// campo vazio (nil) não vira o texto "nil" na página
+	def("markdown", func(a []lang.Value) (lang.Value, error) { return lang.HTML(Markdown(strOrEmpty(argv(a, 0)))), nil })
+	def("visual", func(a []lang.Value) (lang.Value, error) { return Visual(strOrEmpty(argv(a, 0))), nil })
 	// textos editáveis (editavel="chave")
 	def("__edhas", func(a []lang.Value) (lang.Value, error) {
 		_, ok := s.edGet(lang.Str(argv(a, 0)))
@@ -923,4 +924,12 @@ func refill(h string, old map[string][]string) string {
 		return m[1] + opts + m[4]
 	})
 	return h
+}
+
+// strOrEmpty: como lang.Str, mas nil vira "" (campo opcional que ficou vazio).
+func strOrEmpty(v lang.Value) string {
+	if v == nil {
+		return ""
+	}
+	return lang.Str(v)
 }

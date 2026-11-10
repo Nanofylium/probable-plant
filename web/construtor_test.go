@@ -107,3 +107,14 @@ func writeSite(t *testing.T, s *Server, src string) {
 	later := time.Now().Add(2 * time.Second)
 	os.Chtimes(s.file, later, later)
 }
+
+func TestCampoVazioNaoViraNil(t *testing.T) {
+	c := newTCMenu(t)
+	srv := c.srv.Config.Handler.(*Server)
+	writeSite(t, srv, `<!doctype html><html><head></head><body>
+<nep>let x = {}</nep>
+<page route="/" title="I">[{{ visual(x.nada) }}|{{ markdown(x.nada) }}]</page>
+</body></html>`)
+	_, body, _ := anon(c).get("/")
+	must(t, body, `[|]`)
+}
