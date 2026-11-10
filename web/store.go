@@ -365,7 +365,11 @@ func (s *Store) Delete(col string, id int64) (bool, error) {
 	if !ok || r.Col != col {
 		return false, nil
 	}
-	return true, s.write(&logLine{Op: "del", Col: col, ID: id})
+	if err := s.write(&logLine{Op: "del", Col: col, ID: id}); err != nil {
+		return false, err
+	}
+	s.removeFiles(filesIn(r.Data)) // o arquivo enviado sai junto com o registro (LGPD)
+	return true, nil
 }
 
 func (s *Store) Count(col string) int {

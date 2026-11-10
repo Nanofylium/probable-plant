@@ -52,3 +52,19 @@ jobs:
         with:
           name: ${{ matrix.nome }}
           path: ${{ matrix.nome }}
+
+  extensao-vscode:
+    needs: testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Empacotar a extensão
+        working-directory: editor/vscode
+        run: npx --yes @vscode/vsce@3 package --skip-license -o nepenthes.vsix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nepenthes-vscode
+          path: editor/vscode/nepenthes.vsix

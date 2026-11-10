@@ -216,6 +216,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.events(w, r)
 		return
 	}
+	if strings.HasPrefix(rq.path, "/_nep/arquivo/") {
+		s.serveFile(w, r, strings.TrimPrefix(rq.path, "/_nep/arquivo/"))
+		return
+	}
 	if s.static(w, r, rq.path) {
 		return
 	}
@@ -234,6 +238,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rq.site = site
+	if rq.r.Method == "GET" || rq.r.Method == "HEAD" {
+		switch rq.path {
+		case "/sitemap.xml":
+			if !site.hasRoute(rq.path) {
+				s.sitemap(rq)
+				return
+			}
+		case "/robots.txt":
+			if !site.hasRoute(rq.path) {
+				s.robots(rq)
+				return
+			}
+		}
+	}
 	if err := s.route(rq); err != nil {
 		s.fail(rq, err)
 	}
@@ -445,6 +463,9 @@ func (s *Server) renderPage(rq *request, status int, params []string) error {
 	}
 
 	out = s.inject(rq, out)
+	if status == http.StatusOK && s.statsOn(rq.site) {
+		s.countVisit(rq)
+	}
 	rq.saveSession()
 	rq.w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	rq.w.WriteHeader(status)
@@ -483,7 +504,7 @@ func (s *Server) handleHalt(rq *request, err error, status int) error {
 
 // inject acrescenta os scripts de movimento e de regiões vivas.
 func (s *Server) inject(rq *request, out string) string {
-	var tags []string
+	tags := s.seoTags(rq, out)
 	cfg := rq.site.Config
 	mv := strings.ToLower(strings.TrimSpace(cfg["movimento"]))
 	if mv != "" && mv != "false" && mv != "0" && mv != "nao" && mv != "não" {

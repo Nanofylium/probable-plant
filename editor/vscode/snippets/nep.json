@@ -1,0 +1,7 @@
+{
+  "Função": { "prefix": "fn", "body": ["fn ${1:nome}(${2:args}) do", "\t$0", "end"] },
+  "Se": { "prefix": "if", "body": ["if ${1:condição} do", "\t$0", "end"] },
+  "Para cada": { "prefix": "for", "body": ["for ${1:item} in ${2:lista} do", "\t$0", "end"] },
+  "Tentar": { "prefix": "try", "body": ["try do", "\t$1", "catch e do", "\tprint(e.message)", "end"] },
+  "Texto com valores": { "prefix": "tx", "body": ["`${1:Olá}, {${2:nome}}!`"] }
+}

@@ -1,0 +1,10 @@
+{
+  "Página": { "prefix": "page", "body": ["<page route=\"/${1:caminho}\" title=\"${2:Título}\">", "\t$0", "</page>"] },
+  "Código": { "prefix": "nep", "body": ["<nep>", "\t$0", "</nep>"] },
+  "Repetir": { "prefix": "each", "body": ["<each ${1:item} in=\"${2:lista}\">", "\t$0", "<else>", "\t<p>Nada por aqui ainda.</p>", "</each>"] },
+  "Condição": { "prefix": "if", "body": ["<if test=\"${1:condição}\">", "\t$0", "</if>"] },
+  "Formulário que salva": { "prefix": "form", "body": ["<form save=\"${1:contatos}\" success=\"${2:Recebido!}\">", "\t<label>Nome <input name=\"nome\" required maxlength=\"80\"></label>", "\t<label>E-mail <input name=\"email\" type=\"email\" required></label>", "\t$0", "\t<button>Enviar</button>", "</form>"] },
+  "Região ao vivo": { "prefix": "live", "body": ["<live>", "\t$0", "</live>"] },
+  "API JSON": { "prefix": "api", "body": ["<api route=\"/api/${1:itens}\">", "\treturn ${2:db.all(\"itens\")}", "</api>"] },
+  "Valor": { "prefix": "{{", "body": ["{{ ${1:valor} }}"] }
+}

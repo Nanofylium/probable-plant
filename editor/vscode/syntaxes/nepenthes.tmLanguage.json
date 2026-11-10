@@ -1,0 +1,79 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Nepenthes",
+  "scopeName": "source.nep",
+  "patterns": [{ "include": "#code" }],
+  "repository": {
+    "code": {
+      "patterns": [
+        { "include": "#comment" },
+        { "include": "#template" },
+        { "include": "#string" },
+        { "include": "#number" },
+        { "include": "#fndef" },
+        { "include": "#keyword" },
+        { "include": "#constant" },
+        { "include": "#builtin" },
+        { "include": "#call" },
+        { "include": "#operator" }
+      ]
+    },
+    "comment": {
+      "patterns": [
+        { "name": "comment.line.number-sign.nep", "match": "#.*$" },
+        { "name": "comment.line.double-dash.nep", "match": "--.*$" }
+      ]
+    },
+    "string": {
+      "patterns": [
+        { "name": "string.quoted.double.nep", "begin": "\"", "end": "\"", "patterns": [{ "include": "#escape" }] },
+        { "name": "string.quoted.single.nep", "begin": "'", "end": "'", "patterns": [{ "include": "#escape" }] }
+      ]
+    },
+    "template": {
+      "name": "string.interpolated.nep",
+      "begin": "`",
+      "end": "`",
+      "patterns": [
+        { "include": "#escape" },
+        { "name": "constant.character.escape.nep", "match": "\\{\\{|\\}\\}" },
+        {
+          "name": "meta.embedded.interpolation.nep",
+          "begin": "\\{",
+          "end": "\\}",
+          "beginCaptures": { "0": { "name": "punctuation.section.interpolation.begin.nep" } },
+          "endCaptures": { "0": { "name": "punctuation.section.interpolation.end.nep" } },
+          "patterns": [{ "include": "#code" }]
+        }
+      ]
+    },
+    "escape": { "name": "constant.character.escape.nep", "match": "\\\\(u[0-9a-fA-F]{4}|.)" },
+    "number": { "name": "constant.numeric.nep", "match": "\\b\\d[\\d_]*(\\.\\d+)?([eE][+-]?\\d+)?\\b" },
+    "fndef": {
+      "match": "\\b(fn)\\s+([\\p{L}_][\\p{L}\\p{N}_]*)",
+      "captures": { "1": { "name": "storage.type.function.nep" }, "2": { "name": "entity.name.function.nep" } }
+    },
+    "keyword": {
+      "patterns": [
+        { "name": "keyword.control.nep", "match": "\\b(if|elif|else|for|in|while|return|break|continue|try|catch|do|end|import|as)\\b" },
+        { "name": "storage.type.nep", "match": "\\b(let|fn)\\b" },
+        { "name": "keyword.operator.word.nep", "match": "\\b(and|or|not)\\b" }
+      ]
+    },
+    "constant": { "name": "constant.language.nep", "match": "\\b(true|false|nil)\\b" },
+    "builtin": {
+      "name": "support.function.builtin.nep",
+      "match": "\\b(print|input|type|str|repr|int|float|bool|len|copy|default|error|assert|upper|lower|trim|capitalize|replace|split|join|starts_with|ends_with|contains|find_index|substr|truncate|pad|slug|format|round|floor|ceil|abs|money|number|sum|avg|min|max|summarize|range|map|filter|find|reduce|any|all|sort|sort_by|group_by|count_by|where|pluck|take|skip|slice|first|last|reverse|push|pop|insert|remove|unique|flatten|zip|enumerate|keys|values|has|merge|now|date|load_csv|raw|nl2br|json|urlencode|url|not_found|redirect|abort|recusar|reject)\\b(?=\\s*\\()"
+    },
+    "call": {
+      "match": "([\\p{L}_][\\p{L}\\p{N}_]*)(?=\\s*\\()",
+      "captures": { "1": { "name": "entity.name.function.call.nep" } }
+    },
+    "operator": {
+      "patterns": [
+        { "name": "keyword.operator.pipe.nep", "match": "\\|>" },
+        { "name": "keyword.operator.nep", "match": "==|!=|<=|>=|\\+=|-=|\\*=|/=|//|\\.\\.\\.|[-+*/%<>=]" }
+      ]
+    }
+  }
+}
