@@ -1,0 +1,17 @@
+11 13 21 23 31 33 
+k	3
+n	4
+10 7 4 1 
+1 1.5 2 
+1 2 3 
+vazio
+9223372036854775805 9223372036854775806 9223372036854775807 
+1 2 3 
+1,2,3,4
+w	5
+neg	zero	pos
+a	false	zero é verdadeiro	vazio também	nil
+true	false	2
+soma	15
+cnt	3
+a	b

@@ -1,0 +1,20 @@
+false	simples
+false	sem nível
+false	nil
+table
+false	42
+false	erros.lua:7: com posição
+false	nível 2
+4	true	1	2	3
+false	tratado: erros.lua:12: x
+true	7
+false
+false
+false
+false
+afirmação	assertion failed!
+1	v	2	3
+false	false	nil
+true	false	e
+false	no índice
+ErroCustom

@@ -2,6 +2,7 @@ package lang
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -55,12 +56,39 @@ const (
 	OpTry                        // off
 	OpEndTry                     //
 	OpImport                     // k (nome/caminho), 1 byte isPath
+
+	// usados pelo Lua (e, alguns, pelo Nepenthes)
+	OpPow      //
+	OpConcat   //
+	OpLen      //
+	OpBand     //
+	OpBor      //
+	OpBxor     //
+	OpShl      //
+	OpShr      //
+	OpBnot     //
+	OpSelf     // k        obj -> metodo obj
+	OpCallM    // argc     como CALL, mas o último argumento pode ser vários valores
+	OpFirst    //          vários valores -> só o primeiro
+	OpSpread   // n (1)    um valor (talvez vários) -> exatamente n valores
+	OpPack     // n (1)    n valores (o último talvez vários) -> um pacote de valores
+	OpNewTable //
+	OpTSet     //          t k v -> t
+	OpTAppend  // i        t v -> t   (t[i] = v)
+	OpTAppendM // i        t vários -> t
+	OpForPrep  // slot (1), off
+	OpForLoop  // slot (1), off (para trás)
+	OpForGen   // slot (1), nvars (1), off
+	OpSetTop   // n (1)    descarta locais até sobrar n (goto)
+	OpTailCall // argc (1), multi (1)
 )
 
 var opNames = []string{"CONST", "NIL", "TRUE", "FALSE", "POP", "DUP", "DUP2", "GET_LOCAL", "SET_LOCAL", "GET_UPVAL", "SET_UPVAL",
 	"GET_GLOBAL", "SET_GLOBAL", "DEF_GLOBAL", "GET_FIELD", "SET_FIELD", "GET_INDEX", "SET_INDEX", "ADD", "SUB", "MUL", "DIV", "IDIV",
 	"MOD", "NEG", "NOT", "EQ", "NE", "LT", "GT", "LE", "GE", "JUMP", "JUMP_IF_FALSE", "JUMP_IF_TRUE", "POP_JUMP_IF_FALSE", "LOOP",
-	"CALL", "CLOSURE", "CLOSE_UPVAL", "RETURN", "LIST", "TABLE", "ITER_PREP", "ITER_NEXT", "TRY", "END_TRY", "IMPORT"}
+	"CALL", "CLOSURE", "CLOSE_UPVAL", "RETURN", "LIST", "TABLE", "ITER_PREP", "ITER_NEXT", "TRY", "END_TRY", "IMPORT",
+	"POW", "CONCAT", "LEN", "BAND", "BOR", "BXOR", "SHL", "SHR", "BNOT", "SELF", "CALL_M", "FIRST", "SPREAD", "PACK",
+	"NEW_TABLE", "T_SET", "T_APPEND", "T_APPEND_M", "FOR_PREP", "FOR_LOOP", "FOR_GEN", "SET_TOP", "TAIL_CALL"}
 
 // Proto é uma função compilada.
 type Proto struct {
@@ -74,6 +102,8 @@ type Proto struct {
 	Module    *Module
 	File      string
 	IsTop     bool
+	Lua       bool   // compilada de um arquivo .lua: segue as regras do Lua
+	Env       *Table // variáveis globais do Lua (_ENV)
 }
 
 type local struct {
@@ -106,6 +136,8 @@ type compiler struct {
 	tryDepth  int
 	line      int
 	file      string
+	lua       bool
+	lblocks   []*luaBlock
 }
 
 type compileBail struct{ err error }
@@ -149,6 +181,12 @@ func (c *compiler) emit16(op byte, v int) {
 }
 func (c *compiler) konst(v Value) int {
 	for i, k := range c.proto.Consts {
+		if f, ok := v.(float64); ok {
+			if g, ok := k.(float64); ok && math.Float64bits(f) == math.Float64bits(g) {
+				return i
+			}
+			continue
+		}
 		if k == v {
 			if _, ok := k.(string); ok || isNum(k) {
 				if TypeName(k) == TypeName(v) {
@@ -205,7 +243,7 @@ func (c *compiler) popTo(d int) {
 
 func (c *compiler) declare(name string, line int) int {
 	for i := len(c.locals) - 1; i >= 0 && c.locals[i].depth == c.depth; i-- {
-		if c.locals[i].name == name && name != "" && name[0] != '(' {
+		if !c.lua && c.locals[i].name == name && name != "" && name[0] != '(' {
 			c.fail(line, "a variável '"+name+"' já foi declarada neste bloco")
 		}
 	}
@@ -550,6 +588,18 @@ func (c *compiler) expr(e Expr) {
 		c.expr(e.Obj)
 		c.line = e.Line
 		c.emit16(OpGetField, c.konst(e.Name))
+	case *MethodExpr:
+		c.expr(e.Obj)
+		c.line = e.Line
+		c.emit16(OpSelf, c.konst(e.Name))
+		if len(e.Args) > 254 {
+			c.fail(e.Line, "argumentos demais (máximo 254)")
+		}
+		for _, a := range e.Args {
+			c.expr(a)
+		}
+		c.line = e.Line
+		c.emit(OpCall, byte(len(e.Args)+1))
 	case *IndexExpr:
 		c.expr(e.Obj)
 		c.expr(e.Idx)
@@ -614,6 +664,9 @@ func Disassemble(p *Proto) string {
 		name := p.Name
 		if name == "" {
 			name = "<principal>"
+			if !p.IsTop {
+				name = "<anônima>"
+			}
 		}
 		pad := strings.Repeat("  ", depth)
 		fmt.Fprintf(&b, "%s== %s (aridade %d, upvalues %d) ==\n", pad, name, p.Arity, p.NUpvalues)
@@ -623,10 +676,10 @@ func Disassemble(p *Proto) string {
 			fmt.Fprintf(&b, "%s%04d  L%-4d %-18s", pad, i, p.Lines[i], opNames[op])
 			u16 := func(at int) int { return int(code[at])<<8 | int(code[at+1]) }
 			switch op {
-			case OpConst, OpGetGlobal, OpSetGlobal, OpDefGlobal, OpGetField, OpSetField:
+			case OpConst, OpGetGlobal, OpSetGlobal, OpDefGlobal, OpGetField, OpSetField, OpSelf:
 				fmt.Fprintf(&b, " %d (%s)", u16(i+1), Repr(p.Consts[u16(i+1)]))
 				i += 3
-			case OpGetLocal, OpSetLocal, OpGetUpval, OpSetUpval, OpList, OpTable:
+			case OpGetLocal, OpSetLocal, OpGetUpval, OpSetUpval, OpList, OpTable, OpTAppend, OpTAppendM:
 				fmt.Fprintf(&b, " %d", u16(i+1))
 				i += 3
 			case OpJump, OpJumpIfFalse, OpJumpIfTrue, OpPopJumpIfFalse, OpTry:
@@ -635,9 +688,21 @@ func Disassemble(p *Proto) string {
 			case OpLoop:
 				fmt.Fprintf(&b, " -> %d", i+3-u16(i+1))
 				i += 3
-			case OpCall:
+			case OpCall, OpCallM, OpSpread, OpPack, OpSetTop:
 				fmt.Fprintf(&b, " %d", code[i+1])
 				i += 2
+			case OpTailCall:
+				fmt.Fprintf(&b, " %d", code[i+1])
+				i += 3
+			case OpForPrep:
+				fmt.Fprintf(&b, " slot %d -> %d", code[i+1], i+4+u16(i+2))
+				i += 4
+			case OpForLoop:
+				fmt.Fprintf(&b, " slot %d -> %d", code[i+1], i+4-u16(i+2))
+				i += 4
+			case OpForGen:
+				fmt.Fprintf(&b, " slot %d vars %d -> %d", code[i+1], code[i+2], i+5+u16(i+3))
+				i += 5
 			case OpIterNext:
 				fmt.Fprintf(&b, " slot %d vars %d -> %d", code[i+1], code[i+2], i+5+u16(i+3))
 				i += 5

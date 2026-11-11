@@ -35,6 +35,13 @@ type (
 		Name string
 		Line int
 	}
+	// MethodExpr é obj:metodo(args): chama metodo passando obj como primeiro argumento.
+	MethodExpr struct {
+		Obj  Expr
+		Name string
+		Args []Expr
+		Line int
+	}
 	IndexExpr struct {
 		Obj, Idx Expr
 		Line     int
@@ -60,6 +67,7 @@ func (*LogicalExpr) exprNode() {}
 func (*UnaryExpr) exprNode()   {}
 func (*CallExpr) exprNode()    {}
 func (*GetExpr) exprNode()     {}
+func (*MethodExpr) exprNode()  {}
 func (*IndexExpr) exprNode()   {}
 func (*ListExpr) exprNode()    {}
 func (*TableExpr) exprNode()   {}
@@ -395,6 +403,9 @@ func (ps *parser) expr() Expr {
 		if c, ok := r.(*CallExpr); ok {
 			c.Args = append([]Expr{l}, c.Args...)
 			l = c
+		} else if m, ok := r.(*MethodExpr); ok {
+			m.Args = append([]Expr{l}, m.Args...)
+			l = m
 		} else {
 			l = &CallExpr{Fn: r, Args: []Expr{l}, Line: line}
 		}
@@ -477,6 +488,19 @@ func (ps *parser) postfix() Expr {
 				ps.fail(nt, "esperava um nome de campo depois de '.'")
 			}
 			e = &GetExpr{Obj: e, Name: nt.Lit, Line: nt.Line}
+		case t.Is(TOp, ":") && ps.peekN(1).Kind == TIdent && ps.peekN(2).Is(TOp, "(") && ps.peekN(2).Line == ps.peekN(1).Line:
+			ps.next()
+			name := ps.next()
+			ps.next()
+			var args []Expr
+			for !ps.isOp(")") {
+				args = append(args, ps.expr())
+				if !ps.acceptOp(",") {
+					break
+				}
+			}
+			ps.expectOp(")", " para fechar a chamada")
+			e = &MethodExpr{Obj: e, Name: name.Lit, Args: args, Line: name.Line}
 		case t.Is(TOp, "[") && t.Line == prev:
 			ps.next()
 			idx := ps.expr()
@@ -562,7 +586,7 @@ func baseName(p string) string {
 			break
 		}
 	}
-	if len(p) > 4 && p[len(p)-4:] == ".nep" {
+	if len(p) > 4 && (p[len(p)-4:] == ".nep" || p[len(p)-4:] == ".lua") {
 		p = p[:len(p)-4]
 	}
 	return p

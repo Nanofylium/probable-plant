@@ -1,0 +1,21 @@
+suspended
+início	1	2
+true	3
+suspended
+recebeu	10
+true	20
+recebeu	x	y
+true	fim	99
+dead
+false
+soma	15
+false	corrotinas.lua:26: falhou
+false	table	7
+false
+thread	false	true	running
+a,b,c
+3	depois
+1 2 3 4 5
+true	dead
+dentro do pcall
+true 42

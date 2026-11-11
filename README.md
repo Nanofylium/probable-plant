@@ -138,17 +138,23 @@ A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as t
 ## O que tem nesta pasta
 
 - `SPEC.md`: a especificação da linguagem e do formato `.nep.html`.
-- `lang/`: a implementação de referência em Go: lexer, parser, compilador para bytecode, máquina virtual e biblioteca padrão. `lang/std/cerebro.nep` é um módulo escrito na própria Nepenthes.
+- `lang/`: a implementação de referência em Go: lexer, parser, compilador para bytecode, máquina virtual e biblioteca padrão. `lang/std/cerebro.nep` é um módulo escrito na própria Nepenthes. Os arquivos `lang/lua_*.go` leem e compilam Lua 5.4 para a mesma máquina virtual.
 - `web/`: o lado site: leitura do `.nep.html` e tradução para Nepenthes, servidor HTTP, banco de dados embutido, sessões, formulários, painel e os scripts `movimento.js`, `vivo.js` e `editar.js`.
 - `cmd/nep/`: o comando `nep`.
-- `exemplos/`: programas `.nep` e três sites completos: `exemplos/padaria` (loja com encomendas), `exemplos/mural` (mural ao vivo com curtidas e API) e `exemplos/revista` (revista com artigos e páginas gerenciados pelo painel).
+- `exemplos/`: programas `.nep` e quatro sites completos: `exemplos/padaria` (loja com encomendas), `exemplos/mural` (mural ao vivo com curtidas e API), `exemplos/revista` (revista com artigos e páginas gerenciados pelo painel) e `exemplos/ascidia` (tema de blog no estilo WordPress: posts, categorias, tags, arquivo por mês e autor, post fixado, modelos de página, barra lateral com widgets, newsletter, paginação, posts relacionados).
 - `hospedagem/.htaccess`: configuração para hospedagem compartilhada.
 - `editor/vscode`: extensão do VS Code com as cores da sintaxe e atalhos (`.vsix` gerado pela CI).
-- `testdata/`: programas com a saída esperada, usados nos testes automáticos.
+- `testdata/`: programas com a saída esperada, usados nos testes automáticos. Em `testdata/lua`, a saída esperada foi gerada pelo Lua 5.4 oficial.
+- `exemplos/lua/`: programas em Lua que rodam no `nep`.
+- `LICENCA-LUA.txt`: crédito e licença MIT do Lua.
 
 ## Desempenho
 
 Na mesma máquina, `fib(30)` recursivo leva cerca de 0,2 s, na mesma faixa do Python 3. Uma página típica de site é gerada em poucos milissegundos.
+
+## Lua 5.4 dentro do Nepenthes
+
+`nep programa.lua` roda Lua 5.4 na mesma máquina virtual do Nepenthes, com a biblioteca padrão do Lua (string com padrões, table, math, os, io, utf8, coroutine, require). No Nepenthes, `import "util.lua" as util` usa código Lua direto; no Lua, a tabela `nep` dá acesso às funções do Nepenthes. O Nepenthes também ganhou do Lua as metatabelas (`setmetatable`, classes com `obj:metodo()`), as corrotinas e os padrões de texto (`match`, `gmatch`, `gsub`). Exemplo: `nep exemplos/lua/jogo_da_velha.lua`. Implementação própria em Go, sem código C do Lua; crédito MIT em `LICENCA-LUA.txt`. Detalhes na SPEC, seção 11.
 
 ## Nível WordPress
 

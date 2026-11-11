@@ -1,0 +1,30 @@
+7	14	14	nil	nil
+123	abc	7	12
+Ol;mundo;abc;
+a->1 b->2 
+Olá, mundo! ### abc ###	6
+hell0 world	1
+<hello> <world>	2
+-h-e-l-l-o-	6
+Ana is 30	2
+A.B.C.	3
+abc	1
+ab-ab-ab	cba	abc	97	98	99
+Lua	el	llo	ello	hello	
+trim|	key	value
+5	(a(b)c)
+Hello World From Lua	4
+1 = x, 2 = y	2
+nil	2	nil	aaab	ab
+test	a/b/c	1,2,nil,3	1
+5	4	Hä€	228
+1:97 2:233 
+4	true
+nil	true	12	1.5		%%
+8	a
+b	long
+string	with ]] inside
+one two three	2
+<a><b><><c>
+3	nil	ll	o
+esq       |       dir|	  3.1
