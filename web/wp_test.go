@@ -256,3 +256,22 @@ func TestMidiaECopia(t *testing.T) {
 	// editor não baixa a cópia
 	_ = io.Discard
 }
+
+// Uma página "/:slug" (como as páginas do WordPress) não engole o feed, o
+// sitemap e o robots.txt automáticos; uma rota fixa com o mesmo nome, sim.
+func TestSlugNaRaizNaoEngoleFeed(t *testing.T) {
+	c, _ := newTCSite(t, strings.Replace(siteWP, `<page route="/busca"`,
+		`<page route="/:slug" title="Página"><p>pagina {{ params.slug }}</p></page><page route="/busca"`, 1))
+	for _, p := range []string{"/feed.xml", "/sitemap.xml", "/robots.txt"} {
+		_, body, _ := c.get(p)
+		if strings.Contains(body, "pagina ") {
+			t.Errorf("%s caiu na página /:slug: %s", p, body)
+		}
+	}
+	_, body, _ := c.get("/sobre")
+	must(t, body, "pagina sobre")
+
+	c2, _ := newTCSite(t, strings.Replace(siteWP, `<page route="/busca"`, `<page route="/robots.txt"><p>meu robots</p></page><page route="/busca"`, 1))
+	_, body, _ = c2.get("/robots.txt")
+	must(t, body, "meu robots")
+}

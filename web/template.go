@@ -1152,14 +1152,18 @@ func (s *Site) formOn(page, form int) bool {
 	return walk(s.root.children)
 }
 
+// hasRoute diz se o site escreveu uma rota fixa para path (como /feed.xml).
+// Rotas com partes variáveis (/:slug, /*) não contam: senão uma página
+// "/:slug" engoliria o feed, o sitemap e o robots.txt automáticos.
 func (s *Site) hasRoute(path string) bool {
+	fixed := func(route string) bool { return !strings.ContainsAny(route, ":*") }
 	for _, p := range s.Pages {
-		if p.re != nil && p.re.MatchString(path) {
+		if p.re != nil && fixed(p.Route) && p.re.MatchString(path) {
 			return true
 		}
 	}
 	for _, a := range s.APIs {
-		if a.re.MatchString(path) {
+		if fixed(a.Route) && a.re.MatchString(path) {
 			return true
 		}
 	}
