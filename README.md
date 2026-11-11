@@ -150,6 +150,10 @@ A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as t
 
 Na mesma máquina, `fib(30)` recursivo leva cerca de 0,2 s, na mesma faixa do Python 3. Uma página típica de site é gerada em poucos milissegundos.
 
+## Nível WordPress
+
+Todo site com `<conteudo>` ganha histórico de versões, lixeira, publicação agendada, biblioteca de mídia e cópia de segurança no painel. No tema, `{{ comentarios() }}` abre comentários com moderação, `buscar(termo)` faz a busca do site e `/feed.xml` sai sozinho. Detalhes na SPEC, seção 10.13.
+
 ## E-mail
 
 `<form save="pedidos" avisar="contato@empresa.com.br" confirmar="Recebemos!">` avisa o dono e responde para quem enviou; no código, `enviar_email({para:, assunto:, texto:, html:})`. Sai pelo SMTP configurado no painel ou pelo `sendmail` da hospedagem, sem configurar nada no cPanel. No computador, fica guardado em `data/emails/`. Detalhes na SPEC, seção 10.12.

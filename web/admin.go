@@ -123,7 +123,11 @@ func (s *Server) admin(rq *request) error {
 		c := r.PostForm.Get("c")
 		if post && ValidCol(c) {
 			id, _ := strconv.ParseInt(r.PostForm.Get("id"), 10, 64)
-			if _, err := s.Store.Delete(c, id); err != nil {
+			if st := a.site(); st != nil && st.Content(c) != nil { // conteúdo vai para a lixeira
+				if err := s.trash(c, id, a.who()); err != nil {
+					return err
+				}
+			} else if _, err := s.Store.Delete(c, id); err != nil {
 				return err
 			}
 		}
@@ -148,6 +152,16 @@ func (s *Server) admin(rq *request) error {
 		return a.usersPage(post)
 	case "/email":
 		return a.emailPage(post)
+	case "/conteudo/versao":
+		return a.restoreVersion()
+	case "/lixeira":
+		return a.trashPage(post)
+	case "/comentarios":
+		return a.commentsPage(post)
+	case "/midia":
+		return a.mediaPage(post)
+	case "/backup":
+		return a.backupPage(post)
 	case "/construtor/arquivo":
 		return a.uploadBuilder()
 	case "/":
@@ -176,7 +190,7 @@ func (a *adminPage) out(title, body string, nav bool) error {
 	if nav {
 		links := a.navCMS()
 		if a.rq.sess.isOwner() {
-			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a><a href="` + a.base + `/email">E-mail</a>`
+			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a><a href="` + a.base + `/email">E-mail</a><a href="` + a.base + `/backup">Cópia</a>`
 		}
 		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div>` + links +
 			`<a href="` + esc(a.s.opt.Base+"/") + `">Ver site</a></div>` +
@@ -325,7 +339,9 @@ func (a *adminPage) dash() error {
 		}
 		names := make([]string, 0, len(cols))
 		for n := range cols {
-			names = append(names, n)
+			if !strings.HasPrefix(n, "_") { // internas: versões, lixeira, comentários, mídia
+				names = append(names, n)
+			}
 		}
 		sort.Strings(names)
 		b := `<table><tr><th>Coleção</th><th>Registros</th><th></th></tr>`

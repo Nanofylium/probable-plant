@@ -11,11 +11,14 @@
     - reorganiza o menu (menu-editavel="principal");
     - monta faixas e páginas arrastando blocos no construtor visual
       (construtor="..." e <textarea data-construtor>), dentro do espaço que o tema reservou;
-    - e o dono cria logins de editores, que não veem os dados dos visitantes.
+    - e o dono cria logins de editores, que não veem os dados dos visitantes;
+    - agenda artigos (publicar em data e hora), volta versões antigas, restaura da lixeira,
+      modera comentários, guarda imagens na biblioteca de mídia e baixa cópias de segurança.
+  O site ganha sozinho: busca (buscar()), feed RSS em /feed.xml e sitemap.
 
   Rode com:  nep dev exemplos/revista/site.nep.html
 -->
-<nep-config movimento="suave" lang="pt-BR">
+<nep-config nome="Revista do Bairro" movimento="suave" lang="pt-BR">
 
 <!-- Tipos de conteúdo: os campos são um formulário comum, com as mesmas regras. -->
 <conteudo nome="artigos" titulo="Artigos" item="artigo">
@@ -76,6 +79,13 @@
     article.texto h1 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); line-height: 1.1; margin: 8px 0 10px; }
     article.texto .lead { font-size: 1.2rem; color: var(--suave); }
     article.texto img { max-width: 100%; border-radius: 4px; }
+    .nep-comentarios { border-top: 1px solid var(--linha); margin-top: 32px; padding-top: 8px; }
+    .nep-comentario { border-bottom: 1px solid var(--linha); padding: 6px 0; }
+    .nep-comentario time, .nep-comentar-nota { font: .8rem system-ui, sans-serif; color: var(--suave); }
+    .nep-comentar { display: grid; gap: 10px; font: .95rem system-ui, sans-serif; }
+    .nep-comentar label { display: grid; gap: 4px; }
+    .nep-comentar input, .nep-comentar textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--linha); border-radius: 6px; }
+    .nep-comentar button { justify-self: start; font: inherit; font-weight: 600; background: var(--cor); color: #fff; border: 0; border-radius: 6px; padding: 9px 16px; }
     article.texto blockquote { border-left: 3px solid var(--cor); margin: 1.2em 0; padding: .2em 1em; color: var(--suave); }
     .rascunho { background: #fff3cd; border: 1px solid #f0d78a; padding: 8px 12px; font: .9rem system-ui, sans-serif; border-radius: 6px; }
     .sobre { border-top: 1px solid var(--linha); padding: 24px 0 8px; color: var(--suave); }
@@ -90,6 +100,7 @@
       <nav menu-editavel="principal">
         <a href="{{ url('/') }}">Início</a>
         <each p in="menu"><a href="{{ url('/p/' + p.slug) }}">{{ p.titulo }}</a></each>
+        <a href="{{ url('/busca') }}">Buscar</a>
       </nav>
     </div>
   </header>
@@ -146,6 +157,7 @@
         <if test="item.capa"><img src="{{ item.capa.url }}" alt=""></if>
         {{ markdown(item.corpo) }}
         <p><a href="{{ url('/') }}">← Voltar para a capa</a></p>
+        {{ comentarios() }}
       </article>
     </page>
 
@@ -156,6 +168,21 @@
         {{ markdown(item.corpo) }}
       </article>
       {{ visual(item.visual) }}
+    </page>
+
+    <!-- Busca no site: acha sem acento e ignora rascunhos e agendados -->
+    <page route="/busca" title="Busca">
+      <article class="texto">
+        <h1>Buscar</h1>
+        <form method="get" action="{{ url('/busca') }}"><input name="q" value="{{ default(request.query.q, '') }}" placeholder="pão de queijo, feira…" style="font:inherit;padding:8px 10px;width:70%"> <button style="font:inherit">Buscar</button></form>
+        <if test="request.query.q">
+          <each r in="buscar(request.query.q)">
+            <p><a href="{{ r.url }}"><strong>{{ r.titulo }}</strong></a><br><span class="meta">{{ r.resumo }}</span></p>
+          <else>
+            <p class="meta">Nada encontrado para “{{ request.query.q }}”.</p>
+          </each>
+        </if>
+      </article>
     </page>
 
     <page route="404" title="Não encontrado">
