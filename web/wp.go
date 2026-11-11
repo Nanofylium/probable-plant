@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/Nanofylium/probable-plant/lang"
@@ -373,8 +374,13 @@ func fold(s string) string {
 
 // search procura nos tipos de conteúdo publicados que têm página no site.
 func (s *Server) search(site *Site, term string, only []string, limit int) *lang.List {
+	return s.searchMode(site, term, only, limit, false)
+}
+
+// searchMode com any=true aceita itens que tenham só parte das palavras (o atendente usa).
+func (s *Server) searchMode(site *Site, term string, only []string, limit int, any bool) *lang.List {
 	out := lang.NewList()
-	words := strings.Fields(fold(term))
+	words := searchWords(term)
 	if len(words) == 0 {
 		return out
 	}
@@ -406,20 +412,32 @@ func (s *Server) search(site *Site, term string, only []string, limit int) *lang
 				hay.WriteString(getS(t, f.Name) + " ")
 			}
 			text, ft := fold(hay.String()), fold(title)
-			score := 0
+			score, inTitle := 0, 0
 			for _, w := range words {
 				n := strings.Count(text, w)
 				if n == 0 {
+					if any {
+						continue
+					}
 					score = 0
 					break
 				}
 				score += n
 				if strings.Contains(ft, w) {
 					score += 10
+					inTitle++
 				}
 			}
 			if score == 0 {
 				continue
+			}
+			if tw := len(searchWords(title)); any && tw > 0 {
+				score += 10 * inTitle / tw // título mais "coberto" pela pergunta vem antes
+			}
+			if phrase := strings.Join(words, " "); ft == phrase || strings.TrimSpace(fold(term)) == ft {
+				score += 50 // título igual ao que se buscou vem primeiro
+			} else if strings.Contains(ft, phrase) {
+				score += 20
 			}
 			res := lang.NewTable()
 			res.SetStr("titulo", title)
@@ -628,11 +646,19 @@ func (s *Server) comment(rq *request) {
 	t.SetStr("texto", texto)
 	t.SetStr("pagina", back)
 	t.SetStr("status", "pendente")
+	suspect := false
+	if s.iaConf().ready() { // truncata: a IA separa spam e ofensa antes de chegar ao dono
+		if ok, why, err := s.moderate(nome + ": " + texto); err == nil && !ok {
+			suspect = true
+			t.SetStr("status", "suspeito")
+			t.SetStr("motivo", why)
+		}
+	}
 	if _, err := s.Store.Insert(colComments, t); err != nil {
 		s.fail(rq, err)
 		return
 	}
-	if to := splitAddrs(s.emailConf().Avisos); len(to) > 0 {
+	if to := splitAddrs(s.emailConf().Avisos); len(to) > 0 && !suspect {
 		if ok, _ := s.Store.Rate("email:comentario", 100, 3600, true); ok {
 			link := s.siteURL(rq) + "/_admin/comentarios"
 			_, _ = s.sendMail(mailMsg{To: to, Subject: "Novo comentário para aprovar: " + itemTitle(c, it.ToValue()),
@@ -694,7 +720,10 @@ func (a *adminPage) commentsPage(post bool) error {
 		st := getS(t, "status")
 		tag := `<span class="tag">Aprovado</span>`
 		act := `<form method="post">` + a.tok() + `<input type="hidden" name="acao" value="esconder"><input type="hidden" name="id" value="` + id + `"><button class="ghost">Esconder</button></form>`
-		if st != "aprovado" {
+		if st == "suspeito" {
+			tag = `<span class="tag off" style="background:#fdeceb;color:#8a1f17">Suspeito (truncata): ` + esc(getS(t, "motivo")) + `</span>`
+			act = `<form method="post">` + a.tok() + `<input type="hidden" name="acao" value="aprovar"><input type="hidden" name="id" value="` + id + `"><button>Aprovar mesmo assim</button></form>`
+		} else if st != "aprovado" {
 			tag = `<span class="tag off">Esperando</span>`
 			act = `<form method="post">` + a.tok() + `<input type="hidden" name="acao" value="aprovar"><input type="hidden" name="id" value="` + id + `"><button>Aprovar</button></form>`
 		}
@@ -1011,4 +1040,19 @@ func (site *Site) titleName() string {
 		return ""
 	}
 	return htmlUnescape(strings.TrimSpace(t))
+}
+
+// searchWords separa as palavras da busca (sem pontuação; "a", "de" e outras curtas não contam).
+func searchWords(term string) []string {
+	all := strings.FieldsFunc(fold(term), func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) })
+	var out []string
+	for _, w := range all {
+		if utf8.RuneCountInString(w) >= 3 {
+			out = append(out, w)
+		}
+	}
+	if len(out) == 0 {
+		return all
+	}
+	return out
 }

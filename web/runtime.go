@@ -242,6 +242,7 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 		}
 		return s.search(rq.site, strOrEmpty(argv(a, 0)), only, limit), nil
 	})
+	s.iaModules(rq, def) // ia(), rajah, lowii, ampullaria, villosa, truncata (Qwen)
 	def("enviar_email", s.emailBuiltin(rq))
 	def("send_email", s.emailBuiltin(rq))
 	def("visual", func(a []lang.Value) (lang.Value, error) { return Visual(strOrEmpty(argv(a, 0))), nil })
