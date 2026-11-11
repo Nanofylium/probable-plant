@@ -274,6 +274,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.comment(rq)
 		return
 	}
+	if rq.path == "/_nep/lowii" {
+		s.lowii(rq)
+		return
+	}
 	if err := s.route(rq); err != nil {
 		s.fail(rq, err)
 	}

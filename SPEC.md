@@ -440,6 +440,24 @@ No tema:
 
 Coleções internas (`_versoes`, `_lixeira`, `_comentarios`, `_midia`) começam com `_`: o código do site não as alcança e o painel não as lista como coleções.
 
+### 10.14 IA com Qwen: os frameworks Nepenthes
+
+O site fala com o **Qwen** por uma API compatível com a da OpenAI. Pode ser a nuvem da Alibaba (Model Studio/DashScope, padrão `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`, modelo `qwen-plus`, com chave) ou um Qwen no seu servidor (Ollama ou vLLM, sem chave). A configuração fica no painel, em **IA** (só o dono), ou nas variáveis `NEP_IA_URL`, `NEP_IA_CHAVE` e `NEP_IA_MODELO`. A chave nunca é mostrada de volta. Sem IA configurada, nada quebra: as funções devolvem `nil` (ou o texto original, no caso da tradução).
+
+Cada framework tem o nome de uma espécie de *Nepenthes*:
+
+| Framework | Espécie | Para quê | No código |
+|---|---|---|---|
+| **lowii** | *N. lowii* | atendente do site: responde visitantes só com o conteúdo do site e mostra os links | `{{ lowii("Tire suas dúvidas") }}`; instruções do dono em `<nep-config lowii="...">` |
+| **rajah** | *N. rajah* | escreve: rascunho, resumo, descrição para buscadores; botões "✨" no editor do painel | `rajah.escrever(assunto, {tom:, tamanho:})`, `rajah.resumo(texto, 200)`, `rajah.seo(texto)` |
+| **ampullaria** | *N. ampullaria* | organiza o que chega: classifica e extrai dados de envios | `ampullaria.classificar(texto, ["Orçamento", "Dúvida"])`, `ampullaria.extrair(texto, ["nome", "data"])` |
+| **villosa** | *N. villosa* | traduz, com cache (cada texto é traduzido e pago uma vez) | `villosa.traduzir(texto, "en")` |
+| **truncata** | *N. truncata* | modera: comentários suspeitos (spam, ofensa, golpe) ficam separados e não geram aviso | automático em `comentarios()`; `truncata.moderar(texto)` → `{ok, motivo, verificado}` |
+
+E `ia(pergunta, {sistema:, max:})` dá acesso direto ao modelo; `ia_ligada()` diz se a IA está configurada (por exemplo, `<if test="ia_ligada()">{{ lowii() }}</if>`).
+
+Limites: 600 pedidos de IA por hora no site, 20 perguntas a cada 10 minutos por visitante no lowii, respostas curtas. O lowii recebe só trechos do site achados pela busca e ignora pedidos para mudar as regras. O histórico de uso (com tokens e erros) fica no painel.
+
 ## 9. Fora da versão 1 (planejado)
 
 `match`, classes/protótipos, gerenciador de pacotes, formatador (`nep fmt`), servidor de linguagem para editores (já existe a extensão de cores para VS Code em `editor/vscode`), login de visitantes e o módulo `mosca` para simulação do conectoma da Drosophila, usando dados de um repositório público com licença que permite uso comercial (candidato: hemibrain da Janelia, CC BY 4.0, com atribuição). Os dados do FlyWire não serão usados.

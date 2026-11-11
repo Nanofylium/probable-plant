@@ -331,6 +331,7 @@ func (a *adminPage) contentEdit(post bool) error {
 	if cur != nil {
 		b.WriteString(a.versionsHTML(c, id))
 	}
+	b.WriteString(a.iaEditorJS())
 	if builder {
 		b.WriteString(a.builderAssets())
 	}
