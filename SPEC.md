@@ -422,6 +422,24 @@ O site manda e-mail de verdade, sem biblioteca nem serviço de fora.
 - Remetente padrão: `nao-responda@<domínio do site>`. Para cair menos no spam, use um e-mail do próprio domínio.
 - Segurança: quebras de linha em endereço ou assunto são recusadas; limites de 300 avisos, 60 confirmações e 200 envios pelo código por hora; o formulário continua com o limite por visitante. Falha no envio não perde o formulário: tudo fica no histórico **E-mail** do painel (só o dono vê).
 
+### 10.13 O site cuida de si (nível WordPress)
+
+Sem nenhuma linha a mais no tema, todo tipo de `<conteudo>` ganha no painel:
+
+- **Histórico de versões**: cada vez que um item é salvo, a versão anterior fica guardada (as 20 últimas), com data e quem editou. "Restaurar" volta o texto; a versão atual vai para o histórico. Imagens e anexos ficam os atuais.
+- **Lixeira**: apagar um item manda para a lixeira por 30 dias, com os arquivos. "Restaurar" devolve com o mesmo número e endereço.
+- **Publicação agendada**: o campo "Publicar em" esconde o item do site, da busca, do feed e do sitemap até a data e hora escolhidas. Fica gravado em `publicar_em`.
+- **Biblioteca de mídia** (`/_admin/midia`): imagens e PDFs para usar nos textos e no construtor visual (as imagens aparecem no seletor do construtor).
+- **Cópia de segurança** (`/_admin/backup`, só o dono): baixa um .zip com o banco e os arquivos; restaurar troca tudo e guarda os dados anteriores em `data/antes-da-restauracao-*`.
+
+No tema:
+
+- `{{ comentarios() }}` numa `<page conteudo="...">` mostra os comentários aprovados e o formulário (nome, e-mail que não aparece, texto). Tudo passa por moderação em `/_admin/comentarios` (dono e editores); o dono recebe aviso por e-mail se configurou "Avisos" (10.12). Proteções: CSRF, armadilha para robôs, 5 comentários a cada 10 minutos por visitante, texto sempre escapado. Classes para estilizar: `.nep-comentarios`, `.nep-comentario`, `.nep-comentar`.
+- `buscar(termo, tipos, limite)` devolve uma lista de `{titulo, url, resumo, imagem, tipo, item}` dos itens publicados que contêm todas as palavras, sem diferenciar acento nem maiúscula; título pesa mais. `tipos` é opcional (`"artigos"` ou uma lista).
+- `/feed.xml` (RSS 2.0) com os 20 itens mais novos de todos os tipos que têm página própria; o `<head>` ganha o link do feed. Nome do feed: `<nep-config nome="...">`.
+
+Coleções internas (`_versoes`, `_lixeira`, `_comentarios`, `_midia`) começam com `_`: o código do site não as alcança e o painel não as lista como coleções.
+
 ## 9. Fora da versão 1 (planejado)
 
 `match`, classes/protótipos, gerenciador de pacotes, formatador (`nep fmt`), servidor de linguagem para editores (já existe a extensão de cores para VS Code em `editor/vscode`), login de visitantes e o módulo `mosca` para simulação do conectoma da Drosophila, usando dados de um repositório público com licença que permite uso comercial (candidato: hemibrain da Janelia, CC BY 4.0, com atribuição). Os dados do FlyWire não serão usados.

@@ -5,6 +5,8 @@
   var me = document.currentScript;
   var base = me.getAttribute("data-base") || "";
   var csrf = me.getAttribute("data-csrf") || "";
+  var midia = [];
+  try { midia = JSON.parse(me.getAttribute("data-midia") || "[]"); } catch (e) {}
   var blocks = window["gjs-blocks-basic"];
   if (blocks && blocks.default) blocks = blocks.default;
 
@@ -40,7 +42,8 @@
         uploadName: "arquivos",
         params: { _nep_csrf: csrf },
         multiUpload: true,
-        autoAdd: true
+        autoAdd: true,
+        assets: midia // imagens da biblioteca de mídia do painel
       }
     });
     if (blocks) {

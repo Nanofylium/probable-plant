@@ -179,6 +179,8 @@ type request struct {
 	page    *Page
 	sessVal lang.Value
 	sessRaw string
+	item    *lang.Table // <page conteudo=...>: o item mostrado
+	itemCol string
 }
 
 type formState struct {
@@ -261,7 +263,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				s.robots(rq)
 				return
 			}
+		case "/feed.xml":
+			if !site.hasRoute(rq.path) && site.hasFeed() {
+				s.feed(rq)
+				return
+			}
 		}
+	}
+	if rq.path == "/_nep/comentar" {
+		s.comment(rq)
+		return
 	}
 	if err := s.route(rq); err != nil {
 		s.fail(rq, err)

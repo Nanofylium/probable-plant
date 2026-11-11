@@ -225,6 +225,23 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	})
 	// campo vazio (nil) não vira o texto "nil" na página
 	def("markdown", func(a []lang.Value) (lang.Value, error) { return lang.HTML(Markdown(strOrEmpty(argv(a, 0)))), nil })
+	def("comentarios", func(a []lang.Value) (lang.Value, error) { return s.commentsHTML(rq) })
+	def("buscar", func(a []lang.Value) (lang.Value, error) {
+		var only []string
+		switch x := argv(a, 1).(type) {
+		case string:
+			only = []string{x}
+		case *lang.List:
+			for _, it := range x.Items {
+				only = append(only, lang.Str(it))
+			}
+		}
+		limit := 50
+		if n, ok := toInt(argv(a, 2)); ok && n > 0 && n < 500 {
+			limit = int(n)
+		}
+		return s.search(rq.site, strOrEmpty(argv(a, 0)), only, limit), nil
+	})
 	def("enviar_email", s.emailBuiltin(rq))
 	def("send_email", s.emailBuiltin(rq))
 	def("visual", func(a []lang.Value) (lang.Value, error) { return Visual(strOrEmpty(argv(a, 0))), nil })
@@ -354,6 +371,7 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 				return stop(halt{kind: "not_found"})
 			}
 			mod.Define("item", it)
+			rq.item, rq.itemCol = it, c.Name
 			if pg.Title == "" {
 				pv.SetStr("title", itemTitle(c, it))
 			}

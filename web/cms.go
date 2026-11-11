@@ -110,7 +110,11 @@ func (s *Server) uniqueSlug(col, want string, self int64) string {
 // published diz se o registro aparece no site (só publicado=false esconde).
 func published(t *lang.Table) bool {
 	v, ok := t.Get("publicado")
-	return !ok || v != false
+	if ok && v == false {
+		return false
+	}
+	_, future := scheduledFuture(t) // publicar_em no futuro: ainda não aparece
+	return !future
 }
 
 // findItem acha um item pelo endereço (slug) ou pelo número.

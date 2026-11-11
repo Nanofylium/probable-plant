@@ -38,6 +38,15 @@ func (a *adminPage) navCMS() string {
 	if len(site.Editables) > 0 {
 		n += `<a href="` + a.base + `/textos">Textos e menus</a>`
 	}
+	n += `<a href="` + a.base + `/midia">Mídia</a>`
+	if p := a.pendingComments(); p > 0 {
+		n += `<a href="` + a.base + `/comentarios">Comentários (` + strconv.Itoa(p) + `)</a>`
+	} else if a.s.Store.Count(colComments) > 0 || site.usesComments() {
+		n += `<a href="` + a.base + `/comentarios">Comentários</a>`
+	}
+	if a.s.Store.Count(colTrash) > 0 {
+		n += `<a href="` + a.base + `/lixeira">Lixeira</a>`
+	}
 	return n
 }
 
@@ -91,7 +100,10 @@ func (a *adminPage) contentList() error {
 			title = "(sem título)"
 		}
 		st := `<span class="tag">Publicado</span>`
-		if !published(t) {
+		pv, hasPub := t.Get("publicado")
+		if w, future := scheduledFuture(t); future && (!hasPub || pv != false) {
+			st = `<span class="tag off">Agendado: ` + esc(w.Format("02/01/2006 15:04")) + `</span>`
+		} else if !published(t) {
 			st = `<span class="tag off">Rascunho</span>`
 		}
 		when := r.Updated
@@ -107,7 +119,7 @@ func (a *adminPage) contentList() error {
 		if u := site.itemURL(c.Name, t); u != "" {
 			b.WriteString(`<a href="` + esc(a.s.url(u)) + `" target="_blank">Ver</a>`)
 		}
-		b.WriteString(`<form method="post" action="` + a.base + `/delete" onsubmit="return confirm('Apagar este ` + esc(c.Item) + `? Não dá para desfazer.')">` + a.tok() +
+		b.WriteString(`<form method="post" action="` + a.base + `/delete" onsubmit="return confirm('Mandar este ` + esc(c.Item) + ` para a lixeira? Dá para restaurar por 30 dias.')">` + a.tok() +
 			`<input type="hidden" name="c" value="` + esc(c.Name) + `"><input type="hidden" name="id" value="` + id + `"><input type="hidden" name="volta" value="conteudo?c=` + esc(ec) + `"><button class="ghost">Apagar</button></form></td></tr>`)
 	}
 	b.WriteString(`</table></div>`)
@@ -162,13 +174,17 @@ func (a *adminPage) contentEdit(post bool) error {
 	}
 	var errs []string
 	old := map[string][]string{}
-	slug, pub := "", true
+	slug, pub, sched := "", true, ""
 	if cur != nil {
 		old = oldValues(c, cur)
 		if v, _ := cur.Get("slug"); v != nil {
 			slug = lang.Str(v)
 		}
-		pub = published(cur)
+		v, has := cur.Get("publicado")
+		pub = !has || v != false
+		if w, ok := parseSched(getS(cur, schedField)); ok {
+			sched = w.Format("2006-01-02T15:04")
+		}
 	}
 	if post {
 		// arquivo obrigatório já enviado antes não precisa ser reenviado
@@ -193,8 +209,12 @@ func (a *adminPage) contentEdit(post bool) error {
 		}
 		slug = strings.TrimSpace(r.PostForm.Get("_slug"))
 		pub = r.PostForm.Get("_publicado") != ""
+		sched = strings.TrimSpace(r.PostForm.Get("_publicar_em"))
 		if slug != "" && !slugRe.MatchString(slugify(slug)) {
 			errs = append(errs, "O endereço precisa ter letras ou números.")
+		}
+		if _, ok := parseSched(sched); sched != "" && !ok {
+			errs = append(errs, "Data de publicação inválida.")
 		}
 		if len(errs) == 0 {
 			want := slugify(slug)
@@ -203,6 +223,11 @@ func (a *adminPage) contentEdit(post bool) error {
 			}
 			data.SetStr("slug", a.s.uniqueSlug(c.Name, want, id))
 			data.SetStr("publicado", pub)
+			if w, ok := parseSched(sched); ok {
+				data.SetStr(schedField, w.Format("2006-01-02T15:04"))
+			} else {
+				data.SetStr(schedField, nil)
+			}
 			for _, f := range c.Fields {
 				if f.Type == "file" && r.PostForm.Get("_remover_"+f.Name) != "" {
 					data.SetStr(f.Name, nil)
@@ -213,6 +238,7 @@ func (a *adminPage) contentEdit(post bool) error {
 				return err
 			}
 			if id > 0 {
+				a.s.saveVersion(c.Name, curRec, a.who())
 				before := filesIn(curRec.Data)
 				if _, err := a.s.Store.Update(c.Name, id, data); err != nil {
 					a.s.Store.removeFiles(saved)
@@ -242,6 +268,9 @@ func (a *adminPage) contentEdit(post bool) error {
 
 	var b strings.Builder
 	b.WriteString(cmsCSS)
+	if r.URL.Query().Get("restaurado") != "" {
+		b.WriteString(`<p class="ok">Versão restaurada. A anterior ficou no histórico.</p>`)
+	}
 	for _, e := range errs {
 		b.WriteString(errP(e))
 	}
@@ -291,6 +320,7 @@ func (a *adminPage) contentEdit(post bool) error {
 	}
 	b.WriteString(`<label>Endereço no site <input name="_slug" value="` + esc(slug) + `" placeholder="criado a partir do título" maxlength="80"></label>` +
 		`<label class="check"><input type="checkbox" name="_publicado"` + chk + `> Publicado (desmarque para deixar como rascunho)</label>` +
+		`<label>Publicar em (opcional: agenda para esta data e hora) <input type="datetime-local" name="_publicar_em" value="` + esc(sched) + `"></label>` +
 		`<p class="row"><button>Salvar</button><a href="` + a.base + `/conteudo?` + esc("c="+url.QueryEscape(c.Name)) + `">Cancelar</a>`)
 	if cur != nil {
 		if u := a.site().itemURL(c.Name, cur); u != "" {
@@ -298,6 +328,9 @@ func (a *adminPage) contentEdit(post bool) error {
 		}
 	}
 	b.WriteString(`</p></form>`)
+	if cur != nil {
+		b.WriteString(a.versionsHTML(c, id))
+	}
 	if builder {
 		b.WriteString(a.builderAssets())
 	}
@@ -567,6 +600,6 @@ func (a *adminPage) builderAssets() string {
 	return `<style>.nep-box{max-width:1320px}.nep-gjs{border:1px solid #c9cfc5;border-radius:8px;overflow:hidden;margin:6px 0 12px}</style>` +
 		`<link rel="stylesheet" href="` + p + `grapes.min.css">` +
 		`<script src="` + p + `grapes.min.js"></script><script src="` + p + `blocks-basic.js"></script><script src="` + p + `pt.js"></script>` +
-		`<script src="` + p + `nep.js" data-base="` + esc(a.s.opt.Base) + `" data-csrf="` + esc(a.rq.sess.CSRF) + `"></script>` +
+		`<script src="` + p + `nep.js" data-base="` + esc(a.s.opt.Base) + `" data-csrf="` + esc(a.rq.sess.CSRF) + `" data-midia="` + esc(mediaJSON(a.s.mediaURLs())) + `"></script>` +
 		`<p class="muted">Construtor visual: arraste os blocos da direita para a página, clique para editar o texto e use a aba de estilos para cores e espaços. Ele é de código aberto (GrapesJS, licença BSD).</p>`
 }

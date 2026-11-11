@@ -303,6 +303,7 @@ func (a *adminPage) uploadBuilder() error {
 				return err
 			}
 			img, _ := t.Get("imagem")
+			a.s.addMedia(img, a.who()) // entra na biblioteca de mídia
 			u, _ := img.(*lang.Table).Get("url")
 			urls = append(urls, map[string]string{"src": lang.Str(u), "type": "image"})
 		}

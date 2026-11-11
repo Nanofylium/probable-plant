@@ -93,6 +93,9 @@ func (s *Server) seoTags(rq *request, out string) []string {
 	has := func(needle string) bool { return strings.Contains(head, needle) }
 	e := html.EscapeString
 	var t []string
+	if rq.site.hasFeed() && !has("application/rss+xml") {
+		t = append(t, `<link rel="alternate" type="application/rss+xml" title="Novidades" href="`+e(s.url("/feed.xml"))+`">`)
+	}
 	title, desc, img := get("title"), get("description"), get("image")
 	if title == "" {
 		if i := strings.Index(head, "<title>"); i >= 0 {
