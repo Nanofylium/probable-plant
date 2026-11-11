@@ -1,0 +1,23 @@
+1 2 5 8 9
+9 8 5 2 1
+ana,bruno,carla
+0 9 8 5 2 1 7	7
+7	0	9 8 5 2 1	5
+	2, 3
+3	1	nil	3
+1,1,2,3
+1,2,3
+nil
+10
+9
+0	nil
+tabela	função	um	verdade	texto
+fundo	fundo
+false	true
+dois	dois
+1000	1000000
+1000
+2
+1	10
+3	2	3
+99	1	x

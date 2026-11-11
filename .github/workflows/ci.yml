@@ -25,6 +25,7 @@ jobs:
           go build -o nep ./cmd/nep
           ./nep check exemplos/padaria/site.nep.html
           ./nep check exemplos/mural/site.nep.html
+          ./nep exemplos/lua/jogo_da_velha.lua
 
   executaveis:
     needs: testes

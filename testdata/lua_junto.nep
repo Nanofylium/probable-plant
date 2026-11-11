@@ -1,0 +1,45 @@
+# metatabelas no Nepenthes
+let Conta = {}
+Conta.__index = Conta
+fn nova_conta(dono) do
+  setmetatable({dono: dono, saldo: 0}, Conta)
+end
+Conta.depositar = fn(self, v) do
+  self.saldo += v
+  self
+end
+Conta.__add = fn(a, b) do a.saldo + b.saldo end
+Conta.__call = fn(self, x) do `{self.dono} recebeu {x}` end
+let c = nova_conta("Ana")
+c:depositar(50):depositar(25)
+print(c.saldo, c.dono, c.depositar == Conta.depositar)
+let d = nova_conta("Bia")
+d:depositar(10)
+print(c + d, c("oi"))
+let padrao = setmetatable({}, {__index: fn(t, k) do "sem " + k end})
+print(padrao.nome)
+# métodos com : em textos e listas
+print("ola":upper(), [3, 1, 2]:sort())
+# padrões do Lua
+print("data: 2026-11-11".match("(%d+)-(%d+)-(%d+)"))
+print("a=1, b=2".gmatch("(%w+)=(%w+)"))
+print("olá mundo".gsub("o", "0"), match("abc", "x"))
+print("hello world".gsub("%w+", fn(w) do w:upper() end))
+# corrotinas
+let gerador = coroutine.wrap(fn() do
+  for i in range(3) do coroutine.yield(i * 10) end
+end)
+print(gerador(), gerador(), gerador())
+let co = coroutine.create(fn(a) do
+  let b = coroutine.yield(a + 1)
+  b * 2
+end)
+print(coroutine.resume(co, 1), coroutine.resume(co, 21), coroutine.status(co))
+try do
+  coroutine.resume(co)
+catch e do
+  print("erro:", e.message)
+end
+# importar Lua
+import "util.lua" as util
+print(util.dobro(21), util.soma(1, 2, 3), util.nome)

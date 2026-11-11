@@ -197,6 +197,7 @@ import "lib/util" as u         # escolhe o nome
 | Tabelas | `keys values has merge remove` |
 | Datas | `now()`, `date(valor, "d/m/Y")` |
 | Dados | `load_csv(caminho)` |
+| Do Lua | `setmetatable getmetatable rawget rawset match gmatch gsub coroutine.{create resume yield wrap status running isyieldable close}` |
 
 Regras gerais: funções que recebem "chave" (`sort_by`, `group_by`, `count_by`) aceitam um nome de campo ou uma função. `push`, `pop`, `insert` e `remove` alteram a lista recebida; as demais devolvem listas novas. `format("Olá, {}!", nome)` usa `{}` em ordem, `{0}` por posição ou `{campo}` com uma tabela. `money(19.9)` dá `"R$ 19,90"`.
 
@@ -458,6 +459,36 @@ E `ia(pergunta, {sistema:, max:})` dá acesso direto ao modelo; `ia_ligada()` di
 
 Limites: 600 pedidos de IA por hora no site, 20 perguntas a cada 10 minutos por visitante no lowii, respostas curtas. O lowii recebe só trechos do site achados pela busca e ignora pedidos para mudar as regras. O histórico de uso (com tokens e erros) fica no painel.
 
+## 11. Lua 5.4 na mesma máquina virtual
+
+O `nep` roda programas Lua 5.4: `nep jogo.lua [args]`. O código Lua é lido por um leitor próprio e compilado para o mesmo bytecode do Nepenthes, então os dois se misturam:
+
+- No Nepenthes, `import "util.lua" as util` carrega um arquivo Lua e devolve o que ele retorna (normalmente uma tabela de funções). Funções Lua chamadas pelo Nepenthes devolvem só o primeiro valor.
+- No Lua, a tabela `nep` traz as funções globais do Nepenthes (`nep.money(19.9)`, `nep.slug("Olá")`) e `nep.import("json")` carrega módulos do Nepenthes.
+- `require("mod")` procura `mod.lua` e `mod/init.lua` ao lado do arquivo e na pasta atual.
+
+O que vale do Lua 5.4: toda a sintaxe (incluindo `goto`, `repeat`, `local x <const>`, inteiros e decimais separados, operadores de bits, `//`, `..`, textos longos `[[ ]]`), vários retornos e `...`, chamadas finais sem crescer a pilha, metatabelas com todos os metamétodos (`__index __newindex __call __tostring __eq __lt __le __len __concat __unm` e os aritméticos e de bits, `__pairs`, `__metatable`, `__name`), corrotinas, `pcall`/`xpcall`/`error` com nível, `load` com ambiente, `_G` e `_ENV`, e as bibliotecas `string` (com padrões e `format`), `table`, `math`, `os`, `io`, `utf8`, `coroutine` e `package`.
+
+Diferenças conhecidas: mensagens de erro em português; `string.upper/lower` também convertem letras acentuadas; `collectgarbage` não ajusta o coletor; não há `string.pack`, `string.dump`, `debug`, bibliotecas em C nem metatabelas fracas (`__mode`) ou `__gc`/`__close`; a recursão comum (que não é chamada final) vai até 4000 níveis. No servidor web, `io.open`, `os.remove`, `os.exit`, `dofile` e `require` de arquivos ficam desligados, como o `fs` do Nepenthes.
+
+O que o Nepenthes ganhou do Lua:
+
+- **Metatabelas**: `setmetatable(t, mt)` vale também no Nepenthes, com `__index`, `__newindex`, `__call`, operadores (`__add`, `__sub`, `__mul`, `__div`, `__mod`, `__idiv`, `__unm`) e comparações (`__lt`, `__le`). Com isso dá para escrever classes:
+
+```
+let Conta = {}
+Conta.__index = Conta
+Conta.depositar = fn(self, v) do self.saldo += v; self end
+let c = setmetatable({saldo: 0}, Conta)
+c:depositar(50):depositar(25)     # obj:metodo(args) passa obj como primeiro argumento
+```
+
+- **`obj:metodo(args)`**: em tabelas, busca o campo (seguindo `__index`); em textos e listas, usa a função com esse nome (`"oi":upper()`).
+- **Corrotinas**: `coroutine.create/resume/yield/wrap/status`. No Nepenthes, `resume` devolve o valor passado ao `yield` (vários viram lista) e erros da corrotina viram exceção (pegue com `try`).
+- **Padrões de texto do Lua**: `match(s, padrão)` devolve a captura (várias viram lista; `nil` se não achar), `gmatch(s, padrão)` devolve a lista de todas, `gsub(s, padrão, troca, n)` troca por texto (`%1`), tabela ou função. Classes: `%a %d %l %s %u %w %x %p %c %g`, conjuntos `[...]`, `%b()`, `%f[...]`, âncoras `^ $`, repetições `* + - ?`.
+
+A implementação é própria, em Go; nenhum código C do Lua foi incorporado. Crédito e licença MIT do Lua (PUC-Rio) em `LICENCA-LUA.txt`. Os testes em `testdata/lua` comparam a saída do `nep` com a do Lua 5.4 oficial.
+
 ## 9. Fora da versão 1 (planejado)
 
-`match`, classes/protótipos, gerenciador de pacotes, formatador (`nep fmt`), servidor de linguagem para editores (já existe a extensão de cores para VS Code em `editor/vscode`), login de visitantes e o módulo `mosca` para simulação do conectoma da Drosophila, usando dados de um repositório público com licença que permite uso comercial (candidato: hemibrain da Janelia, CC BY 4.0, com atribuição). Os dados do FlyWire não serão usados.
+Gerenciador de pacotes, formatador (`nep fmt`), servidor de linguagem para editores (já existe a extensão de cores para VS Code em `editor/vscode`), login de visitantes e o módulo `mosca` para simulação do conectoma da Drosophila, usando dados de um repositório público com licença que permite uso comercial (candidato: hemibrain da Janelia, CC BY 4.0, com atribuição). Os dados do FlyWire não serão usados.

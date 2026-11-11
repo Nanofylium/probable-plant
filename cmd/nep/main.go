@@ -19,6 +19,7 @@ const ajuda = `Nepenthes %s
 Uso:
   nep                      abre o modo interativo
   nep arquivo.nep [args]   executa um programa
+  nep arquivo.lua [args]   executa um programa em Lua 5.4 (na mesma máquina virtual)
   nep run arquivo.nep      o mesmo que acima
   nep check arquivo.nep    só verifica a sintaxe (também aceita um site .nep.html)
   nep novo pasta           cria um site inicial (pasta/site.nep.html)
@@ -106,7 +107,12 @@ func newVM(script string, args []string) (*lang.VM, *bufio.Writer) {
 
 func run(path string, args []string) int {
 	vm, out := newVM(path, args)
-	err := vm.RunFile(path)
+	var err error
+	if strings.HasSuffix(path, ".lua") {
+		err = vm.RunLuaFile(path, args)
+	} else {
+		err = vm.RunFile(path)
+	}
 	out.Flush()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -124,10 +130,7 @@ func check(files []string) int {
 			code = 1
 			continue
 		}
-		prog, err := lang.Parse(string(src), f)
-		if err == nil {
-			_, err = lang.Compile(prog, lang.NewModule("check", f), f)
-		}
+		_, err = compileAny(string(src), f)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			code = 1
@@ -138,18 +141,29 @@ func check(files []string) int {
 	return code
 }
 
+// compileAny compila um arquivo .nep ou .lua (pelo nome) sem executar.
+func compileAny(src, path string) (*lang.Proto, error) {
+	if strings.HasSuffix(path, ".lua") {
+		prog, err := lang.ParseLua(src, path)
+		if err != nil {
+			return nil, err
+		}
+		return lang.CompileLua(prog, lang.NewModule("lua", path), lang.NewTable(), path)
+	}
+	prog, err := lang.Parse(src, path)
+	if err != nil {
+		return nil, err
+	}
+	return lang.Compile(prog, lang.NewModule("check", path), path)
+}
+
 func disasm(path string) int {
 	src, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	prog, err := lang.Parse(string(src), path)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	p, err := lang.Compile(prog, lang.NewModule("disasm", path), path)
+	p, err := compileAny(string(src), path)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

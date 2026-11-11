@@ -17,88 +17,6 @@ type List struct{ Items []Value }
 // HTML é um texto já seguro para ir direto na página (não é escapado na saída).
 type HTML string
 
-// Table é um dicionário que preserva a ordem de inserção.
-type Table struct {
-	keys  []Value
-	vals  []Value
-	index map[Value]int
-}
-
-func NewTable() *Table { return &Table{index: map[Value]int{}} }
-
-func NewList(items ...Value) *List {
-	if items == nil {
-		items = []Value{}
-	}
-	return &List{Items: items}
-}
-
-// normKey converte uma chave para a forma canônica (float inteiro vira int).
-func normKey(k Value) (Value, error) {
-	switch v := k.(type) {
-	case string, int64, bool:
-		return v, nil
-	case float64:
-		if v == math.Trunc(v) && math.Abs(v) < 1<<53 {
-			return int64(v), nil
-		}
-		return v, nil
-	}
-	return nil, fmt.Errorf("chave de tabela inválida: %s (use texto, número ou bool)", TypeName(k))
-}
-
-func (t *Table) Get(k Value) (Value, bool) {
-	nk, err := normKey(k)
-	if err != nil {
-		return nil, false
-	}
-	i, ok := t.index[nk]
-	if !ok {
-		return nil, false
-	}
-	return t.vals[i], true
-}
-
-func (t *Table) Set(k, v Value) error {
-	nk, err := normKey(k)
-	if err != nil {
-		return err
-	}
-	if i, ok := t.index[nk]; ok {
-		t.vals[i] = v
-		return nil
-	}
-	t.index[nk] = len(t.keys)
-	t.keys = append(t.keys, nk)
-	t.vals = append(t.vals, v)
-	return nil
-}
-
-func (t *Table) SetStr(k string, v Value) { _ = t.Set(k, v) }
-
-func (t *Table) Delete(k Value) bool {
-	nk, err := normKey(k)
-	if err != nil {
-		return false
-	}
-	i, ok := t.index[nk]
-	if !ok {
-		return false
-	}
-	t.keys = append(t.keys[:i], t.keys[i+1:]...)
-	t.vals = append(t.vals[:i], t.vals[i+1:]...)
-	delete(t.index, nk)
-	for j := i; j < len(t.keys); j++ {
-		t.index[t.keys[j]] = j
-	}
-	return true
-}
-
-func (t *Table) Len() int                   { return len(t.keys) }
-func (t *Table) Keys() []Value              { return append([]Value(nil), t.keys...) }
-func (t *Table) Values() []Value            { return append([]Value(nil), t.vals...) }
-func (t *Table) Entry(i int) (Value, Value) { return t.keys[i], t.vals[i] }
-
 // Closure é uma função Nepenthes com as variáveis que ela capturou.
 type Closure struct {
 	Proto    *Proto
@@ -160,6 +78,10 @@ func TypeName(v Value) string {
 		return "module"
 	case HTML:
 		return "html"
+	case *Coroutine:
+		return "coroutine"
+	case *Tuple:
+		return "valores"
 	default:
 		return fmt.Sprintf("%T", x)
 	}
@@ -252,9 +174,10 @@ func equalDepth(a, b Value, d int) bool {
 		if x == y {
 			return true
 		}
-		for i, k := range x.keys {
+		for i := 0; i < x.Len(); i++ {
+			k, v := x.Entry(i)
 			w, ok := y.Get(k)
-			if !ok || !equalDepth(x.vals[i], w, d+1) {
+			if !ok || !equalDepth(v, w, d+1) {
 				return false
 			}
 		}
@@ -376,14 +299,15 @@ func show(v Value, repr bool, depth int) string {
 		return "[" + strings.Join(parts, ", ") + "]"
 	case *Table:
 		parts := make([]string, x.Len())
-		for i, k := range x.keys {
+		for i := 0; i < x.Len(); i++ {
+			k, v := x.Entry(i)
 			ks := ""
 			if s, ok := k.(string); ok && validIdent(s) {
 				ks = s
 			} else {
 				ks = show(k, true, depth+1)
 			}
-			parts[i] = ks + ": " + show(x.vals[i], true, depth+1)
+			parts[i] = ks + ": " + show(v, true, depth+1)
 		}
 		return "{" + strings.Join(parts, ", ") + "}"
 	case *Closure:
@@ -395,6 +319,14 @@ func show(v Value, repr bool, depth int) string {
 		return "<fn nativa " + x.Name + ">"
 	case *Module:
 		return "<módulo " + x.Name + ">"
+	case *Coroutine:
+		return "<corrotina>"
+	case *Tuple:
+		parts := make([]string, len(x.V))
+		for i, it := range x.V {
+			parts[i] = show(it, repr, depth+1)
+		}
+		return strings.Join(parts, ", ")
 	case HTML:
 		if repr {
 			return quote(string(x))

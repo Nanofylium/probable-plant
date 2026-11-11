@@ -21,6 +21,9 @@ type RuntimeError struct {
 	Trace []string
 	// Halt vem de uma parada que try/catch não captura (ex.: redirect() no servidor web).
 	Halt any
+	// Pos é "arquivo:linha" onde um erro da própria linguagem aconteceu (vazio
+	// quando o valor veio de error()).
+	Pos string
 }
 
 // Halt interrompe o programa sem passar por try/catch. Funções nativas devolvem
@@ -63,9 +66,10 @@ func (t *thrown) Error() string { return Str(t.val) }
 func Throw(v Value) error { return &thrown{v} }
 
 type frame struct {
-	cl   *Closure
-	ip   int
-	base int
+	cl      *Closure
+	ip      int
+	base    int
+	goEntry bool // chamada vinda do Go (vm.Call), não do bytecode
 }
 
 type handler struct {
@@ -84,21 +88,25 @@ type iterator struct {
 
 // VM executa bytecode Nepenthes.
 type VM struct {
-	stack    [stackMax]Value
-	sp       int
-	frames   []frame
-	handlers []handler
-	open     []*Upvalue // upvalues abertos, ordenados por slot
-	Builtins map[string]Value
-	modules  map[string]*Module
-	stdmods  map[string]func(vm *VM) *Module
-	Out      io.Writer
-	In       io.Reader
-	Args     []string
-	loading  map[string]bool
+	stack     []Value
+	maxFrames int
+	sp        int
+	frames    []frame
+	handlers  []handler
+	open      []*Upvalue // upvalues abertos, ordenados por slot
+	Builtins  map[string]Value
+	modules   map[string]*Module
+	stdmods   map[string]func(vm *VM) *Module
+	Out       io.Writer
+	In        io.Reader
+	Args      []string
+	loading   map[string]bool
 	// MaxSteps limita quantas instruções podem rodar (0 = sem limite). Usado no servidor web.
 	MaxSteps int64
 	steps    int64
+	L        *luaState // estado do Lua (criado no primeiro uso)
+	fromGo   bool      // a nativa em execução foi chamada pelo Go, não pelo bytecode
+	co       *coState  // corrotina que esta VM executa (nil na principal)
 }
 
 // StepLimit é o motivo de Halt quando MaxSteps é ultrapassado.
@@ -115,8 +123,11 @@ func (vm *VM) RemoveStdModules(names ...string) {
 
 func NewVM() *VM {
 	vm := &VM{Out: os.Stdout, In: os.Stdin, modules: map[string]*Module{}, loading: map[string]bool{}}
+	vm.stack = make([]Value, stackMax)
+	vm.maxFrames = framesMax
 	vm.frames = make([]frame, 0, framesMax+1) // capacidade fixa: ponteiros para frames nunca ficam inválidos
 	vm.Builtins = coreBuiltins()
+	addLuaBuiltins(vm.Builtins)
 	vm.stdmods = stdModules()
 	return vm
 }
@@ -147,12 +158,24 @@ func (vm *VM) RunSource(src, file string, mod *Module) (Value, error) {
 	return vm.Call(&Closure{Proto: proto}, nil)
 }
 
-// Call chama uma função Nepenthes ou nativa e devolve o resultado.
+// Call chama uma função Nepenthes, Lua ou nativa e devolve o resultado
+// (se a função devolver vários valores, só o primeiro).
 func (vm *VM) Call(fn Value, args []Value) (Value, error) {
+	r, err := vm.CallMulti(fn, args)
+	return single(r), err
+}
+
+// CallMulti é como Call, mas mantém todos os valores devolvidos (um *Tuple
+// quando são vários; veja Values).
+func (vm *VM) CallMulti(fn Value, args []Value) (Value, error) {
 	if n, ok := fn.(*Native); ok {
-		return n.Fn(vm, args)
+		old := vm.fromGo
+		vm.fromGo = true
+		r, err := n.Fn(vm, args)
+		vm.fromGo = old
+		return r, err
 	}
-	if vm.sp+len(args)+1 >= stackMax {
+	if vm.sp+len(args)+2 >= len(vm.stack) {
 		return nil, vm.wrap(fmt.Errorf("pilha cheia"))
 	}
 	base := len(vm.frames)
@@ -171,6 +194,7 @@ func (vm *VM) Call(fn Value, args []Value) (Value, error) {
 		vm.sp--
 		return vm.stack[vm.sp], nil
 	}
+	vm.frames[base].goEntry = true
 	res, err := vm.run(base)
 	if err != nil {
 		vm.closeUpvals(baseSP)
@@ -189,7 +213,34 @@ func (vm *VM) callValue(callee Value, argc int) error {
 	switch f := callee.(type) {
 	case *Closure:
 		p := f.Proto
-		if p.Variadic {
+		if p.Lua {
+			if p.Variadic {
+				fixed := p.Arity - 1
+				var rest []Value
+				if argc > fixed {
+					rest = append(rest, vm.stack[vm.sp-(argc-fixed):vm.sp]...)
+					for i := 0; i < argc-fixed; i++ {
+						vm.pop()
+					}
+					argc = fixed
+				}
+				for argc < fixed {
+					vm.push(nil)
+					argc++
+				}
+				vm.push(&Tuple{V: rest})
+				argc++
+			} else {
+				for argc > p.Arity {
+					vm.pop()
+					argc--
+				}
+				for argc < p.Arity {
+					vm.push(nil)
+					argc++
+				}
+			}
+		} else if p.Variadic {
 			fixed := p.Arity - 1
 			var rest []Value
 			if argc > fixed {
@@ -218,10 +269,10 @@ func (vm *VM) callValue(callee Value, argc int) error {
 				argc++
 			}
 		}
-		if len(vm.frames) >= framesMax {
-			return fmt.Errorf("recursão profunda demais (mais de %d chamadas)", framesMax)
+		if len(vm.frames) >= vm.maxFrames {
+			return fmt.Errorf("recursão profunda demais (mais de %d chamadas)", vm.maxFrames)
 		}
-		if vm.sp+256 >= stackMax {
+		if vm.sp+256 >= len(vm.stack) {
 			return fmt.Errorf("pilha cheia")
 		}
 		vm.frames = append(vm.frames, frame{cl: f, ip: 0, base: vm.sp - argc - 1})
@@ -229,9 +280,15 @@ func (vm *VM) callValue(callee Value, argc int) error {
 	case *Native:
 		args := make([]Value, argc)
 		copy(args, vm.stack[vm.sp-argc:vm.sp])
+		old := vm.fromGo
+		vm.fromGo = false
 		res, err := f.Fn(vm, args)
+		vm.fromGo = old
 		if err != nil {
 			return err
+		}
+		if t, ok := res.(*Tuple); ok && !vm.inLua() {
+			res = t.first()
 		}
 		vm.sp -= argc + 1
 		for i := vm.sp; i < vm.sp+argc+1; i++ {
@@ -239,8 +296,30 @@ func (vm *VM) callValue(callee Value, argc int) error {
 		}
 		vm.push(res)
 		return nil
+	case *Table:
+		if f.meta != nil {
+			if h := f.meta.rawStr("__call"); h != nil && h != callee {
+				if vm.sp+1 >= len(vm.stack) {
+					return fmt.Errorf("pilha cheia")
+				}
+				// h(tabela, args...)
+				copy(vm.stack[vm.sp-argc+1:vm.sp+1], vm.stack[vm.sp-argc:vm.sp])
+				vm.stack[vm.sp-argc] = f
+				vm.stack[vm.sp-argc-1] = h
+				vm.sp++
+				return vm.callValue(h, argc+1)
+			}
+		}
+	}
+	if vm.inLua() {
+		return fmt.Errorf("tentou chamar um valor %s", luaTypeName(callee))
 	}
 	return fmt.Errorf("tentou chamar um valor %s, que não é uma função", TypeName(callee))
+}
+
+// inLua diz se a função em execução agora é código Lua.
+func (vm *VM) inLua() bool {
+	return len(vm.frames) > 0 && vm.frames[len(vm.frames)-1].cl.Proto.Lua
 }
 
 func (vm *VM) capture(slot int) *Upvalue {
@@ -275,10 +354,14 @@ func (vm *VM) wrap(err error) *RuntimeError {
 		return &RuntimeError{Value: h.Error(), Halt: h.Reason}
 	}
 	var val Value = err.Error()
-	if t, ok := err.(*thrown); ok {
-		val = t.val
+	_, isThrown := err.(*thrown)
+	if isThrown {
+		val = err.(*thrown).val
 	}
 	re := &RuntimeError{Value: val}
+	if !isThrown {
+		re.Pos = vm.where(1)
+	}
 	for i := len(vm.frames) - 1; i >= 0 && len(re.Trace) < 12; i-- {
 		f := vm.frames[i]
 		p := f.cl.Proto
@@ -316,11 +399,19 @@ func (vm *VM) run(base int) (Value, error) {
 	fr := &vm.frames[len(vm.frames)-1]
 	code := fr.cl.Proto.Code
 	consts := fr.cl.Proto.Consts
+	lua := fr.cl.Proto.Lua
 
 	reload := func() {
 		fr = &vm.frames[len(vm.frames)-1]
 		code = fr.cl.Proto.Code
 		consts = fr.cl.Proto.Consts
+		lua = fr.cl.Proto.Lua
+	}
+	truthy := func(v Value) bool {
+		if lua {
+			return luaTruthy(v)
+		}
+		return Truthy(v)
 	}
 	u16 := func() int {
 		v := int(code[fr.ip])<<8 | int(code[fr.ip+1])
@@ -328,6 +419,7 @@ func (vm *VM) run(base int) (Value, error) {
 		return v
 	}
 
+	reloadNeeded := false
 	for {
 		var err error
 		if vm.MaxSteps > 0 {
@@ -365,7 +457,17 @@ func (vm *VM) run(base int) (Value, error) {
 			*fr.cl.Upvalues[u16()].loc = vm.peek(0)
 		case OpGetGlobal:
 			name := consts[u16()].(string)
-			if v, ok := fr.cl.Proto.Module.Globals[name]; ok {
+			if lua {
+				var v Value
+				if name == "_ENV" {
+					vm.push(fr.cl.Proto.Env)
+					break
+				}
+				v, err = vm.luaIndex(fr.cl.Proto.Env, name)
+				if err == nil {
+					vm.push(v)
+				}
+			} else if v, ok := fr.cl.Proto.Module.Globals[name]; ok {
 				vm.push(v)
 			} else if v, ok := vm.Builtins[name]; ok {
 				vm.push(v)
@@ -380,11 +482,22 @@ func (vm *VM) run(base int) (Value, error) {
 				err = fmt.Errorf("variável não declarada: %s (use 'let %s = ...' para criar)", name, name)
 			}
 		case OpDefGlobal:
+			if lua {
+				err = vm.luaSetIndex(fr.cl.Proto.Env, consts[u16()].(string), vm.pop(), true)
+				break
+			}
 			fr.cl.Proto.Module.Define(consts[u16()].(string), vm.pop())
 		case OpGetField:
 			name := consts[u16()].(string)
 			obj := vm.pop()
 			var v Value
+			if t, isT := obj.(*Table); lua || (isT && t.meta != nil) {
+				v, err = vm.luaIndex(obj, name)
+				if err == nil {
+					vm.push(v)
+				}
+				break
+			}
 			if m := vm.method(obj, name, fr.cl.Proto.Module); m != nil {
 				vm.push(m)
 				break
@@ -397,6 +510,10 @@ func (vm *VM) run(base int) (Value, error) {
 			name := consts[u16()].(string)
 			val := vm.pop()
 			obj := vm.pop()
+			if t, isT := obj.(*Table); lua || (isT && t.meta != nil) {
+				err = vm.luaSetIndex(obj, name, val, lua)
+				break
+			}
 			switch o := obj.(type) {
 			case *Table:
 				o.SetStr(name, val)
@@ -409,7 +526,11 @@ func (vm *VM) run(base int) (Value, error) {
 			idx := vm.pop()
 			obj := vm.pop()
 			var v Value
-			v, err = getIndex(obj, idx)
+			if t, isT := obj.(*Table); lua || (isT && t.meta != nil) {
+				v, err = vm.luaIndex(obj, idx)
+			} else {
+				v, err = getIndex(obj, idx)
+			}
 			if err == nil {
 				vm.push(v)
 			}
@@ -417,35 +538,117 @@ func (vm *VM) run(base int) (Value, error) {
 			val := vm.pop()
 			idx := vm.pop()
 			obj := vm.pop()
-			err = setIndex(obj, idx, val)
+			if t, isT := obj.(*Table); lua || (isT && t.meta != nil) {
+				err = vm.luaSetIndex(obj, idx, val, lua)
+			} else {
+				err = setIndex(obj, idx, val)
+			}
 		case OpAdd, OpSub, OpMul, OpDiv, OpIDiv, OpMod:
 			b := vm.pop()
 			a := vm.pop()
+			if ai, ok := a.(int64); ok && op <= OpMul {
+				if bi, ok := b.(int64); ok {
+					switch op {
+					case OpAdd:
+						vm.push(ai + bi)
+					case OpSub:
+						vm.push(ai - bi)
+					default:
+						vm.push(ai * bi)
+					}
+					break
+				}
+			}
 			var v Value
-			v, err = arith(op, a, b)
+			if lua {
+				v, err = vm.luaArith(op, a, b)
+			} else {
+				v, err = arith(op, a, b)
+				if err != nil {
+					if r, ok, e2 := vm.metaBinary(arithEvents[op], a, b); ok {
+						v, err = single(r), e2
+					}
+				}
+			}
 			if err == nil {
 				vm.push(v)
 			}
 		case OpNeg:
+			if lua {
+				var v Value
+				v, err = vm.luaUnm(vm.pop())
+				if err == nil {
+					vm.push(v)
+				}
+				break
+			}
 			switch x := vm.pop().(type) {
 			case int64:
 				vm.push(-x)
 			case float64:
 				vm.push(-x)
 			default:
+				if h := vm.metamethod(x, "__unm"); h != nil {
+					var v Value
+					v, err = vm.Call(h, []Value{x, x})
+					if err == nil {
+						vm.push(v)
+					}
+					break
+				}
 				err = fmt.Errorf("sinal de menos em %s, que não é número", TypeName(x))
 			}
 		case OpNot:
-			vm.push(!Truthy(vm.pop()))
-		case OpEq:
+			vm.push(!truthy(vm.pop()))
+		case OpEq, OpNe:
 			b := vm.pop()
-			vm.push(Equal(vm.pop(), b))
-		case OpNe:
-			b := vm.pop()
-			vm.push(!Equal(vm.pop(), b))
+			a := vm.pop()
+			var eq bool
+			if lua {
+				eq, err = vm.luaEq(a, b)
+			} else {
+				eq = Equal(a, b)
+			}
+			if err == nil {
+				vm.push(eq == (op == OpEq))
+			}
 		case OpLt, OpGt, OpLe, OpGe:
 			b := vm.pop()
 			a := vm.pop()
+			if ai, ok := a.(int64); ok {
+				if bi, ok := b.(int64); ok {
+					switch op {
+					case OpLt:
+						vm.push(ai < bi)
+					case OpGt:
+						vm.push(ai > bi)
+					case OpLe:
+						vm.push(ai <= bi)
+					default:
+						vm.push(ai >= bi)
+					}
+					break
+				}
+			}
+			_, ta := a.(*Table)
+			_, tb := b.(*Table)
+			if lua || ta || tb {
+				var r bool
+				switch op {
+				case OpLt:
+					r, err = vm.luaLess(a, b, false)
+				case OpGt:
+					r, err = vm.luaLess(b, a, false)
+				case OpLe:
+					r, err = vm.luaLess(a, b, true)
+				default:
+					r, err = vm.luaLess(b, a, true)
+				}
+				if err == nil {
+					vm.push(r)
+				}
+				break
+			}
 			var c int
 			c, err = Compare(a, b)
 			if err == nil {
@@ -465,17 +668,17 @@ func (vm *VM) run(base int) (Value, error) {
 			fr.ip += off
 		case OpJumpIfFalse:
 			off := u16()
-			if !Truthy(vm.peek(0)) {
+			if !truthy(vm.peek(0)) {
 				fr.ip += off
 			}
 		case OpJumpIfTrue:
 			off := u16()
-			if Truthy(vm.peek(0)) {
+			if truthy(vm.peek(0)) {
 				fr.ip += off
 			}
 		case OpPopJumpIfFalse:
 			off := u16()
-			if !Truthy(vm.pop()) {
+			if !truthy(vm.pop()) {
 				fr.ip += off
 			}
 		case OpLoop:
@@ -518,6 +721,9 @@ func (vm *VM) run(base int) (Value, error) {
 			vm.frames = vm.frames[:len(vm.frames)-1]
 			if len(vm.frames) == base {
 				return res, nil
+			}
+			if t, ok := res.(*Tuple); ok && !vm.frames[len(vm.frames)-1].cl.Proto.Lua {
+				res = t.first()
 			}
 			vm.push(res)
 			reload()
@@ -599,12 +805,20 @@ func (vm *VM) run(base int) (Value, error) {
 			k := u16()
 			isPath := code[fr.ip] == 1
 			fr.ip++
-			var m *Module
-			m, err = vm.importModule(consts[k].(string), isPath, fr.cl.Proto.File)
+			var m Value
+			m, err = vm.importAny(consts[k].(string), isPath, fr.cl.Proto.File)
 			if err == nil {
 				vm.push(m)
 			}
 		default:
+			if op >= OpPow {
+				err = vm.luaOp(op, fr, code, &reloadNeeded)
+				if reloadNeeded {
+					reloadNeeded = false
+					reload()
+				}
+				break
+			}
 			err = fmt.Errorf("instrução desconhecida %d", op)
 		}
 

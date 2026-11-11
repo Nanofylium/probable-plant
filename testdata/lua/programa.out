@@ -1,0 +1,10 @@
+{"ativo":true,"nome":"Ed.Tour","nota":4.5,"pacotes":["Chapada","Morro","Lençóis"],"preco":500,"texto":"linha \"1\"\nlinha 2"}
+Ed.Tour	3	Lençóis	500	integer	true	4.5	true
+{"a":[1,2,[]],"c":"x\ty"}
+círculo com área 0.79
+círculo com área 3.14
+retângulo com área 6.00
+1 2 3 5 7 8 9
+23416728348467685
+o=2 rei=2 a=1 
+fim     |   3.142|+5|0xff
