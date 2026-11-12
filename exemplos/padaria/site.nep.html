@@ -4,15 +4,15 @@
   Tudo que está fora de <page> é o layout comum (cabeçalho, rodapé).
   Cada <page route="..."> é uma página do site.
 -->
-<nep-config timezone="America/Sao_Paulo" movimento="true" progresso>
+<nep-config timezone="America/Sao_Paulo" movimento="true" progresso tema="nepenthes" cor="#9a5317" fonte="titulo-serifa">
 
 <data name="produtos">
 [
-  {"slug": "pao-de-mel", "nome": "Pão de mel", "preco": 6.5, "categoria": "Doces", "desc": "Massa de especiarias com cobertura de chocolate meio amargo."},
-  {"slug": "sonho", "nome": "Sonho de creme", "preco": 7.9, "categoria": "Doces", "desc": "Recheado com creme de baunilha feito na casa."},
-  {"slug": "pao-italiano", "nome": "Pão italiano", "preco": 18.0, "categoria": "Pães", "desc": "Fermentação natural de 24 horas, casca crocante."},
-  {"slug": "baguete", "nome": "Baguete", "preco": 9.5, "categoria": "Pães", "desc": "Assada três vezes ao dia."},
-  {"slug": "bolo-cenoura", "nome": "Bolo de cenoura", "preco": 32.0, "categoria": "Bolos", "desc": "Com calda de brigadeiro. Serve 10 pessoas."}
+  {"slug": "pao-de-mel", "nome": "Pão de mel", "preco": 6.5, "categoria": "Doces", "desc": "Massa de especiarias com cobertura de chocolate meio amargo.", "emoji": "🍯"},
+  {"slug": "sonho", "nome": "Sonho de creme", "preco": 7.9, "categoria": "Doces", "desc": "Recheado com creme de baunilha feito na casa.", "emoji": "🍩"},
+  {"slug": "pao-italiano", "nome": "Pão italiano", "preco": 18.0, "categoria": "Pães", "desc": "Fermentação natural de 24 horas, casca crocante.", "emoji": "🍞"},
+  {"slug": "baguete", "nome": "Baguete", "preco": 9.5, "categoria": "Pães", "desc": "Assada três vezes ao dia.", "emoji": "🥖"},
+  {"slug": "bolo-cenoura", "nome": "Bolo de cenoura", "preco": 32.0, "categoria": "Bolos", "desc": "Com calda de brigadeiro. Serve 10 pessoas.", "emoji": "🍰"}
 ]
 </data>
 
@@ -31,40 +31,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.title }} · {{ site.nome }}</title>
   <style>
-    :root { --cor: #8a4b14; --fundo: #fffaf3; --texto: #2e2117; --borda: #ecdcc8; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--fundo); color: var(--texto); }
-    header, main, footer { max-width: 980px; margin: 0 auto; padding: 0 20px; }
-    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding-top: 18px; padding-bottom: 18px; }
-    .marca { font-weight: 800; font-size: 1.25rem; color: var(--cor); text-decoration: none; }
-    nav a { margin-left: 18px; color: var(--texto); text-decoration: none; }
-    nav a.ativo { color: var(--cor); font-weight: 700; }
-    .hero { padding: 56px 0 28px; }
-    .hero h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; margin: 0 0 12px; }
-    .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-    .card { background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 18px; }
-    .card h3 { margin: 0 0 4px; }
-    .card a { color: inherit; text-decoration: none; }
-    .preco { color: var(--cor); font-weight: 700; }
-    .tag { display: inline-block; font-size: .8rem; background: #f6e7d3; border-radius: 99px; padding: 1px 10px; }
-    .botao, button { display: inline-block; background: var(--cor); color: #fff; border: 0; border-radius: 10px; padding: 10px 18px; font: inherit; cursor: pointer; text-decoration: none; }
-    form { display: grid; gap: 12px; max-width: 520px; }
-    label { display: grid; gap: 4px; font-weight: 600; }
-    input, textarea, select { font: inherit; padding: 10px; border: 1px solid var(--borda); border-radius: 10px; background: #fff; }
-    .nep-ok { background: #e7f6ea; border: 1px solid #b9e2c2; padding: 10px 14px; border-radius: 10px; }
-    .nep-erros { background: #fdeceb; border: 1px solid #f3c4c0; padding: 6px 14px; border-radius: 10px; }
-    .nep-erros ul { margin: 6px 0; padding-left: 18px; }
-    .numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 8px 0 40px; text-align: center; }
-    .numeros strong { display: block; font-size: 2.2rem; color: var(--cor); }
-    .numeros span { font-size: .9rem; }
-    footer { margin-top: 64px; padding-top: 24px; padding-bottom: 40px; border-top: 1px solid var(--borda); font-size: .95rem; }
-    footer form { grid-template-columns: 1fr auto; max-width: 440px; }
-    footer .nep-ok, footer .nep-erros { grid-column: 1 / -1; }
+    /* O tema Nepenthes (tema="nepenthes") faz o grosso; aqui só o que é da padaria. */
+    :root { --nep-fundo: #fffaf3; --nep-alt: #f8efe2; --nep-linha: #eedfcb; --nep-texto: #2e2117; --nep-suave: #6e5a49; --nep-escuro: #2a1c12; }
+    .marca span { font-size: 1.5rem; }
+    .capa:not(.cor) { background: radial-gradient(800px 400px at 90% 10%, #f6dcb8, transparent 70%), var(--nep-fundo); }
+    .forno { aspect-ratio: 1; max-width: 420px; justify-self: center; width: 100%; border-radius: 50%; display: grid; place-items: center; font-size: clamp(6rem, 16vw, 10rem);
+             background: radial-gradient(circle at 50% 60%, #ffd18a, #e99a3e 55%, #9a5317 100%); box-shadow: 0 40px 80px rgba(154,83,23,.35), inset 0 -20px 40px rgba(0,0,0,.2); }
+    .produto .foto { aspect-ratio: 16/10; display: grid; place-items: center; font-size: 3.4rem; background: linear-gradient(135deg, #fbe7cc, #f1cf9f); }
+    .preco { color: var(--nep-cor); font-weight: 800; font-size: 1.1rem; }
+    .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .filtros a { text-decoration: none; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--nep-linha); color: var(--nep-texto); background: #fff; font-weight: 600; font-size: .92rem; }
+    .filtros a[aria-current=page] { background: var(--nep-cor); color: #fff; border-color: var(--nep-cor); }
+    .detalhe { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    .detalhe .foto { aspect-ratio: 1; border-radius: 28px; display: grid; place-items: center; font-size: 9rem; background: linear-gradient(135deg, #fbe7cc, #f1cf9f); }
+    .lado-a-lado { display: grid; grid-template-columns: .8fr 1.2fr; gap: 48px; align-items: start; }
+    footer form { display: flex; gap: 8px; max-width: 420px; }
+    footer form input { flex: 1; }
+    footer .nep-ok, footer .nep-erros { flex-basis: 100%; }
+    footer form { flex-wrap: wrap; }
+    @media (max-width: 820px) { .detalhe, .lado-a-lado { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <header>
-    <a class="marca" href="{{ url('/') }}">🥐 {{ site.nome }}</a>
+    <a class="marca" href="{{ url('/') }}"><span>🥐</span> {{ site.nome }}</a>
     <nav>
       <a href="{{ url('/') }}" class="{{ ativo('/') }}">Início</a>
       <a href="{{ url('/produtos') }}" class="{{ ativo('/produtos') }}">Produtos</a>
@@ -75,27 +65,50 @@
 
   <main>
     <page route="/" title="Início">
-      <section class="hero">
-        <h1 nep-digitar="Pão quentinho desde 1998.|Fermentação natural de verdade.|Entrega no seu bairro.">Pão quentinho desde 1998.</h1>
-        <p>Fermentação natural, receitas de família e entrega no bairro. Hoje é {{ date(nil, "d/m/Y") }}.</p>
-        <a class="botao" nep-magnetico href="{{ url('/encomenda') }}">Fazer uma encomenda</a>
+      <section class="capa">
+        <div class="lado">
+          <div>
+            <span class="chapeu">Padaria artesanal · {{ site.cidade }}</span>
+            <h1 nep-digitar="Pão quentinho desde 1998.|Fermentação natural de verdade.|Entrega no seu bairro.">Pão quentinho desde 1998.</h1>
+            <p>Fermentação natural, receitas de família e entrega no bairro. Hoje é {{ date(nil, "d/m/Y") }}.</p>
+            <div class="acoes">
+              <a class="botao" nep-magnetico href="{{ url('/encomenda') }}">Fazer uma encomenda</a>
+              <a class="botao secundario" href="{{ url('/produtos') }}">Ver produtos</a>
+            </div>
+          </div>
+          <div class="forno" nep-inclinar="10" aria-hidden="true">🥐</div>
+        </div>
       </section>
 
-      <div class="numeros">
-        <div><strong nep-contar>27</strong><span>anos de forno</span></div>
-        <div><strong nep-contar>1.200+</strong><span>pães por dia</span></div>
-        <div><strong nep-contar>4,9</strong><span>nota dos clientes</span></div>
-      </div>
+      <section class="secao alt">
+        <div class="numeros">
+          <div><strong nep-contar>27</strong><span>anos de forno</span></div>
+          <div><strong nep-contar>1.200+</strong><span>pães por dia</span></div>
+          <div><strong nep-contar>4,9</strong><span>nota dos clientes</span></div>
+        </div>
+      </section>
 
-      <h2>Mais pedidos</h2>
-      <div class="grade">
-        <each p in="produtos |> sort_by('preco') |> take(3)">
-          <div class="card" nep-inclinar>
-            <a href="{{ url('/produto/' + p.slug) }}"><h3>{{ p.nome }}</h3></a>
-            <span class="preco">{{ p.preco |> money }}</span>
-          </div>
-        </each>
-      </div>
+      <section class="secao">
+        <span class="chapeu">Do forno</span>
+        <h2>Mais pedidos</h2>
+        <div class="grade">
+          <each p in="produtos |> sort_by('preco') |> take(3)">
+            <a class="cartao produto" nep-inclinar="6" href="{{ url('/produto/' + p.slug) }}">
+              <div class="foto">{{ p.emoji }}</div>
+              <span class="selo">{{ p.categoria }}</span>
+              <h3>{{ p.nome }}</h3>
+              <p>{{ p.desc }}</p>
+              <span class="preco">{{ p.preco |> money }}</span>
+            </a>
+          </each>
+        </div>
+      </section>
+
+      <section class="capa cor centro">
+        <h2 style="margin-top:0">Encomende para o café da manhã de amanhã</h2>
+        <p style="margin-left:auto;margin-right:auto">Peça até as 18h e receba quentinho no seu bairro.</p>
+        <div class="acoes" style="justify-content:center"><a class="botao" href="{{ url('/encomenda') }}">Fazer encomenda</a></div>
+      </section>
     </page>
 
     <page route="/produtos" title="Produtos">
@@ -106,25 +119,29 @@
           lista = produtos |> where("categoria", filtro)
         end
       </nep>
+      <section class="secao">
+      <span class="chapeu">Cardápio</span>
       <h1>Produtos</h1>
-      <p>
-        <a href="{{ url('/produtos') }}">Todos</a>
-        <each c in="categorias"> · <a href="{{ url('/produtos?categoria=' + c) }}">{{ c }}</a></each>
-      </p>
+      <nav class="filtros">
+        <a href="{{ url('/produtos') }}" aria-current="{{ filtro and 'false' or 'page' }}">Todos</a>
+        <each c in="categorias"><a href="{{ url('/produtos?categoria=' + c) }}" aria-current="{{ filtro == c and 'page' or 'false' }}">{{ c }}</a></each>
+      </nav>
       <if test="len(lista) == 0">
         <p>Nenhum produto nessa categoria.</p>
       <else>
         <div class="grade">
           <each p in="lista">
-            <div class="card">
-              <span class="tag">{{ p.categoria }}</span>
-              <a href="{{ url('/produto/' + p.slug) }}"><h3>{{ p.nome }}</h3></a>
+            <a class="cartao produto" href="{{ url('/produto/' + p.slug) }}">
+              <div class="foto">{{ p.emoji }}</div>
+              <span class="selo">{{ p.categoria }}</span>
+              <h3>{{ p.nome }}</h3>
               <p>{{ p.desc |> truncate(60) }}</p>
               <span class="preco">{{ p.preco |> money }}</span>
-            </div>
+            </a>
           </each>
         </div>
       </if>
+      </section>
     </page>
 
     <page route="/produto/:slug" title="Produto">
@@ -133,18 +150,28 @@
         if not p do not_found() end
         page.title = p.nome
       </nep>
-      <p><a href="{{ url('/produtos') }}">← Todos os produtos</a></p>
-      <h1>{{ p.nome }}</h1>
-      <p><span class="tag">{{ p.categoria }}</span></p>
-      <p>{{ p.desc }}</p>
-      <p class="preco" style="font-size:1.4rem">{{ p.preco |> money }}</p>
-      <a class="botao" href="{{ url('/encomenda') }}">Encomendar</a>
+      <section class="secao">
+        <div class="detalhe">
+          <div class="foto" nep-inclinar="8">{{ p.emoji }}</div>
+          <div>
+            <a class="chapeu" href="{{ url('/produtos') }}">← Todos os produtos</a>
+            <h1>{{ p.nome }}</h1>
+            <p><span class="selo">{{ p.categoria }}</span></p>
+            <p class="intro">{{ p.desc }}</p>
+            <p class="preco" style="font-size:1.8rem">{{ p.preco |> money }}</p>
+            <a class="botao" href="{{ url('/encomenda') }}">Encomendar</a>
+          </div>
+        </div>
+      </section>
     </page>
 
     <page route="/encomenda" title="Encomendas">
-      <h1>Encomendas</h1>
-      <p>Peça com 24 horas de antecedência. Confirmamos pelo WhatsApp.</p>
-      <form save="encomendas" success="Encomenda recebida! Vamos confirmar pelo WhatsApp em breve.">
+      <section class="secao"><div class="lado-a-lado"><div>
+      <span class="chapeu">Encomendas</span>
+      <h1>Peça o seu</h1>
+      <p class="intro">Peça com 24 horas de antecedência. Confirmamos pelo WhatsApp.</p>
+      </div>
+      <form class="cartao" save="encomendas" success="Encomenda recebida! Vamos confirmar pelo WhatsApp em breve.">
         <label>Seu nome <input name="nome" required maxlength="80"></label>
         <label>WhatsApp <input name="whatsapp" type="tel" required></label>
         <label>Produto
@@ -162,18 +189,23 @@
         <label>Observações <textarea name="obs" rows="3" maxlength="500"></textarea></label>
         <button>Enviar encomenda</button>
       </form>
+      </div></section>
     </page>
 
     <page route="/contato" title="Contato">
+      <section class="secao"><div class="lado-a-lado"><div>
+      <span class="chapeu">Contato</span>
       <h1>Fale com a gente</h1>
-      <p>Ou ligue: {{ site.fone }}</p>
-      <form save="contatos" success="Mensagem enviada! Respondemos em até 1 dia útil.">
+      <p class="intro">Ou ligue: {{ site.fone }}</p>
+      </div>
+      <form class="cartao" save="contatos" success="Mensagem enviada! Respondemos em até 1 dia útil.">
         <label>Nome <input name="nome" required maxlength="80"></label>
         <label>E-mail <input name="email" type="email" required></label>
         <label>Mensagem <textarea name="mensagem" rows="5" required maxlength="2000"></textarea></label>
         <label style="display:flex;gap:8px;font-weight:400"><input type="checkbox" name="aceite" required data-label="Autorização de contato"> Autorizo o uso dos meus dados para responder este contato.</label>
         <button>Enviar</button>
       </form>
+      </div></section>
     </page>
 
     <page route="/painel" title="Painel" auth>
@@ -192,18 +224,35 @@
     </page>
 
     <page route="404" title="Não encontrado">
-      <h1>Ops, essa página saiu do forno antes da hora.</h1>
-      <p><a href="{{ url('/') }}">Voltar ao início</a></p>
+      <section class="secao centro">
+        <div style="font-size:4rem">🥖</div>
+        <h1>Ops, essa página saiu do forno antes da hora.</h1>
+        <p class="intro">O endereço pode ter mudado.</p>
+        <a class="botao" href="{{ url('/') }}">Voltar ao início</a>
+      </section>
     </page>
   </main>
 
   <footer>
-    <p><strong>{{ site.nome }}</strong> · {{ site.cidade }} · {{ site.fone }}</p>
-    <p>Receba as fornadas especiais por e-mail:</p>
-    <form save="newsletter" success="Inscrição feita!" limit="3">
-      <input name="email" type="email" required placeholder="seu@email.com" data-label="E-mail">
-      <button>Quero</button>
-    </form>
+    <div class="colunas-rodape">
+      <div>
+        <h4>🥐 {{ site.nome }}</h4>
+        <p>Pães de fermentação natural, doces e bolos feitos todo dia. {{ site.cidade }} · {{ site.fone }}</p>
+      </div>
+      <div>
+        <h4>Navegue</h4>
+        <nav><a href="{{ url('/produtos') }}">Produtos</a><a href="{{ url('/encomenda') }}">Encomendas</a><a href="{{ url('/contato') }}">Contato</a></nav>
+      </div>
+      <div>
+        <h4>Fornadas especiais</h4>
+        <p>Receba as novidades por e-mail:</p>
+        <form save="newsletter" success="Inscrição feita!" limit="3">
+          <input name="email" type="email" required placeholder="seu@email.com" data-label="E-mail">
+          <button>Quero</button>
+        </form>
+      </div>
+    </div>
+    <div class="base"><span>© {{ site.nome }}</span><span>Feito com Nepenthes</span></div>
   </footer>
 </body>
 </html>

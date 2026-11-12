@@ -5,7 +5,7 @@
   Abra em duas abas: o recado publicado numa aparece na outra sozinho (<live>),
   sem uma linha de JavaScript escrita por você.
 -->
-<nep-config movimento="suave">
+<nep-config movimento="suave" tema="nepenthes" cor="#1f6f5c">
 
 <nep>
   let site = {nome: "Mural da Vila", lema: "Recados do bairro, ao vivo."}
@@ -51,32 +51,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.title }} · {{ site.nome }}</title>
   <style>
-    :root { --cor: #1f6f5c; --fundo: #f4f7f5; --texto: #17251f; --borda: #d7e2dc; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--fundo); color: var(--texto); }
-    header, main { max-width: 760px; margin: 0 auto; padding: 0 16px; }
-    header { display: flex; justify-content: space-between; align-items: center; padding-top: 18px; padding-bottom: 8px; flex-wrap: wrap; gap: 8px; }
-    header a { color: var(--texto); text-decoration: none; margin-left: 14px; }
-    .marca { font-weight: 800; color: var(--cor); margin: 0; }
-    form { display: grid; gap: 10px; }
-    label { display: grid; gap: 4px; font-weight: 600; }
-    input, textarea { font: inherit; padding: 10px; border: 1px solid var(--borda); border-radius: 10px; background: #fff; }
-    button { font: inherit; background: var(--cor); color: #fff; border: 0; border-radius: 10px; padding: 9px 16px; cursor: pointer; }
-    .recado { background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 14px 16px; margin: 12px 0; }
-    .recado p { margin: 6px 0 10px; overflow-wrap: anywhere; }
-    .recado time { color: #5d6e66; font-size: .85rem; margin-left: 6px; }
+    /* O tema Nepenthes faz o grosso; aqui só o que é do mural. */
+    :root { --nep-fundo: #f4f7f5; --nep-alt: #e9f0ec; --nep-linha: #d7e2dc; --nep-escuro: #12241d; }
+    .marca span { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--nep-cor); color: #fff; font-size: 1rem; }
+    .capa { padding-top: 56px; padding-bottom: 40px; }
+    .mural { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 40px; align-items: start; padding-bottom: 72px; }
+    .mural > form { position: sticky; top: 90px; max-width: none; }
+    .mural > form h2 { margin: 0; font-size: 1.2rem; }
+    .feed h2 { margin: 0 0 16px; font-size: 1.2rem; }
+    .recado { margin: 0 0 14px; }
+    .recado header { display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--nep-cor); flex: none; }
+    .recado p { margin: 10px 0 12px; color: var(--nep-texto); overflow-wrap: anywhere; font-size: 1.02rem; }
+    .recado img { width: 100%; margin-bottom: 10px; }
     .recado form { display: inline; }
-    .recado button { background: #fff; color: var(--cor); border: 1px solid var(--borda); padding: 4px 12px; }
-    .nep-ok { background: #e3f4ec; border-radius: 10px; padding: 8px 12px; }
-    .nep-erros { background: #fde9e7; border-radius: 10px; padding: 4px 12px; }
-    .muted { color: #5d6e66; font-size: .9rem; }
-    table { border-collapse: collapse; width: 100%; }
-    td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--borda); }
+    .recado form button { background: #fff; color: var(--nep-cor); border: 1px solid var(--nep-linha); box-shadow: none; padding: 6px 14px; font-size: .9rem; }
+    .vivo { display: inline-flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--nep-suave); }
+    .vivo i { width: 8px; height: 8px; border-radius: 50%; background: #2fbf71; box-shadow: 0 0 0 4px rgba(47,191,113,.18); }
+    @media (max-width: 860px) { .mural { grid-template-columns: 1fr; } .mural > form { position: static; } }
   </style>
 </head>
 <body>
   <header>
-    <p class="marca">{{ site.nome }}</p>
+    <a class="marca" href="{{ url('/') }}"><span>✉</span> {{ site.nome }}</a>
     <nav>
       <a href="{{ url('/') }}">Mural</a>
       <a href="{{ url('/numeros') }}">Números</a>
@@ -86,32 +83,40 @@
 
   <main>
     <page route="/" title="Mural" description="Recados do bairro, ao vivo: publique e veja os recados dos vizinhos chegando na hora.">
-      <h1>{{ site.lema }}</h1>
-      <p class="muted">{{ saudacao }} Esta é a sua visita número {{ session.visitas }}.</p>
+      <section class="capa">
+        <span class="chapeu">Ao vivo</span>
+        <h1>{{ site.lema }}</h1>
+        <p>{{ saudacao }} Esta é a sua visita número {{ session.visitas }}.</p>
+      </section>
 
-      <form save="recados" success="Recado publicado!" limit="5">
-        <label>Seu nome <input name="autor" required maxlength="40"></label>
-        <label>Recado <textarea name="texto" rows="3" required maxlength="280"></textarea></label>
-        <label>Foto (opcional) <input type="file" name="foto" accept="image/*" data-max-mb="3" data-publico></label>
-        <button>Publicar</button>
-      </form>
+      <div class="faixa mural">
+        <form class="cartao" save="recados" success="Recado publicado!" limit="5">
+          <h2>Deixe um recado</h2>
+          <label>Seu nome <input name="autor" required maxlength="40"></label>
+          <label>Recado <textarea name="texto" rows="3" required maxlength="280"></textarea></label>
+          <label>Foto (opcional) <input type="file" name="foto" accept="image/*" data-max-mb="3" data-publico></label>
+          <button>Publicar</button>
+        </form>
 
-      <live>
-        <h2>{{ db.count("recados") }} recado(s)</h2>
-        <each r in="db.all('recados', 30)">
-          <article class="recado">
-            <strong>{{ r.autor }}</strong><time>{{ quando(r.created_at) }}</time>
-            <p>{{ r.texto |> nl2br }}</p>
-            <if test="r.foto"><img src="{{ r.foto.url }}" alt="Foto de {{ r.autor }}" style="max-width:100%;border-radius:10px"></if>
-            <form run="curtir" success="" limit="60">
-              <input type="hidden" name="id" value="{{ r.id }}">
-              <button>♥ {{ default(r.curtidas, 0) }}</button>
-            </form>
-          </article>
-        <else>
-          <p class="muted">Ainda não há recados. Seja o primeiro!</p>
-        </each>
-      </live>
+        <div class="feed">
+          <live>
+            <h2>{{ db.count("recados") }} recado(s) <span class="vivo"><i></i>atualiza sozinho</span></h2>
+            <each r in="db.all('recados', 30)">
+              <article class="recado cartao">
+                <header><span class="avatar">{{ upper(substr(r.autor, 0, 1)) }}</span><div><strong>{{ r.autor }}</strong><div class="meta">{{ quando(r.created_at) }}</div></div></header>
+                <p>{{ r.texto |> nl2br }}</p>
+                <if test="r.foto"><img src="{{ r.foto.url }}" alt="Foto de {{ r.autor }}"></if>
+                <form run="curtir" success="" limit="60">
+                  <input type="hidden" name="id" value="{{ r.id }}">
+                  <button>♥ {{ default(r.curtidas, 0) }}</button>
+                </form>
+              </article>
+            <else>
+              <div class="cartao"><p>Ainda não há recados. Seja o primeiro!</p></div>
+            </each>
+          </live>
+        </div>
+      </div>
     </page>
 
     <page route="/numeros" title="Números">
@@ -119,23 +124,41 @@
         let recados = db.all("recados")
         let por_autor = recados |> count_by("autor")
       </nep>
-      <h1>Números do mural</h1>
-      <live every="5">
-        <p class="muted">Atualizado às {{ date(nil, "H:i:s") }}</p>
-        <p>{{ len(recados) }} recado(s), {{ recados |> pluck("curtidas") |> sum }} curtida(s).</p>
-      </live>
-      <table>
-        <tr><th>Autor</th><th>Recados</th></tr>
-        <each autor, n in="por_autor">
-          <tr><td>{{ loop.index }}. {{ autor }}</td><td>{{ n }}</td></tr>
-        </each>
-      </table>
+      <section class="secao">
+        <span class="chapeu">Estatísticas</span>
+        <h1>Números do mural</h1>
+        <live every="5">
+          <div class="numeros" style="margin:24px 0 40px">
+            <div><strong>{{ len(recados) }}</strong><span>recados</span></div>
+            <div><strong>{{ recados |> pluck("curtidas") |> map(fn(c) do default(c, 0) end) |> sum }}</strong><span>curtidas</span></div>
+            <div><strong>{{ len(keys(por_autor)) }}</strong><span>vizinhos</span></div>
+          </div>
+          <p class="meta">Atualizado às {{ date(nil, "H:i:s") }}</p>
+        </live>
+        <table>
+          <tr><th>Autor</th><th>Recados</th></tr>
+          <each autor, n in="por_autor">
+            <tr><td>{{ loop.index }}. {{ autor }}</td><td>{{ n }}</td></tr>
+          <else>
+            <tr><td colspan="2">Ninguém publicou ainda.</td></tr>
+          </each>
+        </table>
+      </section>
     </page>
 
     <page route="404" title="Não encontrado">
-      <h1>Essa página não existe.</h1>
-      <p><a href="{{ url('/') }}">Voltar ao mural</a></p>
+      <section class="secao centro">
+        <h1>Essa página não existe.</h1>
+        <a class="botao" href="{{ url('/') }}">Voltar ao mural</a>
+      </section>
     </page>
   </main>
+
+  <footer>
+    <div class="base" style="margin-top:0;border-top:0;padding-top:0">
+      <span>{{ site.nome }} · recados de vizinhos para vizinhos</span>
+      <span>Feito com Nepenthes · <a href="{{ url('/api/recados') }}">API</a></span>
+    </div>
+  </footer>
 </body>
 </html>

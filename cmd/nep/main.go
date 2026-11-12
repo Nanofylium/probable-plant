@@ -22,7 +22,7 @@ Uso:
   nep arquivo.lua [args]   executa um programa em Lua 5.4 (na mesma máquina virtual)
   nep run arquivo.nep      o mesmo que acima
   nep check arquivo.nep    só verifica a sintaxe (também aceita um site .nep.html)
-  nep novo pasta           cria um site inicial (pasta/site.nep.html)
+  nep novo pasta [--modelo empresa|blog]  cria um site pronto (pasta/site.nep.html)
   nep dev site.nep.html    roda o site no computador, com erros detalhados
   nep serve site.nep.html  roda o site em produção (VPS): --porta 8000 --dados pasta --base /sub
   nep cgi [site.nep.html]  atende um pedido CGI (hospedagem compartilhada; automático se o
@@ -61,10 +61,7 @@ func main() {
 	case "serve", "servir":
 		os.Exit(serve(args[1:], false))
 	case "novo", "new":
-		if len(args) < 2 {
-			fail("informe a pasta: nep novo meu-site")
-		}
-		os.Exit(novo(args[1]))
+		os.Exit(novo(args[1:]))
 	case "dev":
 		os.Exit(serve(args[1:], true))
 	case "cgi":

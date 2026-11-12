@@ -215,6 +215,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/_nep/editar.js":
 		asset(w, r, editarJS)
 		return
+	case "/_nep/tema.css":
+		serveTema(w, r)
+		return
 	case "/_nep/versao":
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
@@ -534,8 +537,10 @@ func (s *Server) handleHalt(rq *request, err error, status int) error {
 
 // inject acrescenta os scripts de movimento e de regiões vivas.
 func (s *Server) inject(rq *request, out string) string {
-	tags := s.seoTags(rq, out)
 	cfg := rq.site.Config
+	inicio, _ := s.temaTags(cfg, out)
+	out = noComecoDoHead(out, inicio)
+	tags := s.seoTags(rq, out)
 	mv := strings.ToLower(strings.TrimSpace(cfg["movimento"]))
 	if mv != "" && mv != "false" && mv != "0" && mv != "nao" && mv != "não" {
 		t := `<script src="` + html.EscapeString(s.opt.Base) + `/_nep/movimento.js" defer`

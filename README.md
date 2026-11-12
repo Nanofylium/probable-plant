@@ -70,6 +70,8 @@ Você escreve o tema à mão; quem cuida do site publica e troca o conteúdo sem
 
 No painel aparecem "Artigos" (criar, editar, rascunho ou publicado, endereço) e "Textos e menus" (com `menu-editavel="principal"` num `<nav>`, o cliente reorganiza o menu). O dono cria logins de **editores**, que cuidam só do conteúdo e não veem os dados dos visitantes. E onde o tema deixar (`construtor="home.faixa"` ou `<textarea data-construtor>`), o cliente monta blocos arrastando, no construtor visual de código aberto [GrapesJS](https://github.com/GrapesJS/grapesjs) (BSD-3-Clause), que vem embutido no `nep`. Logado, o dono clica no título da página e escreve ali mesmo. Título, prévia no WhatsApp, 404 e sitemap de cada artigo saem sozinhos. Exemplo completo: [`exemplos/revista`](exemplos/revista/site.nep.html).
 
+**Aparência profissional sem CSS.** Todo site sai com cara de tema WordPress: sem CSS próprio, o `nep` aplica sozinho o tema Nepenthes (cabeçalho com menu, rodapé, cartões, botões, formulários, tabelas, celular). Troque a cor e a fonte com `<nep-config cor="#9a5317" fonte="titulo-serifa">`, use as classes prontas (`.capa`, `.secao`, `.grade`, `.cartao`, `.botao`…) e sobrescreva o que quiser: o seu CSS sempre manda. Detalhes na seção 10.15 do [SPEC](SPEC.md).
+
 ## Instalar
 
 Os executáveis de cada sistema são gerados pela CI a cada mudança (aba **Actions** do GitHub, artefatos da última execução). Para compilar você mesmo, precisa do Go 1.24 ou mais novo:
@@ -97,7 +99,7 @@ nep check arquivo           verifica um programa .nep ou um site .nep.html
 nep test pasta              roda os testes (*_test.nep, funções test_*)
 nep disasm programa.nep     mostra o bytecode
 
-nep novo meu-site           cria meu-site/site.nep.html
+nep novo meu-site           cria meu-site/site.nep.html (site de empresa pronto; --modelo blog para um blog)
 nep dev site.nep.html       roda o site no computador (http://localhost:8000), erros com a linha exata
 nep serve site.nep.html     roda em produção num VPS: --porta 8000 --dados /var/lib/site --base /loja
 ```

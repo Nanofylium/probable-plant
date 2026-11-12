@@ -232,7 +232,7 @@ Formato de datas (letras do PHP, iguais no runtime web): `d j m n Y y H G i s D 
 Um arquivo `.nep.html` é HTML comum com algumas tags a mais. O `nep` lê o arquivo, traduz o HTML para código Nepenthes e executa na mesma máquina virtual da linguagem. Não há PHP, Node nem banco de dados para instalar: o executável `nep` é o servidor, o banco e o painel.
 
 ```
-nep novo meu-site              cria meu-site/site.nep.html
+nep novo meu-site              cria meu-site/site.nep.html (modelo empresa; --modelo blog para o tema de blog)
 nep dev meu-site/site.nep.html desenvolvimento: http://localhost:8000, erros com a linha do arquivo
 nep serve site.nep.html        produção (VPS), atrás de um proxy com HTTPS
 nep.cgi                        hospedagem compartilhada (Apache + CGI), ver hospedagem/.htaccess
@@ -458,6 +458,17 @@ Cada framework tem o nome de uma espécie de *Nepenthes*:
 E `ia(pergunta, {sistema:, max:})` dá acesso direto ao modelo; `ia_ligada()` diz se a IA está configurada (por exemplo, `<if test="ia_ligada()">{{ lowii() }}</if>`).
 
 Limites: 600 pedidos de IA por hora no site, 20 perguntas a cada 10 minutos por visitante no lowii, respostas curtas. O lowii recebe só trechos do site achados pela busca e ignora pedidos para mudar as regras. O histórico de uso (com tokens e erros) fica no painel.
+
+### 10.15 Aparência profissional: o tema Nepenthes
+
+Todo site sai com cara de site profissional, como um tema do WordPress, sem precisar escrever CSS.
+
+- **Sem CSS próprio** (nenhum `<style>` nem `<link rel="stylesheet">`), o site ganha sozinho o tema Nepenthes (`/_nep/tema.css`, embutido no `nep`): tipografia, cabeçalho fixo com menu, rodapé escuro, formulários, botões, tabelas, citações, código, avisos de formulário e comentários, em computador e celular. HTML simples (`<header>`, `<nav>`, `<main>`, `<footer>`, `<h1>`, `<form>`, `<table>`) já fica bonito.
+- `<nep-config tema="nepenthes">` usa o tema mesmo com CSS próprio: o tema entra no começo do `<head>` e todas as regras dele usam `:where()`, então qualquer regra do site manda nele, sem `!important`. `tema="nenhum"` desliga.
+- `cor="#2f6b4f"` troca a cor principal e `fonte="..."` a fonte: `sem-serifa` (padrão), `serifa`, `titulo-serifa` (só os títulos), `arredondada`, `geometrica`, `humanista`, `classica`, `mono`. As demais cores são variáveis CSS: `--nep-fundo`, `--nep-alt`, `--nep-superficie`, `--nep-texto`, `--nep-suave`, `--nep-linha`, `--nep-escuro`, `--nep-raio`.
+- Classes prontas: `.capa` (abertura; `.capa.cor` e `.capa.escura`; `.lado` divide em duas colunas), `.secao` (`.alt`, `.escura`), `.faixa` (largura do conteúdo), `.chapeu`, `.intro`, `.centro`, `.acoes`, `.grade` (`.duas`, `.quatro`), `.cartao`, `.icone`, `.selo`, `.meta`, `.numeros`, `.botao` (`.secundario`, `.pequeno`), `.texto` (posts), `.colunas` + `.barra` + `.widget` (barra lateral), `.colunas-rodape` e `.base` no rodapé, `.marca` no cabeçalho.
+- Sem `<meta name="viewport">`, o `nep` coloca uma (o site funciona no celular). Um site com CSS próprio que não estilizou os avisos de formulário e os comentários recebe um estilo mínimo para eles.
+- `nep novo pasta` cria um site completo de empresa (abertura, serviços, números, depoimentos, novidades, contato com aviso por e-mail, páginas do painel, rodapé com menus editáveis); `nep novo pasta --modelo blog` cria o tema de blog estilo WordPress de `exemplos/ascidia`.
 
 ## 11. Lua 5.4 na mesma máquina virtual
 
