@@ -99,11 +99,20 @@ nep check arquivo           verifica um programa .nep ou um site .nep.html
 nep test pasta              roda os testes (*_test.nep, funções test_*)
 nep disasm programa.nep     mostra o bytecode
 
+nep criar "descrição"       monta um site completo a partir do que você escrever (veja abaixo)
 nep novo meu-site           cria meu-site/site.nep.html (site de empresa pronto; --modelo blog para um blog)
 nep dev site.nep.html       roda o site no computador (http://localhost:8000), erros com a linha exata
 nep previa site.nep.html    cria site-previa.html: o site pronto num arquivo só, abre com dois cliques
 nep serve site.nep.html     roda em produção num VPS: --porta 8000 --dados /var/lib/site --base /loja
 ```
+
+## Descreva o site e o Nepenthes monta
+
+```
+nep criar "escola de música chamada Sol Maior em Salvador, com blog, eventos e wiki, azul e elegante"
+```
+
+O `nep criar` entende o ramo, o nome, a cidade, a cor e o estilo, e monta um `site.nep.html` com a complexidade de um Joomla, WordPress, Backdrop ou TikiWiki: loja com carrinho, agendamento e reservas, eventos com inscrição, blog completo, wiki com `[[links]]`, fórum moderado, downloads, vagas, newsletter, painel e SEO. `com X` acrescenta, `sem X` tira e `só X` deixa só o que você pediu. Sai junto o `site-previa.html`. Detalhes na seção 10.16 da SPEC.
 
 ## Colocar um site no ar
 

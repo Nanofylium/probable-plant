@@ -472,6 +472,22 @@ Todo site sai com cara de site profissional, como um tema do WordPress, sem prec
 - **Abrir o código direto não mostra bagunça:** um `<style nep-fonte>` e um `<aside nep-fonte>` no começo do arquivo escondem o código e mostram um aviso (o que é o arquivo, como ver a prévia e como rodar). O `nep` tira esses trechos antes de tudo, então o visitante nunca os vê. Os modelos do `nep novo` e os exemplos já vêm com eles.
 - `nep novo pasta` cria um site completo de empresa (abertura, serviços, números, depoimentos, novidades, contato com aviso por e-mail, páginas do painel, rodapé com menus editáveis); `nep novo pasta --modelo blog` cria o tema de blog estilo WordPress de `exemplos/ascidia`.
 
+### 10.16 `nep criar`: descreva o site e o Nepenthes monta
+
+`nep criar "descrição"` lê o que a pessoa escreveu em português e monta um `site.nep.html` completo, no nível de um Joomla, WordPress, Backdrop ou TikiWiki, mais o `site-previa.html`. Não usa IA nem internet: as regras são simples e previsíveis, e o comando mostra o que entendeu antes de escrever.
+
+```
+nep criar "escola de música chamada Sol Maior em Salvador, com blog, eventos e wiki, azul e elegante"
+nep criar "só loja e contato, chamada Doce Encanto"
+nep criar "associação de moradores do Jardim Europa sem blog" --pasta bairro
+nep criar "pousada em Paraty chamada Maré Mansa" --plano     # só mostra o que entendeu
+```
+
+- **O que ele lê:** o ramo (clínica, veterinária, beleza, restaurante, hotel/pousada, escola, academia, escritório, tecnologia, loja, associação/ONG/igreja, comunidade/wiki; o resto vira "empresa"), o nome (`chamada X`, `"X"` entre aspas ou o começo da frase, como "associação de moradores do Jardim Europa"), a cidade (`em Salvador`), a cor (verde, azul, marinho, vinho, rosa, roxo, laranja, dourado... ou `#1d4ed8`) e o estilo (elegante, clássico, moderno, divertido, acolhedor), que escolhe a fonte do tema.
+- **Quem pede manda:** cada ramo tem as seções que um site do tipo costuma ter; `com X` acrescenta, `sem X` (também "não quero X", "sem X e Y") tira, e `só X` (ou "apenas", "somente") deixa só o que foi pedido. Contato, páginas livres (Sobre e Política de privacidade/LGPD já escritas), busca, SEO, RSS, mapa do site, painel e atendente lowii (com a IA ligada) entram sempre.
+- **Seções (módulos):** serviços com página de cada um; loja ou cardápio com categorias, carrinho na sessão e pedido (o total vem do banco, nunca do navegador) e `/api/produtos`; agendamento com horários livres ao vivo, vagas por horário e recusa de horário ocupado ou passado (`/api/horarios`); reservas por diária para hotel, que recusam datas sobrepostas (`/api/disponibilidade`); eventos com inscrição, vagas que diminuem ao vivo e recusa de e-mail repetido (`/api/eventos`); planos e preços; equipe; galeria com álbuns; depoimentos; blog com categorias, tags, arquivo por mês, paginação, tempo de leitura, posts relacionados, comentários e widgets; wiki no estilo TikiWiki com `[[Página]]` e `[[Página|texto]]`, índice A–Z, busca, mudanças recentes, "páginas que apontam para cá", página que não existe convidando a criá-la e sugestões de edição revisadas pela equipe (o histórico fica nas versões do painel); fórum moderado (tópico novo entra como rascunho, respostas pelos comentários); downloads por categoria; trabalhe conosco com envio de currículo restrito ao painel; perguntas frequentes; newsletter; tradução com `?idioma=en` pela villosa (com a IA ligada).
+- Todo conteúdo de exemplo entra uma vez só (a marca fica na coleção `instalacao`); depois, tudo pelo painel. O arquivo gerado é Nepenthes comum, com comentários, para a pessoa mudar à vontade.
+
 ## 11. Lua 5.4 na mesma máquina virtual
 
 O `nep` roda programas Lua 5.4: `nep jogo.lua [args]`. O código Lua é lido por um leitor próprio e compilado para o mesmo bytecode do Nepenthes, então os dois se misturam:

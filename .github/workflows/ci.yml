@@ -27,6 +27,8 @@ jobs:
           ./nep check exemplos/mural/site.nep.html
           ./nep check exemplos/ascidia/site.nep.html
           ./nep check exemplos/clinica/site.nep.html
+          ./nep criar "escola de música chamada Sol Maior com blog, eventos, wiki, fórum, loja e vagas" --pasta /tmp/criado
+          ./nep check /tmp/criado/site.nep.html
           ./nep exemplos/lua/jogo_da_velha.lua
 
   executaveis:
