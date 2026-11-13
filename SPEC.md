@@ -232,7 +232,7 @@ Formato de datas (letras do PHP, iguais no runtime web): `d j m n Y y H G i s D 
 Um arquivo `.nep.html` é HTML comum com algumas tags a mais. O `nep` lê o arquivo, traduz o HTML para código Nepenthes e executa na mesma máquina virtual da linguagem. Não há PHP, Node nem banco de dados para instalar: o executável `nep` é o servidor, o banco e o painel.
 
 ```
-nep novo meu-site              cria meu-site/site.nep.html
+nep novo meu-site              cria meu-site/site.nep.html (modelo empresa; --modelo blog para o tema de blog)
 nep dev meu-site/site.nep.html desenvolvimento: http://localhost:8000, erros com a linha do arquivo
 nep serve site.nep.html        produção (VPS), atrás de um proxy com HTTPS
 nep.cgi                        hospedagem compartilhada (Apache + CGI), ver hospedagem/.htaccess
@@ -458,6 +458,35 @@ Cada framework tem o nome de uma espécie de *Nepenthes*:
 E `ia(pergunta, {sistema:, max:})` dá acesso direto ao modelo; `ia_ligada()` diz se a IA está configurada (por exemplo, `<if test="ia_ligada()">{{ lowii() }}</if>`).
 
 Limites: 600 pedidos de IA por hora no site, 20 perguntas a cada 10 minutos por visitante no lowii, respostas curtas. O lowii recebe só trechos do site achados pela busca e ignora pedidos para mudar as regras. O histórico de uso (com tokens e erros) fica no painel.
+
+### 10.15 Aparência profissional: o tema Nepenthes
+
+Todo site sai com cara de site profissional, como um tema do WordPress, sem precisar escrever CSS.
+
+- **Sem CSS próprio** (nenhum `<style>` nem `<link rel="stylesheet">`), o site ganha sozinho o tema Nepenthes (`/_nep/tema.css`, embutido no `nep`): tipografia, cabeçalho fixo com menu, rodapé escuro, formulários, botões, tabelas, citações, código, avisos de formulário e comentários, em computador e celular. HTML simples (`<header>`, `<nav>`, `<main>`, `<footer>`, `<h1>`, `<form>`, `<table>`) já fica bonito.
+- `<nep-config tema="nepenthes">` usa o tema mesmo com CSS próprio: o tema entra no começo do `<head>` e todas as regras dele usam `:where()`, então qualquer regra do site manda nele, sem `!important`. `tema="nenhum"` desliga.
+- `cor="#2f6b4f"` troca a cor principal e `fonte="..."` a fonte: `sem-serifa` (padrão), `serifa`, `titulo-serifa` (só os títulos), `arredondada`, `geometrica`, `humanista`, `classica`, `mono`. As demais cores são variáveis CSS: `--nep-fundo`, `--nep-alt`, `--nep-superficie`, `--nep-texto`, `--nep-suave`, `--nep-linha`, `--nep-escuro`, `--nep-raio`.
+- Classes prontas: `.capa` (abertura; `.capa.cor` e `.capa.escura`; `.lado` divide em duas colunas), `.secao` (`.alt`, `.escura`), `.faixa` (largura do conteúdo), `.chapeu`, `.intro`, `.centro`, `.acoes`, `.grade` (`.duas`, `.quatro`), `.cartao`, `.icone`, `.selo`, `.meta`, `.numeros`, `.botao` (`.secundario`, `.pequeno`), `.texto` (posts), `.colunas` + `.barra` + `.widget` (barra lateral), `.colunas-rodape` e `.base` no rodapé, `.marca` no cabeçalho.
+- Sem `<meta name="viewport">`, o `nep` coloca uma (o site funciona no celular). Um site com CSS próprio que não estilizou os avisos de formulário e os comentários recebe um estilo mínimo para eles.
+- **Ver o site sem servidor:** `nep previa site.nep.html` cria `site-previa.html`, um arquivo só (CSS embutido) com todas as páginas como ficam no ar, que abre com dois cliques ou em qualquer visualizador de HTML. É uma foto: formulários e regiões `<live>` funcionam só com o `nep`.
+- **Abrir o código direto não mostra bagunça:** um `<style nep-fonte>` e um `<aside nep-fonte>` no começo do arquivo escondem o código e mostram um aviso (o que é o arquivo, como ver a prévia e como rodar). O `nep` tira esses trechos antes de tudo, então o visitante nunca os vê. Os modelos do `nep novo` e os exemplos já vêm com eles.
+- `nep novo pasta` cria um site completo de empresa (abertura, serviços, números, depoimentos, novidades, contato com aviso por e-mail, páginas do painel, rodapé com menus editáveis); `nep novo pasta --modelo blog` cria o tema de blog estilo WordPress de `exemplos/ascidia`.
+
+### 10.16 `nep criar`: descreva o site e o Nepenthes monta
+
+`nep criar "descrição"` lê o que a pessoa escreveu em português e monta um `site.nep.html` completo, no nível de um Joomla, WordPress, Backdrop ou TikiWiki, mais o `site-previa.html`. Não usa IA nem internet: as regras são simples e previsíveis, e o comando mostra o que entendeu antes de escrever.
+
+```
+nep criar "escola de música chamada Sol Maior em Salvador, com blog, eventos e wiki, azul e elegante"
+nep criar "só loja e contato, chamada Doce Encanto"
+nep criar "associação de moradores do Jardim Europa sem blog" --pasta bairro
+nep criar "pousada em Paraty chamada Maré Mansa" --plano     # só mostra o que entendeu
+```
+
+- **O que ele lê:** o ramo (clínica, veterinária, beleza, restaurante, hotel/pousada, escola, academia, escritório, tecnologia, loja, associação/ONG/igreja, comunidade/wiki; o resto vira "empresa"), o nome (`chamada X`, `"X"` entre aspas ou o começo da frase, como "associação de moradores do Jardim Europa"), a cidade (`em Salvador`), a cor (verde, azul, marinho, vinho, rosa, roxo, laranja, dourado... ou `#1d4ed8`) e o estilo (elegante, clássico, moderno, divertido, acolhedor), que escolhe a fonte do tema.
+- **Quem pede manda:** cada ramo tem as seções que um site do tipo costuma ter; `com X` acrescenta, `sem X` (também "não quero X", "sem X e Y") tira, e `só X` (ou "apenas", "somente") deixa só o que foi pedido. Contato, páginas livres (Sobre e Política de privacidade/LGPD já escritas), busca, SEO, RSS, mapa do site, painel e atendente lowii (com a IA ligada) entram sempre.
+- **Seções (módulos):** serviços com página de cada um; loja ou cardápio com categorias, carrinho na sessão e pedido (o total vem do banco, nunca do navegador) e `/api/produtos`; agendamento com horários livres ao vivo, vagas por horário e recusa de horário ocupado ou passado (`/api/horarios`); reservas por diária para hotel, que recusam datas sobrepostas (`/api/disponibilidade`); eventos com inscrição, vagas que diminuem ao vivo e recusa de e-mail repetido (`/api/eventos`); planos e preços; equipe; galeria com álbuns; depoimentos; blog com categorias, tags, arquivo por mês, paginação, tempo de leitura, posts relacionados, comentários e widgets; wiki no estilo TikiWiki com `[[Página]]` e `[[Página|texto]]`, índice A–Z, busca, mudanças recentes, "páginas que apontam para cá", página que não existe convidando a criá-la e sugestões de edição revisadas pela equipe (o histórico fica nas versões do painel); fórum moderado (tópico novo entra como rascunho, respostas pelos comentários); downloads por categoria; trabalhe conosco com envio de currículo restrito ao painel; perguntas frequentes; newsletter; tradução com `?idioma=en` pela villosa (com a IA ligada).
+- Todo conteúdo de exemplo entra uma vez só (a marca fica na coleção `instalacao`); depois, tudo pelo painel. O arquivo gerado é Nepenthes comum, com comentários, para a pessoa mudar à vontade.
 
 ## 11. Lua 5.4 na mesma máquina virtual
 

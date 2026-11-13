@@ -1,0 +1,601 @@
+<!doctype html>
+<!--
+  Ascídia: um tema de blog no estilo WordPress, num arquivo só.
+  O blog de exemplo, "Diário do Jarro", é fictício (um viveiro de plantas carnívoras).
+
+  Rode com:  nep dev exemplos/ascidia/site.nep.html      (painel em /_admin)
+
+  O que é igual ao WordPress, e onde está neste arquivo:
+    Posts e páginas ............ <conteudo nome="posts"> e <conteudo nome="paginas">
+    Categorias e tags .......... campos do post; arquivos em /categoria/x e /tag/x
+    Arquivo por mês e autor .... /arquivo/2026/10 e /autor/nome
+    Post fixado ................ caixa "Fixar no topo" no post
+    Modelos de página .......... campo "Modelo" (com barra lateral ou largura total)
+    Barra lateral (widgets) .... <aside class="barra">: busca, sobre, recentes, categorias,
+                                 nuvem de tags, arquivo e newsletter
+    Personalizar ............... textos, logo e cor do tema em Painel > Textos e menus
+    Menus ...................... menu-editavel="principal" e "rodape"
+    Comentários, busca, RSS .... comentarios(), buscar(), /feed.xml (automáticos)
+    Rascunho, agendamento, versões, lixeira, mídia, backup, editores: no painel, sem código.
+
+  "archive.php" do WordPress: as páginas de arquivo (início, categoria, tag, mês,
+  autor, busca) só escolhem a lista; a listagem é desenhada uma vez, no layout.
+
+  Do Lua, só o que ajudou: padrões de texto (match, gmatch, gsub) para ler a data,
+  contar palavras (tempo de leitura), limpar o resumo e conferir a cor do tema.
+-->
+<!-- Só aparece se alguém abrir este arquivo direto (sem o nep): esconde o código e explica. O nep tira os trechos nep-fonte. -->
+<style nep-fonte>
+  html, body { background: #10231d !important; margin: 0 !important; }
+  body > :not([nep-fonte]) { display: none !important; }
+  aside[nep-fonte] { display: block !important; box-sizing: border-box; max-width: 600px; margin: 9vh auto; padding: 36px 34px; border-radius: 22px;
+    background: #fff; color: #1d2420; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; box-shadow: 0 30px 70px rgba(0,0,0,.35); }
+  aside[nep-fonte] small { font-weight: 800; letter-spacing: .14em; font-size: .72rem; color: #2f6b4f; }
+  aside[nep-fonte] h1 { font-size: 1.9rem; line-height: 1.15; margin: 8px 0 12px; }
+  aside[nep-fonte] ol { padding-left: 1.2em; } aside[nep-fonte] li { margin: .5em 0; }
+  aside[nep-fonte] code { background: #eef2ee; padding: 2px 6px; border-radius: 6px; font-size: .9em; }
+  aside[nep-fonte] a { color: #2f6b4f; font-weight: 700; }
+</style>
+<aside nep-fonte>
+  <small>NEPENTHES · CÓDIGO DO SITE</small>
+  <h1>Diário do Jarro</h1>
+  <p>Este arquivo é o código do site, como um arquivo .php: quem monta as páginas, guarda os dados e manda os e-mails é o programa <b>nep</b>. Aberto direto, ele não mostra o site.</p>
+  <ol>
+    <li><b>Ver como ficou:</b> abra a <a href="site-previa.html">prévia (site-previa.html)</a>. Para criar ou atualizar a prévia: <code>nep previa site.nep.html</code></li>
+    <li><b>No computador:</b> <code>nep dev site.nep.html</code> e abra <code>http://localhost:8000</code></li>
+    <li><b>No ar:</b> envie para a hospedagem com o <code>nep.cgi</code> e o <code>.htaccess</code>.</li>
+  </ol>
+</aside>
+
+<nep-config nome="Diário do Jarro" movimento="suave" progresso lang="pt-BR"
+  lowii="Você atende o blog Diário do Jarro, de um viveiro de plantas carnívoras. Responda sobre cuidados e indique os posts do blog.">
+
+<!-- ================= tipos de conteúdo (o "wp-admin") ================= -->
+
+<conteudo nome="posts" titulo="Posts" item="post">
+  <label>Título <input name="titulo" required maxlength="140"></label>
+  <label>Categoria
+    <select name="categoria" required>
+      <option value="">Escolha…</option>
+      <option>Cuidados</option><option>Espécies</option><option>Diário da estufa</option><option>Novidades</option>
+    </select>
+  </label>
+  <label>Tags (separe por vírgula) <input name="tags" maxlength="200" placeholder="nepenthes, rega, iniciantes"></label>
+  <label>Resumo (opcional: sem ele, usamos o começo do texto) <textarea name="resumo" maxlength="300" rows="2"></textarea></label>
+  <label>Texto <textarea name="corpo" data-editor required maxlength="60000"></textarea></label>
+  <label>Imagem destacada <input type="file" name="capa" accept="image/*" data-max-mb="6" data-publico></label>
+  <label>Autor <input name="autor" maxlength="60" placeholder="Marina Duarte"></label>
+  <label>Fixar no topo da página inicial <input type="checkbox" name="fixado"></label>
+</conteudo>
+
+<conteudo nome="paginas" titulo="Páginas" item="página">
+  <label>Título <input name="titulo" required maxlength="100"></label>
+  <label>Modelo
+    <select name="modelo">
+      <option>Com barra lateral</option><option>Largura total</option>
+    </select>
+  </label>
+  <label>Texto <textarea name="corpo" data-editor maxlength="60000"></textarea></label>
+  <label>Montagem visual (opcional: arraste blocos, fotos, vídeos e mapas) <textarea name="visual" data-construtor></textarea></label>
+  <label>Posição no menu (0 = fora do menu) <input type="number" name="ordem" min="0" max="99" value="10"></label>
+</conteudo>
+
+<!-- ================= functions.php ================= -->
+<nep>
+  # Conteúdo de exemplo na primeira vez (depois, tudo pelo painel).
+  if db.count("posts") == 0 do
+    let exemplo = [
+      {titulo: "Por que a água da torneira mata sua carnívora", categoria: "Cuidados", tags: "rega, iniciantes", autor: "Marina Duarte", fixado: true,
+       publicar_em: "2026-11-03T09:00",
+       corpo: "Plantas carnívoras vivem em brejos e encostas onde a terra quase não tem nutrientes. Por isso as raízes **não aguentam sais minerais**, e a água da torneira está cheia deles.\n\n# O que usar\n\n- Água de chuva, guardada num balde com tampa.\n- Água destilada ou de osmose reversa.\n- A água que pinga do ar-condicionado.\n\n# Como regar\n\nDeixe o vaso num pratinho com 1 a 2 cm de água e complete quando secar. Assim o musgo fica úmido sem encharcar.\n\n> Nunca use adubo no substrato. Elas se alimentam dos insetos que pegam."},
+      {titulo: "Nepenthes ventricosa, a melhor primeira Nepenthes", categoria: "Espécies", tags: "nepenthes, iniciantes", autor: "Marina Duarte",
+       publicar_em: "2026-10-21T10:30",
+       corpo: "Se você quer um jarro em casa, comece por ela. A *Nepenthes ventricosa* vem das Filipinas, aguenta noites quentes e frias e forma jarros vermelhos mesmo perto de uma janela.\n\n# Luz\n\nMuita claridade, sem sol forte do meio-dia.\n\n# Umidade\n\nAcima de 50% ela fica feliz. Num apartamento seco, um borrifador de manhã resolve."},
+      {titulo: "Diário da estufa: o primeiro jarro da rajah", categoria: "Diário da estufa", tags: "nepenthes, rajah, estufa", autor: "Caio Nunes",
+       publicar_em: "2026-10-08T18:00",
+       corpo: "Depois de quatorze meses, a muda de *Nepenthes rajah* que veio de cultura de tecido abriu o primeiro jarro de verdade.\n\nEle tem 6 cm, ainda é pequeno, mas já mostra o peristoma largo que faz dela a rainha do gênero. Vamos medir a cada mês e contar aqui."},
+      {titulo: "Dioneia no inverno: ela não morreu, está descansando", categoria: "Cuidados", tags: "dioneia, inverno", autor: "Caio Nunes",
+       publicar_em: "2026-09-17T08:15",
+       corpo: "Entre junho e agosto, a dioneia para de crescer, as armadilhas ficam pequenas e algumas folhas escurecem. É a **dormência**, e ela precisa disso para viver muitos anos.\n\n- Mantenha no sol.\n- Regue menos.\n- Não corte as folhas verdes."},
+      {titulo: "Chegaram as droseras do Cabo", categoria: "Novidades", tags: "drosera, iniciantes", autor: "Marina Duarte",
+       publicar_em: "2026-09-02T12:00",
+       corpo: "A *Drosera capensis* voltou ao viveiro. Folhas cheias de gotinhas brilhantes que prendem mosquitos, crescimento rápido e sementes que nascem sozinhas no vaso ao lado.\n\nÉ a planta que mais indicamos para crianças e para quem está começando."}
+    ]
+    for p in exemplo do
+      p.slug = slug(p.titulo)
+      p.publicado = true
+      db.insert("posts", p)
+    end
+    db.insert("paginas", {titulo: "Sobre", slug: "sobre", publicado: true, modelo: "Com barra lateral", ordem: 1,
+      corpo: "O **Diário do Jarro** é o blog da estufa. Aqui contamos o que dá certo, o que dá errado e como cuidar de plantas carnívoras no clima do Brasil."})
+    db.insert("paginas", {titulo: "Visite a estufa", slug: "visite", publicado: true, modelo: "Largura total", ordem: 2,
+      corpo: "Abrimos aos sábados, das 9h às 13h, com agendamento.\n\nTraga sua planta para uma consulta gratuita."})
+  end
+
+  let MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+
+  # Data do post: a de publicação agendada (como no WordPress) ou a de criação.
+  # O painel grava "2026-10-21T10:30" e o banco "2026-10-21 10:30:00": um padrão lê os dois.
+  fn ler_data(s) do
+    let m = match(default(s, ""), "^(%d%d%d%d)%-(%d%d)%-(%d%d)[T ](%d%d):(%d%d)")
+    if not m do return {ano: "", mm: "", txt: "", chave: ""} end
+    let mes = MESES[int(m[1]) - 1]
+    return {ano: m[0], mm: m[1], mes: mes, chave: m[0] + "-" + m[1] + "-" + m[2] + " " + m[3] + ":" + m[4],
+            txt: str(int(m[2])) + " de " + mes + " de " + m[0]}
+  end
+
+  # Tempo de leitura: conta as palavras com gmatch (200 por minuto).
+  fn minutos_de_leitura(texto) do
+    let n = 0
+    for w in gmatch(default(texto, ""), "%S+") do n = n + 1 end
+    return max(1, round(n / 200))
+  end
+
+  # Resumo automático: tira a marcação do markdown e corta no tamanho.
+  fn resumo_de(p) do
+    if p.resumo do return p.resumo end
+    let t = gsub(default(p.corpo, ""), "%[([^%]]*)%]%b()", "%1")   # [texto](link) -> texto
+    t = gsub(t, "\n%s*[-*]%s+", "\n")                          # marcadores de lista
+    t = gsub(t, "[#*_`>]", "")
+    t = gsub(t, "%s+", " ")
+    return truncate(trim(t), 170)
+  end
+
+  fn preparar(p) do
+    p.data = ler_data(default(p.publicar_em, p.created_at))
+    p.tags_l = split(default(p.tags, ""), ",") |> map(trim) |> filter(fn(t) do t != "" end)
+    p.leitura = minutos_de_leitura(p.corpo)
+    p.excerto = resumo_de(p)
+    p.autor = default(p.autor, "Equipe")
+    return p
+  end
+
+  # Todos os posts publicados, do mais novo para o mais antigo.
+  let posts = db.all("posts") |> map(preparar) |> sort_by(fn(p) do p.data.chave end) |> reverse
+  let paginas_menu = db.all("paginas") |> filter(fn(p) do default(p.ordem, 0) > 0 end) |> sort_by("ordem")
+
+  # Widgets da barra lateral
+  let por_categoria = posts |> group_by("categoria")
+  let por_mes = posts |> group_by(fn(p) do p.data.ano + "/" + p.data.mm end)
+  let tag_conta = {}
+  for p in posts do
+    for t in p.tags_l do tag_conta[t] = default(tag_conta[t], 0) + 1 end
+  end
+  let tag_max = max(values(tag_conta) + [1])
+
+  # Cor do tema (Personalizar): trocada em Painel > Textos e menus, conferida com um padrão.
+  let cor = texto("tema.cor", "#9b2335")
+  if not match(cor, "^#%x%x%x%x%x%x$") do cor = "#9b2335" end
+
+  # O que as páginas de arquivo preenchem (o layout desenha a lista uma vez).
+  let arquivo = nil      # {chapeu, titulo, descricao, lista}
+  let por_pagina = 4
+  let pagina_atual = 1
+  if match(default(request.query.pagina, ""), "^%d+$") do pagina_atual = max(1, int(request.query.pagina)) end
+  let barra = true       # modelo "Largura total" desliga a barra lateral
+
+  fn link_post(p) do return url("/blog/" + p.slug) end
+  fn link_cat(c) do return url("/categoria/" + slug(c)) end
+  fn link_tag(t) do return url("/tag/" + slug(t)) end
+  fn link_autor(a) do return url("/autor/" + slug(a)) end
+  fn icone(c) do
+    if c == "Cuidados" do return "💧" end
+    if c == "Espécies" do return "🪴" end
+    if c == "Diário da estufa" do return "📓" end
+    return "✨"
+  end
+
+  # Newsletter: guarda o e-mail uma vez só.
+  fn assinar(d) do
+    if len(db.where("assinantes", "email", lower(d.email))) > 0 do recusar("Esse e-mail já recebe o Diário.") end
+    d.email = lower(d.email)
+  end
+</nep>
+
+<api route="/api/posts">
+  return posts |> map(fn(p) do
+    {titulo: p.titulo, categoria: p.categoria, tags: p.tags_l, data: p.data.chave, autor: p.autor, url: link_post(p)}
+  end)
+</api>
+
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }} · Diário do Jarro</title>
+  <style>
+    :root { --mata: #1f4d3a; --mata-2: #2e6b4f; --lima: #b5d334; --papel: #fbf9f3; --tinta: #1b2420; --suave: #5f6b63; --linha: #e4dfd2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--papel); color: var(--tinta); font: 17px/1.7 Georgia, "Iowan Old Style", serif; }
+    a { color: var(--acento); }
+    img { max-width: 100%; }
+    .faixa { max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+    .ui { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+    /* cabeçalho */
+    .topo { background: var(--mata); color: #eef3e8; }
+    .topo .faixa { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px 28px; padding-top: 26px; padding-bottom: 22px; }
+    .marca { display: flex; align-items: center; gap: 14px; color: #fff; text-decoration: none; }
+    .logo { width: 52px; height: 52px; border-radius: 16px; background: var(--acento); display: grid; place-items: center; font-size: 1.7rem; box-shadow: 0 6px 0 rgba(0,0,0,.18); }
+    .logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
+    .marca strong { display: block; font-size: 1.7rem; line-height: 1.05; letter-spacing: -.01em; }
+    .marca small { display: block; font: .9rem/1.3 system-ui, sans-serif; color: #c9d8c1; }
+    nav.menu { display: flex; flex-wrap: wrap; gap: 4px 6px; font: 600 .95rem system-ui, sans-serif; }
+    nav.menu a { color: #eef3e8; text-decoration: none; padding: 6px 12px; border-radius: 999px; }
+    nav.menu a:hover, nav.menu a[aria-current] { background: rgba(255,255,255,.12); color: #fff; }
+
+    /* colunas: conteúdo + barra lateral */
+    .colunas { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 44px; padding-top: 40px; padding-bottom: 56px; }
+    .colunas.cheia { grid-template-columns: minmax(0, 1fr); }
+
+    /* cabeçalho de arquivo */
+    .arq-topo { margin: 0 0 26px; padding-bottom: 18px; border-bottom: 1px solid var(--linha); }
+    .chapeu { font: 800 .74rem system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--acento); text-decoration: none; }
+    .arq-topo h1 { margin: 4px 0 4px; font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.1; }
+    .arq-topo p { margin: 0; color: var(--suave); }
+
+    /* lista de posts */
+    .post-card { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 22px; padding: 0 0 28px; margin: 0 0 28px; border-bottom: 1px solid var(--linha); }
+    .post-card.fixo { grid-template-columns: 1fr; background: #fff; border: 1px solid var(--linha); border-radius: 20px; padding: 0 0 22px; overflow: hidden; box-shadow: 0 14px 30px rgba(31,77,58,.08); }
+    .post-card.fixo .txt { padding: 0 24px; }
+    .post-card.fixo .capa { aspect-ratio: 21/8; border-radius: 0; font-size: 4rem; }
+    .capa { display: grid; place-items: center; aspect-ratio: 4/3; border-radius: 14px; overflow: hidden; font-size: 3rem; text-decoration: none;
+            background: radial-gradient(circle at 30% 25%, var(--mata-2), var(--mata) 70%); }
+    .capa img { width: 100%; height: 100%; object-fit: cover; }
+    .post-card h2 { margin: 4px 0 6px; font-size: 1.5rem; line-height: 1.2; }
+    .post-card h2 a { color: var(--tinta); text-decoration: none; }
+    .post-card h2 a:hover { color: var(--acento); }
+    .post-card p { margin: 0 0 10px; color: #39443e; }
+    .meta { font: .85rem/1.5 system-ui, sans-serif; color: var(--suave); }
+    .meta a { color: var(--suave); }
+    .fixado { display: inline-block; font: 800 .7rem system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; background: var(--lima); color: #1d3311; padding: 3px 10px; border-radius: 999px; margin-right: 6px; }
+    .ler { font: 700 .92rem system-ui, sans-serif; text-decoration: none; }
+    .paginacao { display: flex; justify-content: space-between; gap: 12px; font: 700 .95rem system-ui, sans-serif; }
+    .paginacao span { color: var(--suave); font-weight: 500; }
+
+    /* post e página */
+    article.single h1 { font-size: clamp(2rem, 4.6vw, 2.9rem); line-height: 1.08; margin: 6px 0 10px; letter-spacing: -.01em; }
+    article.single .capa { aspect-ratio: 16/8; margin: 18px 0 24px; font-size: 5rem; }
+    .corpo h2 { font-size: 1.5rem; margin: 1.6em 0 .4em; color: var(--mata); }
+    .corpo h3 { font-size: 1.2rem; }
+    .corpo blockquote { margin: 1.4em 0; padding: 12px 20px; border-left: 5px solid var(--lima); background: #fff; border-radius: 0 12px 12px 0; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 8px; font: .88rem system-ui, sans-serif; }
+    .tags a { text-decoration: none; background: #ecefe4; color: var(--mata); padding: 4px 12px; border-radius: 999px; }
+    .vizinhos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 28px 0; font: .92rem system-ui, sans-serif; }
+    .vizinhos a { display: block; background: #fff; border: 1px solid var(--linha); border-radius: 14px; padding: 12px 16px; text-decoration: none; color: var(--tinta); }
+    .vizinhos a small { display: block; color: var(--suave); }
+    .vizinhos .prox { text-align: right; grid-column: 2; }
+    .relacionados { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+    .relacionados a { text-decoration: none; color: var(--tinta); font: 600 .95rem/1.35 system-ui, sans-serif; }
+    .relacionados .capa { aspect-ratio: 16/10; font-size: 2rem; margin-bottom: 8px; }
+    .rascunho { background: #fff4d6; border-radius: 12px; padding: 10px 14px; font: .92rem system-ui, sans-serif; }
+
+    /* barra lateral (widgets) */
+    aside.barra { display: grid; gap: 22px; align-content: start; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: .95rem; }
+    .widget { background: #fff; border: 1px solid var(--linha); border-radius: 18px; padding: 18px 20px; }
+    .widget h3 { margin: 0 0 10px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--mata); }
+    .widget ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+    .widget li { display: flex; justify-content: space-between; gap: 10px; }
+    .widget li a { color: var(--tinta); text-decoration: none; }
+    .widget li a:hover { color: var(--acento); }
+    .widget li span { color: var(--suave); }
+    .widget.sobre { background: var(--mata); color: #e7efe1; border: 0; }
+    .widget.sobre h3 { color: var(--lima); }
+    .widget.sobre p { margin: 0; }
+    .nuvem { display: flex; flex-wrap: wrap; gap: 4px 10px; line-height: 1.4; }
+    .nuvem a { text-decoration: none; color: var(--mata); }
+    .recentes li { display: block; }
+    .recentes small { display: block; color: var(--suave); font-size: .8rem; }
+    form.busca { display: flex; gap: 6px; }
+    input, select, textarea { font: inherit; padding: 9px 12px; border: 1px solid #cfd6c8; border-radius: 12px; background: #fff; color: var(--tinta); min-width: 0; }
+    form.busca input { flex: 1; }
+    button, .botao { font: 700 .95rem system-ui, sans-serif; background: var(--acento); color: #fff; border: 0; border-radius: 999px; padding: 10px 18px; cursor: pointer; text-decoration: none; display: inline-block; }
+    form.news { display: grid; gap: 8px; }
+    .nep-ok { background: #e6f6ec; color: #135c2f; padding: 10px 12px; border-radius: 12px; }
+    .nep-erros { background: #fdeceb; color: #8a1f17; padding: 4px 12px; border-radius: 12px; }
+
+    /* comentários (comentarios() gera estas classes) */
+    .nep-comentarios { border-top: 1px solid var(--linha); margin-top: 32px; font-family: system-ui, sans-serif; }
+    .nep-comentario { border-bottom: 1px solid var(--linha); padding: 10px 0; }
+    .nep-comentar { display: grid; gap: 10px; }
+    .nep-comentar label { display: grid; gap: 4px; font-weight: 600; font-size: .92rem; }
+    .nep-comentar button { justify-self: start; }
+
+    /* rodapé com 3 widgets */
+    footer { background: #14261d; color: #c4d2be; padding: 40px 0 30px; font: .93rem/1.6 system-ui, sans-serif; }
+    footer .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+    footer h4 { color: #fff; margin: 0 0 8px; font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; }
+    footer a { color: var(--lima); }
+    footer nav { display: grid; gap: 4px; }
+    footer .base { border-top: 1px solid rgba(255,255,255,.1); margin-top: 28px; padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+
+    @media (max-width: 900px) {
+      .colunas { grid-template-columns: minmax(0, 1fr); }
+      footer .cols { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .post-card { grid-template-columns: 1fr; }
+      .vizinhos { grid-template-columns: 1fr; }
+      .vizinhos .prox { grid-column: 1; }
+    }
+  </style>
+</head>
+<body style="--acento: {{ cor }}">
+  <header class="topo">
+    <div class="faixa">
+      <a class="marca" href="{{ url('/') }}">
+        <span class="logo" editavel="tema.logo">🌿</span>
+        <span><strong editavel="tema.nome">Diário do Jarro</strong><small editavel="tema.descricao">O blog de uma estufa de plantas carnívoras</small></span>
+      </a>
+      <nav class="menu" menu-editavel="principal">
+        <a href="{{ url('/') }}">Início</a>
+        <a href="{{ url('/categoria/cuidados') }}">Cuidados</a>
+        <a href="{{ url('/categoria/especies') }}">Espécies</a>
+        <a href="{{ url('/categoria/diario-da-estufa') }}">Diário da estufa</a>
+        <each pg in="paginas_menu"><a href="{{ url('/' + pg.slug) }}">{{ pg.titulo }}</a></each>
+      </nav>
+    </div>
+  </header>
+
+  <div class="faixa colunas{{ (not barra) and ' cheia' or '' }}">
+    <main>
+      <!-- ============ páginas de arquivo: só escolhem a lista ============ -->
+      <page route="/" title="Início" description="O blog de uma estufa de plantas carnívoras: cuidados, espécies e o dia a dia do viveiro.">
+        <nep>
+          arquivo = {chapeu: "", titulo: "", descricao: "", lista: posts, inicio: true}
+        </nep>
+      </page>
+
+      <page route="/categoria/:cat" title="Categoria">
+        <nep>
+          let nome = find(keys(por_categoria), fn(c) do slug(c) == params.cat end)
+          if not nome do not_found() end
+          page.title = nome
+          arquivo = {chapeu: "Categoria", titulo: icone(nome) + " " + nome, descricao: str(len(por_categoria[nome])) + " posts", lista: por_categoria[nome]}
+        </nep>
+      </page>
+
+      <page route="/tag/:tag" title="Tag">
+        <nep>
+          let nome = find(keys(tag_conta), fn(t) do slug(t) == params.tag end)
+          if not nome do not_found() end
+          page.title = "#" + nome
+          arquivo = {chapeu: "Tag", titulo: "#" + nome, descricao: "", lista: posts |> filter(fn(p) do contains(p.tags_l, nome) end)}
+        </nep>
+      </page>
+
+      <page route="/arquivo/:ano/:mes" title="Arquivo">
+        <nep>
+          let lista = default(por_mes[params.ano + "/" + params.mes], [])
+          if len(lista) == 0 do not_found() end
+          page.title = first(lista).data.mes + " de " + params.ano
+          arquivo = {chapeu: "Arquivo", titulo: capitalize(page.title), descricao: "", lista: lista}
+        </nep>
+      </page>
+
+      <page route="/autor/:autor" title="Autor">
+        <nep>
+          let lista = posts |> filter(fn(p) do slug(p.autor) == params.autor end)
+          if len(lista) == 0 do not_found() end
+          page.title = first(lista).autor
+          arquivo = {chapeu: "Autor", titulo: first(lista).autor, descricao: str(len(lista)) + " posts", lista: lista}
+        </nep>
+      </page>
+
+      <page route="/busca" title="Busca" noindex>
+        <nep>
+          let q = trim(default(request.query.q, ""))
+          let achados = []
+          if q != "" do achados = buscar(q, "posts") |> map(fn(r) do preparar(r.item) end) end
+          arquivo = {chapeu: "Busca", titulo: (q == "" and "Buscar no blog") or "Resultados para “" + q + "”",
+                     descricao: (q == "" and "Digite uma palavra na caixa ao lado.") or str(len(achados)) + " encontrados", lista: achados}
+        </nep>
+      </page>
+
+      <!-- ============ single.php ============ -->
+      <page route="/blog/:slug" conteudo="posts">
+        <nep>
+          let p = preparar(item)
+          let i = find_index(posts |> pluck("id"), p.id)
+          let mais_novo = nil
+          let mais_antigo = nil
+          if i != nil and i >= 0 do
+            if i > 0 do mais_novo = posts[i - 1] end
+            mais_antigo = posts[i + 1]
+          end
+          let relacionados = posts |> filter(fn(x) do x.id != p.id and x.categoria == p.categoria end) |> take(3)
+        </nep>
+        <article class="single">
+          <if test="not item.publicado or item.publicar_em and p.data.chave > date(now(), 'Y-m-d H:i')"><p class="rascunho">Rascunho ou agendado: só quem está no painel vê.</p></if>
+          <a class="chapeu" href="{{ link_cat(p.categoria) }}">{{ p.categoria }}</a>
+          <h1>{{ p.titulo }}</h1>
+          <div class="meta">
+            por <a href="{{ link_autor(p.autor) }}">{{ p.autor }}</a> · {{ p.data.txt }} · {{ p.leitura }} min de leitura
+          </div>
+          <div class="capa"><if test="p.capa"><img src="{{ p.capa.url }}" alt=""><else>{{ icone(p.categoria) }}</if></div>
+          <div class="corpo">{{ markdown(p.corpo) }}</div>
+          <if test="len(p.tags_l) > 0">
+            <div class="tags"><each t in="p.tags_l"><a href="{{ link_tag(t) }}">#{{ t }}</a></each></div>
+          </if>
+          <div class="vizinhos">
+            <if test="mais_antigo"><a href="{{ link_post(mais_antigo) }}"><small>← Anterior</small>{{ mais_antigo.titulo }}</a></if>
+            <if test="mais_novo"><a class="prox" href="{{ link_post(mais_novo) }}"><small>Próximo →</small>{{ mais_novo.titulo }}</a></if>
+          </div>
+          <if test="len(relacionados) > 0">
+            <h3 class="ui" style="font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mata)">Leia também</h3>
+            <div class="relacionados">
+              <each r in="relacionados">
+                <a href="{{ link_post(r) }}"><div class="capa"><if test="r.capa"><img src="{{ r.capa.url }}" alt="" loading="lazy"><else>{{ icone(r.categoria) }}</if></div>{{ r.titulo }}</a>
+              </each>
+            </div>
+          </if>
+          {{ comentarios() }}
+        </article>
+      </page>
+
+      <page route="404" title="Não encontrado">
+        <article class="single">
+          <span class="chapeu">Erro 404</span>
+          <h1 editavel="404.titulo">Essa página foi comida por uma dioneia.</h1>
+          <p class="ui">Tente a busca ou volte para o <a href="{{ url('/') }}">início</a>.</p>
+        </article>
+      </page>
+
+      <!-- ============ page.php (fica por último: /:slug pega o que sobrou) ============ -->
+      <page route="/:slug" conteudo="paginas">
+        <nep>
+          barra = item.modelo != "Largura total"
+        </nep>
+        <article class="single">
+          <if test="not item.publicado"><p class="rascunho">Rascunho: só quem está no painel vê.</p></if>
+          <h1>{{ item.titulo }}</h1>
+          <div class="corpo">{{ markdown(default(item.corpo, "")) }}</div>
+          {{ visual(item.visual) }}
+        </article>
+      </page>
+
+      <!-- ============ archive.php: desenhado uma vez para todas as listas ============ -->
+      <if test="arquivo">
+        <nep>
+          let total = len(arquivo.lista)
+          let paginas = max(1, ceil(total / por_pagina))
+          let lista = arquivo.lista
+          let fixos = []
+          if arquivo.inicio and pagina_atual == 1 do
+            fixos = lista |> filter(fn(p) do p.fixado end) |> take(1)
+          end
+          if len(fixos) > 0 do lista = lista |> filter(fn(p) do p.id != fixos[0].id end) end
+          lista = lista |> skip((pagina_atual - 1) * por_pagina) |> take(por_pagina)
+        </nep>
+        <if test="arquivo.titulo">
+          <div class="arq-topo">
+            <span class="chapeu">{{ arquivo.chapeu }}</span>
+            <h1>{{ arquivo.titulo }}</h1>
+            <if test="arquivo.descricao"><p class="ui">{{ arquivo.descricao }}</p></if>
+          </div>
+        </if>
+        <each p in="fixos">
+          <article class="post-card fixo">
+            <a class="capa" href="{{ link_post(p) }}"><if test="p.capa"><img src="{{ p.capa.url }}" alt=""><else>{{ icone(p.categoria) }}</if></a>
+            <div class="txt">
+              <span class="fixado">Fixado</span><a class="chapeu" href="{{ link_cat(p.categoria) }}">{{ p.categoria }}</a>
+              <h2 style="font-size:2rem"><a href="{{ link_post(p) }}">{{ p.titulo }}</a></h2>
+              <p>{{ p.excerto }}</p>
+              <div class="meta">{{ p.autor }} · {{ p.data.txt }} · {{ p.leitura }} min</div>
+            </div>
+          </article>
+        </each>
+        <each p in="lista">
+          <article class="post-card">
+            <a class="capa" href="{{ link_post(p) }}" nep-inclinar="6"><if test="p.capa"><img src="{{ p.capa.url }}" alt="" loading="lazy"><else>{{ icone(p.categoria) }}</if></a>
+            <div>
+              <a class="chapeu" href="{{ link_cat(p.categoria) }}">{{ p.categoria }}</a>
+              <h2><a href="{{ link_post(p) }}">{{ p.titulo }}</a></h2>
+              <p>{{ p.excerto }}</p>
+              <div class="meta"><a href="{{ link_autor(p.autor) }}">{{ p.autor }}</a> · {{ p.data.txt }} · {{ p.leitura }} min · <a class="ler" href="{{ link_post(p) }}">Continuar lendo →</a></div>
+            </div>
+          </article>
+        <else>
+          <if test="len(fixos) == 0"><p class="ui">Nenhum post por aqui ainda.</p></if>
+        </each>
+        <if test="paginas > 1">
+          <nav class="paginacao">
+            <if test="pagina_atual > 1"><a href="?pagina={{ pagina_atual - 1 }}{{ (request.query.q and '&q=' + urlencode(request.query.q)) or '' }}">← Mais novos</a><else><i></i></if>
+            <span>Página {{ pagina_atual }} de {{ paginas }}</span>
+            <if test="pagina_atual < paginas"><a href="?pagina={{ pagina_atual + 1 }}{{ (request.query.q and '&q=' + urlencode(request.query.q)) or '' }}">Mais antigos →</a><else><i></i></if>
+          </nav>
+        </if>
+      </if>
+    </main>
+
+    <!-- ============ sidebar.php: os widgets ============ -->
+    <if test="barra">
+      <aside class="barra">
+        <section class="widget">
+          <h3>Buscar</h3>
+          <form class="busca" method="get" action="{{ url('/busca') }}">
+            <input name="q" value="{{ default(request.query.q, '') }}" placeholder="rega, dioneia…" aria-label="Buscar">
+            <button>Ir</button>
+          </form>
+        </section>
+
+        <section class="widget sobre">
+          <h3 editavel="widget.sobre.titulo">Sobre o blog</h3>
+          <div editavel="widget.sobre.texto"><p>Escrevemos sobre o que acontece na estufa e respondemos às dúvidas que chegam no viveiro.</p></div>
+        </section>
+
+        <section class="widget recentes">
+          <h3>Posts recentes</h3>
+          <ul>
+            <each p in="posts |> take(5)"><li><a href="{{ link_post(p) }}">{{ p.titulo }}<small>{{ p.data.txt }}</small></a></li></each>
+          </ul>
+        </section>
+
+        <section class="widget">
+          <h3>Categorias</h3>
+          <ul>
+            <each nome, lista in="por_categoria"><li><a href="{{ link_cat(nome) }}">{{ icone(nome) }} {{ nome }}</a><span>{{ len(lista) }}</span></li></each>
+          </ul>
+        </section>
+
+        <section class="widget">
+          <h3>Tags</h3>
+          <div class="nuvem">
+            <each t, n in="tag_conta"><a href="{{ link_tag(t) }}" style="font-size:{{ round(0.85 + 0.6 * n / tag_max, 2) }}rem">#{{ t }}</a></each>
+          </div>
+        </section>
+
+        <section class="widget">
+          <h3>Arquivo</h3>
+          <ul>
+            <each chave, lista in="por_mes"><li><a href="{{ url('/arquivo/' + chave) }}">{{ capitalize(first(lista).data.mes) }} de {{ first(lista).data.ano }}</a><span>{{ len(lista) }}</span></li></each>
+          </ul>
+        </section>
+
+        <section class="widget">
+          <h3 editavel="widget.news.titulo">Receba o Diário</h3>
+          <p editavel="widget.news.texto" style="margin:0 0 10px;color:var(--suave)">Um e-mail por mês, com os posts novos. Sem spam.</p>
+          <form class="news" save="assinantes" run="assinar" limit="3"
+                confirmar="Pronto! Você vai receber o Diário do Jarro uma vez por mês. Para sair, é só responder este e-mail."
+                confirmar-assunto="Inscrição confirmada" success="Inscrição feita! Confira seu e-mail.">
+            <input name="email" type="email" required placeholder="seu@email.com" aria-label="E-mail">
+            <button>Assinar</button>
+          </form>
+        </section>
+      </aside>
+    </if>
+  </div>
+
+  <!-- ============ footer.php ============ -->
+  <footer>
+    <div class="faixa">
+      <div class="cols">
+        <div>
+          <h4 editavel="rodape.titulo1">Diário do Jarro</h4>
+          <div editavel="rodape.texto1"><p>Blog de exemplo de um viveiro fictício de plantas carnívoras.</p></div>
+        </div>
+        <div>
+          <h4>Navegue</h4>
+          <nav menu-editavel="rodape">
+            <a href="{{ url('/sobre') }}">Sobre</a>
+            <a href="{{ url('/visite') }}">Visite a estufa</a>
+            <a href="{{ url('/busca') }}">Buscar</a>
+          </nav>
+        </div>
+        <div>
+          <h4>Assine</h4>
+          <p><a href="{{ url('/feed.xml') }}">Feed RSS</a> · <a href="{{ url('/api/posts') }}">API JSON</a></p>
+          <p style="display:none" editavel="tema.cor">#9b2335</p>
+        </div>
+      </div>
+      <div class="base">
+        <span editavel="rodape.base">© Diário do Jarro · feito com Nepenthes, tema Ascídia</span>
+        <a href="{{ url('/_admin') }}">Painel</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- lowii: atendente com IA (Qwen). Só aparece com a IA ligada no painel. -->
+  <if test="ia_ligada()">{{ lowii("Dúvidas sobre suas plantas?") }}</if>
+</body>
+</html>

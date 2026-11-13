@@ -221,7 +221,24 @@ func (s *Site) Editable(key string) *Editable {
 }
 
 // ParseSite lê o .nep.html.
+// Trechos com o atributo nep-fonte (um <style nep-fonte> e um <aside nep-fonte>)
+// só aparecem para quem abre o .nep.html direto no navegador ou num visualizador:
+// escondem o código e mostram um aviso. O nep os tira antes de tudo, trocando
+// por quebras de linha para os números de linha continuarem certos.
+var fonteRe = []*regexp.Regexp{
+	regexp.MustCompile(`(?is)<style\b[^>]*\bnep-fonte\b[^>]*>.*?</style>`),
+	regexp.MustCompile(`(?is)<aside\b[^>]*\bnep-fonte\b[^>]*>.*?</aside>`),
+}
+
+func tirarFonte(src string) string {
+	for _, re := range fonteRe {
+		src = re.ReplaceAllStringFunc(src, func(m string) string { return strings.Repeat("\n", strings.Count(m, "\n")) })
+	}
+	return src
+}
+
 func ParseSite(file, src string) (*Site, error) {
+	src = tirarFonte(src)
 	s := &Site{File: file, Src: src, Config: map[string]string{}, cache: map[int][2]string{}}
 	s.root = &node{kind: kRoot, line: 1}
 	stack := []*node{s.root}

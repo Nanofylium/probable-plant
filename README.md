@@ -70,6 +70,8 @@ Você escreve o tema à mão; quem cuida do site publica e troca o conteúdo sem
 
 No painel aparecem "Artigos" (criar, editar, rascunho ou publicado, endereço) e "Textos e menus" (com `menu-editavel="principal"` num `<nav>`, o cliente reorganiza o menu). O dono cria logins de **editores**, que cuidam só do conteúdo e não veem os dados dos visitantes. E onde o tema deixar (`construtor="home.faixa"` ou `<textarea data-construtor>`), o cliente monta blocos arrastando, no construtor visual de código aberto [GrapesJS](https://github.com/GrapesJS/grapesjs) (BSD-3-Clause), que vem embutido no `nep`. Logado, o dono clica no título da página e escreve ali mesmo. Título, prévia no WhatsApp, 404 e sitemap de cada artigo saem sozinhos. Exemplo completo: [`exemplos/revista`](exemplos/revista/site.nep.html).
 
+**Aparência profissional sem CSS.** Todo site sai com cara de tema WordPress: sem CSS próprio, o `nep` aplica sozinho o tema Nepenthes (cabeçalho com menu, rodapé, cartões, botões, formulários, tabelas, celular). Troque a cor e a fonte com `<nep-config cor="#9a5317" fonte="titulo-serifa">`, use as classes prontas (`.capa`, `.secao`, `.grade`, `.cartao`, `.botao`…) e sobrescreva o que quiser: o seu CSS sempre manda. Detalhes na seção 10.15 do [SPEC](SPEC.md).
+
 ## Instalar
 
 Os executáveis de cada sistema são gerados pela CI a cada mudança (aba **Actions** do GitHub, artefatos da última execução). Para compilar você mesmo, precisa do Go 1.24 ou mais novo:
@@ -97,10 +99,20 @@ nep check arquivo           verifica um programa .nep ou um site .nep.html
 nep test pasta              roda os testes (*_test.nep, funções test_*)
 nep disasm programa.nep     mostra o bytecode
 
-nep novo meu-site           cria meu-site/site.nep.html
+nep criar "descrição"       monta um site completo a partir do que você escrever (veja abaixo)
+nep novo meu-site           cria meu-site/site.nep.html (site de empresa pronto; --modelo blog para um blog)
 nep dev site.nep.html       roda o site no computador (http://localhost:8000), erros com a linha exata
+nep previa site.nep.html    cria site-previa.html: o site pronto num arquivo só, abre com dois cliques
 nep serve site.nep.html     roda em produção num VPS: --porta 8000 --dados /var/lib/site --base /loja
 ```
+
+## Descreva o site e o Nepenthes monta
+
+```
+nep criar "escola de música chamada Sol Maior em Salvador, com blog, eventos e wiki, azul e elegante"
+```
+
+O `nep criar` entende o ramo, o nome, a cidade, a cor e o estilo, e monta um `site.nep.html` com a complexidade de um Joomla, WordPress, Backdrop ou TikiWiki: loja com carrinho, agendamento e reservas, eventos com inscrição, blog completo, wiki com `[[links]]`, fórum moderado, downloads, vagas, newsletter, painel e SEO. `com X` acrescenta, `sem X` tira e `só X` deixa só o que você pediu. Sai junto o `site-previa.html`. Detalhes na seção 10.16 da SPEC.
 
 ## Colocar um site no ar
 
@@ -141,7 +153,7 @@ A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as t
 - `lang/`: a implementação de referência em Go: lexer, parser, compilador para bytecode, máquina virtual e biblioteca padrão. `lang/std/cerebro.nep` é um módulo escrito na própria Nepenthes. Os arquivos `lang/lua_*.go` leem e compilam Lua 5.4 para a mesma máquina virtual.
 - `web/`: o lado site: leitura do `.nep.html` e tradução para Nepenthes, servidor HTTP, banco de dados embutido, sessões, formulários, painel e os scripts `movimento.js`, `vivo.js` e `editar.js`.
 - `cmd/nep/`: o comando `nep`.
-- `exemplos/`: programas `.nep` e quatro sites completos: `exemplos/padaria` (loja com encomendas), `exemplos/mural` (mural ao vivo com curtidas e API), `exemplos/revista` (revista com artigos e páginas gerenciados pelo painel) e `exemplos/ascidia` (tema de blog no estilo WordPress: posts, categorias, tags, arquivo por mês e autor, post fixado, modelos de página, barra lateral com widgets, newsletter, paginação, posts relacionados).
+- `exemplos/`: programas `.nep` e cinco sites completos: `exemplos/clinica` (clínica veterinária com agendamento online que recusa horário ocupado, equipe, serviços e blog), `exemplos/padaria` (loja com encomendas), `exemplos/mural` (mural ao vivo com curtidas e API), `exemplos/revista` (revista com artigos e páginas gerenciados pelo painel) e `exemplos/ascidia` (tema de blog no estilo WordPress: posts, categorias, tags, arquivo por mês e autor, post fixado, modelos de página, barra lateral com widgets, newsletter, paginação, posts relacionados).
 - `hospedagem/.htaccess`: configuração para hospedagem compartilhada.
 - `editor/vscode`: extensão do VS Code com as cores da sintaxe e atalhos (`.vsix` gerado pela CI).
 - `testdata/`: programas com a saída esperada, usados nos testes automáticos. Em `testdata/lua`, a saída esperada foi gerada pelo Lua 5.4 oficial.

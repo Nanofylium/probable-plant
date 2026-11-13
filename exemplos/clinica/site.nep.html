@@ -1,0 +1,587 @@
+<!doctype html>
+<!--
+  Clínica Veterinária Bem-te-vi: site de exemplo completo e funcionando, num arquivo só.
+  Empresa fictícia.
+
+  Rode com:   nep dev exemplos/clinica/site.nep.html        (painel em /_admin)
+  Na Mindnet: nep.cgi + .htaccess + este arquivo (ver LEIA-ME do pacote)
+
+  O que funciona de verdade:
+    - Agendamento online: valida o dia (não aceita passado nem domingo), recusa
+      horário já ocupado e manda e-mail para a clínica e para o tutor.
+    - "Horários livres" ao vivo: some da lista assim que alguém agenda.
+    - Serviços, equipe e dicas (blog) editáveis no painel, com rascunho,
+      agendamento de publicação, versões, lixeira e comentários.
+    - Textos, números, depoimentos e menus trocados no painel ou clicando na página.
+    - Contato com aviso por e-mail, busca, RSS, sitemap, API JSON (/api/horarios).
+    - Aparência: tema Nepenthes (cor e fonte no nep-config), celular incluído.
+-->
+<!-- Só aparece se alguém abrir este arquivo direto (sem o nep): esconde o código e explica. O nep tira os trechos nep-fonte. -->
+<style nep-fonte>
+  html, body { background: #10231d !important; margin: 0 !important; }
+  body > :not([nep-fonte]) { display: none !important; }
+  aside[nep-fonte] { display: block !important; box-sizing: border-box; max-width: 600px; margin: 9vh auto; padding: 36px 34px; border-radius: 22px;
+    background: #fff; color: #1d2420; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; box-shadow: 0 30px 70px rgba(0,0,0,.35); }
+  aside[nep-fonte] small { font-weight: 800; letter-spacing: .14em; font-size: .72rem; color: #2f6b4f; }
+  aside[nep-fonte] h1 { font-size: 1.9rem; line-height: 1.15; margin: 8px 0 12px; }
+  aside[nep-fonte] ol { padding-left: 1.2em; } aside[nep-fonte] li { margin: .5em 0; }
+  aside[nep-fonte] code { background: #eef2ee; padding: 2px 6px; border-radius: 6px; font-size: .9em; }
+  aside[nep-fonte] a { color: #2f6b4f; font-weight: 700; }
+</style>
+<aside nep-fonte>
+  <small>NEPENTHES · CÓDIGO DO SITE</small>
+  <h1>Clínica Veterinária Bem-te-vi</h1>
+  <p>Este arquivo é o código do site, como um arquivo .php: quem monta as páginas, guarda os dados e manda os e-mails é o programa <b>nep</b>. Aberto direto, ele não mostra o site.</p>
+  <ol>
+    <li><b>Ver como ficou:</b> abra a <a href="site-previa.html">prévia (site-previa.html)</a>. Para criar ou atualizar a prévia: <code>nep previa site.nep.html</code></li>
+    <li><b>No computador:</b> <code>nep dev site.nep.html</code> e abra <code>http://localhost:8000</code></li>
+    <li><b>No ar:</b> envie para a hospedagem com o <code>nep.cgi</code> e o <code>.htaccess</code>.</li>
+  </ol>
+</aside>
+
+<nep-config nome="Clínica Veterinária Bem-te-vi" tema="nepenthes" cor="#0e7490" fonte="geometrica"
+  movimento="suave" timezone="America/Sao_Paulo" lang="pt-BR"
+  lowii="Você atende a Clínica Veterinária Bem-te-vi. Fale de serviços, horários (segunda a sábado, 8h às 18h) e indique a página de agendamento. Emergência: ligar no telefone da clínica.">
+
+<!-- ================= conteúdo editado no painel ================= -->
+
+<conteudo nome="servicos" titulo="Serviços" item="serviço">
+  <label>Nome <input name="titulo" required maxlength="60"></label>
+  <label>Ícone (um emoji) <input name="icone" maxlength="4" placeholder="🩺"></label>
+  <label>A partir de (R$) <input type="number" name="preco" min="0" step="0.01"></label>
+  <label>Resumo <textarea name="resumo" maxlength="200" rows="2"></textarea></label>
+  <label>Descrição <textarea name="corpo" data-editor maxlength="20000"></textarea></label>
+  <label>Ordem na página (menor vem antes) <input type="number" name="ordem" min="0" max="99" value="10"></label>
+</conteudo>
+
+<conteudo nome="equipe" titulo="Equipe" item="profissional">
+  <label>Nome <input name="titulo" required maxlength="80"></label>
+  <label>Função <input name="cargo" maxlength="80" placeholder="Clínica geral"></label>
+  <label>Registro (CRMV) <input name="crmv" maxlength="30"></label>
+  <label>Sobre <textarea name="resumo" maxlength="300" rows="3"></textarea></label>
+  <label>Foto <input type="file" name="foto" accept="image/*" data-max-mb="4" data-publico></label>
+</conteudo>
+
+<conteudo nome="dicas" titulo="Dicas (blog)" item="dica">
+  <label>Título <input name="titulo" required maxlength="120"></label>
+  <label>Resumo <textarea name="resumo" maxlength="300" rows="2"></textarea></label>
+  <label>Texto <textarea name="corpo" data-editor required maxlength="40000"></textarea></label>
+  <label>Imagem <input type="file" name="capa" accept="image/*" data-max-mb="5" data-publico></label>
+</conteudo>
+
+<conteudo nome="paginas" titulo="Páginas" item="página">
+  <label>Título <input name="titulo" required maxlength="100"></label>
+  <label>Texto <textarea name="corpo" data-editor maxlength="40000"></textarea></label>
+  <label>Montagem visual (opcional) <textarea name="visual" data-construtor></textarea></label>
+</conteudo>
+
+<!-- ================= código do site ================= -->
+<nep>
+  # Conteúdo de exemplo na primeira vez (depois, tudo pelo painel).
+  if db.count("servicos") == 0 do
+    for s in [
+      {titulo: "Consulta", icone: "🩺", preco: 150, ordem: 1, resumo: "Avaliação completa, orientação e plano de cuidado para cães e gatos.",
+       corpo: "A consulta dura cerca de 40 minutos. Traga a carteirinha de vacinação e, se tiver, exames anteriores.\n\n- Exame físico completo\n- Orientação de alimentação e comportamento\n- Retorno em até 15 dias sem custo"},
+      {titulo: "Vacinação", icone: "💉", preco: 90, ordem: 2, resumo: "V10, antirrábica, gripe canina e V5 felina, com lembrete da próxima dose.",
+       corpo: "Mantemos o calendário de vacinas do seu pet e mandamos lembrete por e-mail antes da próxima dose."},
+      {titulo: "Exames", icone: "🔬", preco: 80, ordem: 3, resumo: "Hemograma, bioquímico e ultrassom com resultado no mesmo dia.",
+       corpo: "Laboratório próprio: a maior parte dos resultados sai em até 4 horas."},
+      {titulo: "Castração", icone: "🏥", preco: 450, ordem: 4, resumo: "Cirurgia com anestesia inalatória, monitoramento e acompanhamento no pós.",
+       corpo: "Inclui exames pré-operatórios, roupa cirúrgica e retorno para retirar os pontos."},
+      {titulo: "Banho e tosa", icone: "🛁", preco: 60, ordem: 5, resumo: "Produtos hipoalergênicos e equipe que entende de pet com medo.",
+       corpo: "Atendimento com hora marcada, sem gaiola de espera."},
+      {titulo: "Odontologia", icone: "🦷", preco: 280, ordem: 6, resumo: "Limpeza de tártaro e tratamento de dentes, com anestesia segura.",
+       corpo: "Mau hálito é sinal de doença. A limpeza previne problemas no coração e nos rins."}
+    ] do
+      s.slug = slug(s.titulo)
+      s.publicado = true
+      db.insert("servicos", s)
+    end
+    db.insert("equipe", {titulo: "Dra. Helena Prado", slug: "helena-prado", publicado: true, cargo: "Clínica geral e felinos", crmv: "CRMV-SP 00000",
+      resumo: "Atende gatos há 12 anos e coordena o atendimento \"cat friendly\" da clínica."})
+    db.insert("equipe", {titulo: "Dr. Rafael Moura", slug: "rafael-moura", publicado: true, cargo: "Cirurgia e ortopedia", crmv: "CRMV-SP 00001",
+      resumo: "Responsável pelo centro cirúrgico e pelas castrações."})
+    db.insert("equipe", {titulo: "Dra. Lívia Santos", slug: "livia-santos", publicado: true, cargo: "Dermatologia", crmv: "CRMV-SP 00002",
+      resumo: "Coceira, alergia e queda de pelo: cuida da pele dos pets."})
+    db.insert("dicas", {titulo: "Calendário de vacinas do filhote", slug: "vacinas-do-filhote", publicado: true,
+      resumo: "Quando começar, quantas doses e quando o filhote pode passear na rua.",
+      corpo: "O filhote de cachorro começa a vacinação entre **6 e 8 semanas**.\n\n# As doses\n\n- 3 doses de V10, com 21 a 30 dias entre elas\n- Antirrábica junto com a última dose\n- Reforço anual de todas\n\n> Só leve para passear na rua 15 dias depois da última dose."})
+    db.insert("dicas", {titulo: "Seu gato bebe pouca água? 5 truques", slug: "gato-bebe-pouca-agua", publicado: true,
+      resumo: "Gatos que bebem pouca água têm mais problema nos rins. Veja como ajudar.",
+      corpo: "- Use fonte de água corrente\n- Espalhe potes pela casa, longe da comida\n- Prefira potes largos e rasos\n- Ofereça ração úmida uma vez por dia\n- Troque a água duas vezes por dia"})
+  end
+
+  let servicos = db.all("servicos") |> sort_by("ordem")
+  let equipe = db.all("equipe") |> reverse
+  let dicas = db.all("dicas", 3)
+
+  # ---------- agenda ----------
+  let HORARIOS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"]
+  let DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"]
+  let hoje = date(now(), "Y-m-d")
+
+  fn ocupados(dia) do
+    return db.where("agendamentos", "data", dia) |> pluck("horario")
+  end
+  fn livres(dia) do
+    let o = ocupados(dia)
+    let lista = HORARIOS |> filter(fn(h) do not contains(o, h) end)
+    if dia == hoje do
+      let agora = date(now(), "H:i")
+      lista = lista |> filter(fn(h) do h > agora end)
+    end
+    return lista
+  end
+  # Próximos dias de atendimento (segunda a sábado), a partir de hoje.
+  fn proximos_dias(n) do
+    let out = []
+    let t = int(date(now(), "U"))
+    while len(out) < n do
+      let d = date(t, "Y-m-d")
+      if date(t, "w") != "0" do push(out, {data: d, txt: DIAS[int(date(t, "w"))] + ", " + date(t, "d/m")}) end
+      t = t + 86400
+    end
+    return out
+  end
+
+  # Chamada pelo formulário de agendamento, com os dados já validados.
+  fn agendar(a) do
+    if a.data < hoje do recusar("Escolha uma data de hoje em diante.") end
+    if date(a.data, "w") == "0" do recusar("Aos domingos a clínica fecha. Escolha outro dia.") end
+    if not contains(livres(a.data), a.horario) do
+      recusar("Esse horário acabou de ser reservado ou já passou. Veja os horários livres ao lado.")
+    end
+    a.status = "Confirmado"
+    return "/agendar/ok?data=" + a.data + "&h=" + urlencode(a.horario)
+  end
+
+  fn reais(v) do
+    if not v do return "Sob consulta" end
+    return "a partir de " + money(v)
+  end
+</nep>
+
+<!-- Horários livres de um dia, em JSON: /api/horarios?data=2026-11-20 -->
+<api route="/api/horarios">
+  let dia = default(request.query.data, hoje)
+  return {data: dia, livres: livres(dia)}
+</api>
+
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>{{ page.title }} · Bem-te-vi</title>
+  <style>
+    /* O tema Nepenthes faz o grosso; aqui só o que é da clínica. */
+    :root { --nep-fundo: #f7fbfc; --nep-alt: #eaf4f6; --nep-linha: #d7e7eb; --nep-escuro: #0b2a33; --nep-texto: #13262c; --nep-suave: #546b72; }
+    .marca span { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: #dff3f7; border: 1px solid #b9e3ec; font-size: 1.2rem; }
+    .topo-faixa { background: var(--nep-escuro); color: #cfe3e8; font-size: .85rem; padding: 7px var(--nep-margem); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 18px; }
+    .topo-faixa a { color: #fff; text-decoration: none; font-weight: 600; }
+    .capa:not(.cor) { background: radial-gradient(700px 380px at 85% 30%, #c6eef4, transparent 70%), linear-gradient(180deg, #f2fafb, var(--nep-fundo)); }
+    .pets { position: relative; aspect-ratio: 1; max-width: 440px; width: 100%; justify-self: center; }
+    .pets .bola { position: absolute; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 24px 50px rgba(14,116,144,.25); }
+    .pets .b1 { inset: 8% 18% 22% 8%; background: linear-gradient(145deg, #22a3bd, #0e7490); font-size: clamp(5rem, 12vw, 8rem); }
+    .pets .b2 { width: 38%; height: 38%; right: 2%; bottom: 6%; background: #fff; font-size: clamp(3rem, 7vw, 4.4rem); }
+    .pets .b3 { width: 22%; height: 22%; right: 12%; top: 4%; background: #fde68a; font-size: 2.2rem; }
+    .selo-capa { display: inline-flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--nep-linha); border-radius: 999px; padding: 6px 14px 6px 8px; font-size: .9rem; font-weight: 600; box-shadow: var(--nep-sombra); margin-top: 22px; }
+    .selo-capa b { background: #dcfce7; color: #166534; border-radius: 999px; padding: 2px 10px; }
+    .servico .preco { font-weight: 700; color: var(--nep-cor); font-size: .95rem; }
+    .pessoa { text-align: center; }
+    .pessoa .foto { width: 112px; height: 112px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; font-size: 3rem; background: linear-gradient(145deg, #c6eef4, #8fd3e0); overflow: hidden; }
+    .pessoa .foto img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+    .agenda { display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: start; }
+    .agenda form { max-width: none; }
+    .agenda .duplo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .dias { display: grid; gap: 12px; }
+    .dia h4 { margin: 0 0 8px; font-size: .95rem; text-transform: capitalize; }
+    .horas { display: flex; flex-wrap: wrap; gap: 6px; }
+    .horas span { font-size: .85rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .horas em { font-size: .85rem; color: var(--nep-suave); }
+    .vivo { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--nep-suave); font-weight: 600; }
+    .vivo i { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,.18); }
+    details { background: var(--nep-superficie); border: 1px solid var(--nep-linha); border-radius: var(--nep-raio); padding: 16px 20px; margin-bottom: 10px; }
+    details summary { cursor: pointer; font-weight: 700; }
+    details p { margin: 10px 0 0; color: var(--nep-suave); }
+    .ok-grande { text-align: center; max-width: 620px; margin: 0 auto; }
+    .ok-grande .icone { width: 84px; height: 84px; font-size: 2.6rem; border-radius: 50%; background: #dcfce7; }
+    .depo p { font-size: 1.05rem; color: var(--nep-texto); }
+    .depo .estrelas { color: #f59e0b; letter-spacing: 2px; }
+    @media (max-width: 860px) { .agenda { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { .agenda .duplo { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="topo-faixa">
+    <span editavel="topo.horario">Segunda a sábado, 8h às 18h · Emergência 24h</span>
+    <a href="tel:+5511000000000" editavel="topo.fone">(11) 0000-0000</a>
+  </div>
+  <header>
+    <a class="marca" href="{{ url('/') }}"><span>🐾</span><b editavel="marca">Bem-te-vi</b></a>
+    <nav menu-editavel="principal">
+      <a href="{{ url('/') }}">Início</a>
+      <a href="{{ url('/servicos') }}">Serviços</a>
+      <a href="{{ url('/equipe') }}">Equipe</a>
+      <a href="{{ url('/dicas') }}">Dicas</a>
+      <a href="{{ url('/contato') }}">Contato</a>
+      <a class="botao pequeno" href="{{ url('/agendar') }}" style="color:#fff">Agendar</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ================= início ================= -->
+    <page route="/" title="Clínica veterinária" description="Clínica veterinária para cães e gatos: consulta, vacinas, exames, cirurgia e banho e tosa. Agende online.">
+      <section class="capa">
+        <div class="lado">
+          <div>
+            <span class="chapeu" editavel="capa.chapeu">Clínica veterinária · cães e gatos</span>
+            <h1 editavel="capa.titulo">Cuidado de verdade para quem é da família</h1>
+            <p editavel="capa.texto">Consulta, vacinas, exames e cirurgia no mesmo lugar, com hora marcada e sem fila. Agende online em menos de um minuto.</p>
+            <div class="acoes">
+              <a class="botao" href="{{ url('/agendar') }}" nep-magnetico>Agendar consulta</a>
+              <a class="botao secundario" href="{{ url('/servicos') }}">Ver serviços</a>
+            </div>
+            <live>
+              <div class="selo-capa"><b>{{ len(livres(proximos_dias(1)[0].data)) }} livres</b> horários para {{ proximos_dias(1)[0].txt }}</div>
+            </live>
+          </div>
+          <div class="pets" nep-inclinar="10" aria-hidden="true">
+            <div class="bola b1">🐶</div><div class="bola b2">🐱</div><div class="bola b3">🐾</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="secao alt">
+        <div class="numeros">
+          <div><strong nep-contar editavel="num.anos">15</strong><span editavel="num.anos.txt">anos de clínica</span></div>
+          <div><strong nep-contar editavel="num.pets">9800</strong><span editavel="num.pets.txt">pets atendidos</span></div>
+          <div><strong nep-contar editavel="num.nota">4,9</strong><span editavel="num.nota.txt">nota no Google</span></div>
+          <div><strong editavel="num.plantao">24h</strong><span editavel="num.plantao.txt">plantão de emergência</span></div>
+        </div>
+      </section>
+
+      <section class="secao">
+        <div class="centro">
+          <span class="chapeu">Serviços</span>
+          <h2 editavel="servicos.titulo">Tudo o que seu pet precisa</h2>
+          <p class="intro" editavel="servicos.intro">Da primeira vacina ao check-up do idoso, com a mesma equipe acompanhando.</p>
+        </div>
+        <div class="grade">
+          <each s in="servicos |> take(6)">
+            <a class="cartao servico" href="{{ url('/servicos/' + s.slug) }}" nep-inclinar="5">
+              <div class="icone">{{ default(s.icone, '🐾') }}</div>
+              <h3>{{ s.titulo }}</h3>
+              <p>{{ default(s.resumo, '') }}</p>
+              <span class="preco">{{ reais(s.preco) }}</span>
+            </a>
+          </each>
+        </div>
+      </section>
+
+      <section class="secao alt">
+        <span class="chapeu">Equipe</span>
+        <h2 editavel="equipe.titulo">Quem vai cuidar do seu pet</h2>
+        <div class="grade">
+          <each p in="equipe">
+            <div class="cartao pessoa">
+              <div class="foto"><if test="p.foto"><img src="{{ p.foto.url }}" alt="{{ p.titulo }}"><else>🩺</if></div>
+              <h3>{{ p.titulo }}</h3>
+              <span class="selo">{{ default(p.cargo, '') }}</span>
+              <p style="margin-top:10px">{{ default(p.resumo, '') }}</p>
+            </div>
+          </each>
+        </div>
+      </section>
+
+      <section class="secao">
+        <span class="chapeu">Quem já veio</span>
+        <h2>O que os tutores dizem</h2>
+        <div class="grade">
+          <blockquote class="cartao depo"><div class="estrelas">★★★★★</div><p editavel="depo1">“A Dra. Helena tem uma paciência enorme com a Mia, que odeia sair de casa. Fomos muito bem tratadas.”</p><footer class="meta" editavel="depo1.autor">Camila, tutora da Mia</footer></blockquote>
+          <blockquote class="cartao depo"><div class="estrelas">★★★★★</div><p editavel="depo2">“Agendei pelo site à noite e no dia seguinte já estava sendo atendido. Sem fila nenhuma.”</p><footer class="meta" editavel="depo2.autor">Marcos, tutor do Thor</footer></blockquote>
+          <blockquote class="cartao depo"><div class="estrelas">★★★★★</div><p editavel="depo3">“A castração do Fred foi tranquila e mandaram notícia o tempo todo pelo WhatsApp.”</p><footer class="meta" editavel="depo3.autor">Juliana, tutora do Fred</footer></blockquote>
+        </div>
+      </section>
+
+      <section class="secao alt">
+        <span class="chapeu">Dicas</span>
+        <h2>Do blog da clínica</h2>
+        <div class="grade">
+          <each d in="dicas">
+            <a class="cartao" href="{{ url('/dicas/' + d.slug) }}">
+              <if test="d.capa"><img src="{{ d.capa.url }}" alt="" loading="lazy"></if>
+              <span class="meta">{{ date(d.created_at, 'd/m/Y') }}</span>
+              <h3>{{ d.titulo }}</h3>
+              <p>{{ default(d.resumo, '') }}</p>
+            </a>
+          </each>
+        </div>
+      </section>
+
+      <section class="secao">
+        <div class="centro"><span class="chapeu">Dúvidas</span><h2>Perguntas frequentes</h2></div>
+        <div style="max-width:760px;margin:0 auto">
+          <details><summary editavel="faq1">Vocês atendem emergência?</summary><p editavel="faq1.r">Sim, 24 horas por dia. Fora do horário comercial, ligue antes para a equipe se preparar.</p></details>
+          <details><summary editavel="faq2">Quais formas de pagamento?</summary><p editavel="faq2.r">Pix, dinheiro e cartão em até 6 vezes sem juros para cirurgias.</p></details>
+          <details><summary editavel="faq3">Preciso levar algo na primeira consulta?</summary><p editavel="faq3.r">A carteirinha de vacinação e exames anteriores, se tiver. Gatos sempre na caixa de transporte.</p></details>
+          <details><summary editavel="faq4">Posso remarcar o horário?</summary><p editavel="faq4.r">Pode. Responda o e-mail de confirmação ou chame no WhatsApp com até 2 horas de antecedência.</p></details>
+        </div>
+      </section>
+
+      <section class="capa cor centro">
+        <h2 style="margin-top:0" editavel="chamada.titulo">Seu pet merece um check-up este ano</h2>
+        <p style="margin-left:auto;margin-right:auto" editavel="chamada.texto">Escolha o dia e o horário. A confirmação chega no seu e-mail na hora.</p>
+        <div class="acoes" style="justify-content:center"><a class="botao" href="{{ url('/agendar') }}">Agendar agora</a></div>
+      </section>
+    </page>
+
+    <!-- ================= serviços ================= -->
+    <page route="/servicos" title="Serviços" description="Consulta, vacinação, exames, castração, odontologia e banho e tosa para cães e gatos.">
+      <section class="secao">
+        <span class="chapeu">Serviços</span>
+        <h1>Serviços e preços</h1>
+        <p class="intro">Valores de referência. O orçamento final é feito na consulta, sem surpresa.</p>
+        <div class="grade">
+          <each s in="servicos">
+            <a class="cartao servico" href="{{ url('/servicos/' + s.slug) }}">
+              <div class="icone">{{ default(s.icone, '🐾') }}</div>
+              <h3>{{ s.titulo }}</h3>
+              <p>{{ default(s.resumo, '') }}</p>
+              <span class="preco">{{ reais(s.preco) }}</span>
+            </a>
+          </each>
+        </div>
+      </section>
+    </page>
+
+    <page route="/servicos/:slug" conteudo="servicos">
+      <article class="texto">
+        <a class="chapeu" href="{{ url('/servicos') }}">← Serviços</a>
+        <h1>{{ default(item.icone, '') }} {{ item.titulo }}</h1>
+        <p class="intro">{{ default(item.resumo, '') }}</p>
+        <p><span class="selo">{{ reais(item.preco) }}</span></p>
+        {{ markdown(default(item.corpo, '')) }}
+        <p style="margin-top:2em"><a class="botao" href="{{ url('/agendar') }}?servico={{ urlencode(item.titulo) }}">Agendar {{ lower(item.titulo) }}</a></p>
+      </article>
+    </page>
+
+    <!-- ================= equipe ================= -->
+    <page route="/equipe" title="Equipe" description="Médicos veterinários da Clínica Bem-te-vi.">
+      <section class="secao">
+        <span class="chapeu">Equipe</span>
+        <h1>Nossos veterinários</h1>
+        <div class="grade">
+          <each p in="equipe">
+            <div class="cartao pessoa">
+              <div class="foto"><if test="p.foto"><img src="{{ p.foto.url }}" alt="{{ p.titulo }}"><else>🩺</if></div>
+              <h3>{{ p.titulo }}</h3>
+              <span class="selo">{{ default(p.cargo, '') }}</span>
+              <p style="margin-top:10px">{{ default(p.resumo, '') }}</p>
+              <p class="meta">{{ default(p.crmv, '') }}</p>
+            </div>
+          </each>
+        </div>
+      </section>
+    </page>
+
+    <!-- ================= agendamento ================= -->
+    <page route="/agendar" title="Agendar consulta" description="Agende consulta, vacina, exame ou banho e tosa online.">
+      <section class="secao">
+        <span class="chapeu">Agendamento online</span>
+        <h1>Agende em menos de um minuto</h1>
+        <p class="intro">Escolha o dia e o horário. A confirmação chega no seu e-mail na hora.</p>
+        <div class="agenda">
+          <form class="cartao" save="agendamentos" run="agendar" limit="5" avisar="dono"
+                confirmar="Olá! Seu horário na Clínica Veterinária Bem-te-vi está confirmado. Chegue 10 minutos antes e traga a carteirinha de vacinação. Para remarcar, responda este e-mail."
+                confirmar-assunto="Horário confirmado na Bem-te-vi" success="">
+            <div class="duplo">
+              <label>Seu nome <input name="tutor" required maxlength="80"></label>
+              <label>WhatsApp <input name="whatsapp" type="tel" required maxlength="20" placeholder="(11) 90000-0000"></label>
+            </div>
+            <label>E-mail (para a confirmação) <input name="email" type="email" required></label>
+            <div class="duplo">
+              <label>Nome do pet <input name="pet" required maxlength="40"></label>
+              <label>Espécie
+                <select name="especie" required><option>Cachorro</option><option>Gato</option><option>Outro</option></select>
+              </label>
+            </div>
+            <label>Serviço
+              <select name="servico" required>
+                <option>Consulta</option><option>Vacinação</option><option>Exames</option><option>Castração</option><option>Banho e tosa</option><option>Odontologia</option>
+              </select>
+            </label>
+            <div class="duplo">
+              <label>Dia <input name="data" type="date" required min="{{ hoje }}" value="{{ default(request.query.data, '') }}"></label>
+              <label>Horário
+                <select name="horario" required>
+                  <option value="">Escolha…</option>
+                  <option>08:00</option><option>09:00</option><option>10:00</option><option>11:00</option><option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option>
+                </select>
+              </label>
+            </div>
+            <label>Conte o que está acontecendo (opcional) <textarea name="obs" maxlength="800" rows="3"></textarea></label>
+            <label><input type="checkbox" name="aceite" required data-label="Autorização"> Autorizo a clínica a usar estes dados para o atendimento.</label>
+            <button>Confirmar agendamento</button>
+          </form>
+
+          <aside class="cartao">
+            <h3 style="margin-top:0">Horários livres</h3>
+            <live>
+              <p class="vivo"><i></i>atualiza sozinho</p>
+              <div class="dias">
+                <each d in="proximos_dias(5)">
+                  <div class="dia">
+                    <h4>{{ d.txt }}</h4>
+                    <div class="horas">
+                      <each h in="livres(d.data)"><span>{{ h }}</span><else><em>Sem horários livres</em></each>
+                    </div>
+                  </div>
+                </each>
+              </div>
+            </live>
+          </aside>
+        </div>
+      </section>
+    </page>
+
+    <page route="/agendar/ok" title="Agendamento confirmado" noindex>
+      <section class="secao">
+        <div class="ok-grande">
+          <div class="icone">✓</div>
+          <h1>Horário confirmado!</h1>
+          <if test="request.query.data">
+            <p class="intro" style="margin:0 auto 1.4em">Esperamos você em <b>{{ date(request.query.data, 'd/m/Y') }}</b> às <b>{{ default(request.query.h, '') }}</b>. A confirmação foi para o seu e-mail.</p>
+          </if>
+          <div class="acoes" style="justify-content:center">
+            <a class="botao" href="{{ url('/') }}">Voltar ao início</a>
+            <a class="botao secundario" href="{{ url('/dicas') }}">Ler as dicas</a>
+          </div>
+        </div>
+      </section>
+    </page>
+
+    <!-- ================= dicas (blog) ================= -->
+    <page route="/dicas" title="Dicas" description="Dicas de saúde e cuidado para cães e gatos.">
+      <section class="secao">
+        <span class="chapeu">Blog</span>
+        <h1>Dicas para o seu pet</h1>
+        <form method="get" action="{{ url('/busca') }}" style="margin-bottom:28px">
+          <input name="q" placeholder="vacina, gato, alimentação…" aria-label="Buscar"><button>Buscar</button>
+        </form>
+        <div class="grade">
+          <each d in="db.all('dicas')">
+            <a class="cartao" href="{{ url('/dicas/' + d.slug) }}">
+              <if test="d.capa"><img src="{{ d.capa.url }}" alt="" loading="lazy"></if>
+              <span class="meta">{{ date(d.created_at, 'd/m/Y') }}</span>
+              <h3>{{ d.titulo }}</h3>
+              <p>{{ default(d.resumo, '') }}</p>
+            </a>
+          <else>
+            <p>Nenhuma dica publicada ainda.</p>
+          </each>
+        </div>
+      </section>
+    </page>
+
+    <page route="/dicas/:slug" conteudo="dicas">
+      <article class="texto">
+        <a class="chapeu" href="{{ url('/dicas') }}">← Dicas</a>
+        <h1>{{ item.titulo }}</h1>
+        <p class="meta">{{ date(item.created_at, 'd/m/Y') }}</p>
+        <if test="item.capa"><img src="{{ item.capa.url }}" alt=""></if>
+        {{ markdown(item.corpo) }}
+        <div class="cartao" style="margin-top:2em"><b>Ficou com dúvida?</b> <a href="{{ url('/agendar') }}">Agende uma consulta</a> e converse com a equipe.</div>
+        {{ comentarios() }}
+      </article>
+    </page>
+
+    <page route="/busca" title="Busca" noindex>
+      <section class="secao">
+        <span class="chapeu">Busca</span>
+        <h1>Buscar no site</h1>
+        <form method="get" action="{{ url('/busca') }}" style="margin-bottom:28px">
+          <input name="q" value="{{ default(request.query.q, '') }}" aria-label="Buscar"><button>Buscar</button>
+        </form>
+        <if test="request.query.q">
+          <each r in="buscar(request.query.q)">
+            <p><a href="{{ r.url }}"><strong>{{ r.titulo }}</strong></a><br><span class="meta">{{ r.resumo }}</span></p>
+          <else>
+            <p>Nada encontrado para “{{ request.query.q }}”.</p>
+          </each>
+        </if>
+      </section>
+    </page>
+
+    <!-- ================= contato ================= -->
+    <page route="/contato" title="Contato" description="Endereço, telefone e mensagem para a Clínica Veterinária Bem-te-vi.">
+      <section class="secao">
+        <div class="agenda">
+          <div>
+            <span class="chapeu">Contato</span>
+            <h1>Fale com a clínica</h1>
+            <p class="intro">Para marcar horário, use o <a href="{{ url('/agendar') }}">agendamento online</a>. Para o resto, mande uma mensagem.</p>
+            <div class="cartao">
+              <p><b>Endereço</b><br><span editavel="contato.endereco">Rua das Acácias, 120, Vila Exemplo, São Paulo</span></p>
+              <p><b>Telefone e WhatsApp</b><br><span editavel="contato.fone">(11) 0000-0000</span></p>
+              <p><b>Horário</b><br><span editavel="contato.horario">Segunda a sábado, 8h às 18h. Emergência 24h.</span></p>
+            </div>
+          </div>
+          <form class="cartao" save="contatos" avisar="dono" limit="5" success="Mensagem enviada! Respondemos em até 1 dia útil."
+                confirmar="Recebemos sua mensagem na Clínica Bem-te-vi e vamos responder em até 1 dia útil." confirmar-assunto="Recebemos sua mensagem">
+            <label>Nome <input name="nome" required maxlength="80"></label>
+            <label>E-mail <input name="email" type="email" required></label>
+            <label>Mensagem <textarea name="mensagem" required maxlength="2000"></textarea></label>
+            <button>Enviar mensagem</button>
+          </form>
+        </div>
+      </section>
+    </page>
+
+    <page route="404" title="Não encontrado">
+      <section class="secao centro">
+        <div style="font-size:4rem">🐕</div>
+        <h1>O cachorro escondeu esta página</h1>
+        <p class="intro">O endereço pode ter mudado.</p>
+        <a class="botao" href="{{ url('/') }}">Voltar ao início</a>
+      </section>
+    </page>
+
+    <!-- Páginas criadas no painel (Política de privacidade, Trabalhe conosco...). Fica por último. -->
+    <page route="/:slug" conteudo="paginas">
+      <article class="texto">
+        <h1>{{ item.titulo }}</h1>
+        {{ markdown(default(item.corpo, '')) }}
+        {{ visual(item.visual) }}
+      </article>
+    </page>
+  </main>
+
+  <footer>
+    <div class="colunas-rodape">
+      <div>
+        <h4>🐾 <span editavel="marca">Bem-te-vi</span></h4>
+        <p editavel="rodape.texto">Clínica veterinária para cães e gatos. Consulta, vacinas, exames, cirurgia e banho e tosa, com plantão 24h.</p>
+      </div>
+      <div>
+        <h4>Clínica</h4>
+        <nav menu-editavel="rodape">
+          <a href="{{ url('/servicos') }}">Serviços</a>
+          <a href="{{ url('/equipe') }}">Equipe</a>
+          <a href="{{ url('/dicas') }}">Dicas</a>
+          <a href="{{ url('/agendar') }}">Agendar</a>
+        </nav>
+      </div>
+      <div>
+        <h4>Atendimento</h4>
+        <p><span editavel="rodape.fone">(11) 0000-0000</span><br><span editavel="rodape.endereco">Rua das Acácias, 120 · São Paulo</span></p>
+        <nav menu-editavel="redes"><a href="https://instagram.com/">Instagram</a><a href="{{ url('/feed.xml') }}">RSS</a></nav>
+      </div>
+    </div>
+    <div class="base">
+      <span editavel="rodape.base">© Clínica Veterinária Bem-te-vi · empresa fictícia de exemplo</span>
+      <span>Feito com Nepenthes · <a href="{{ url('/_admin') }}">Painel</a></span>
+    </div>
+  </footer>
+
+  <if test="ia_ligada()">{{ lowii("Dúvidas? Pergunte aqui") }}</if>
+</body>
+</html>
