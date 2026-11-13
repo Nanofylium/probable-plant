@@ -16,6 +16,29 @@
     - Contato com aviso por e-mail, busca, RSS, sitemap, API JSON (/api/horarios).
     - Aparência: tema Nepenthes (cor e fonte no nep-config), celular incluído.
 -->
+<!-- Só aparece se alguém abrir este arquivo direto (sem o nep): esconde o código e explica. O nep tira os trechos nep-fonte. -->
+<style nep-fonte>
+  html, body { background: #10231d !important; margin: 0 !important; }
+  body > :not([nep-fonte]) { display: none !important; }
+  aside[nep-fonte] { display: block !important; box-sizing: border-box; max-width: 600px; margin: 9vh auto; padding: 36px 34px; border-radius: 22px;
+    background: #fff; color: #1d2420; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; box-shadow: 0 30px 70px rgba(0,0,0,.35); }
+  aside[nep-fonte] small { font-weight: 800; letter-spacing: .14em; font-size: .72rem; color: #2f6b4f; }
+  aside[nep-fonte] h1 { font-size: 1.9rem; line-height: 1.15; margin: 8px 0 12px; }
+  aside[nep-fonte] ol { padding-left: 1.2em; } aside[nep-fonte] li { margin: .5em 0; }
+  aside[nep-fonte] code { background: #eef2ee; padding: 2px 6px; border-radius: 6px; font-size: .9em; }
+  aside[nep-fonte] a { color: #2f6b4f; font-weight: 700; }
+</style>
+<aside nep-fonte>
+  <small>NEPENTHES · CÓDIGO DO SITE</small>
+  <h1>Clínica Veterinária Bem-te-vi</h1>
+  <p>Este arquivo é o código do site, como um arquivo .php: quem monta as páginas, guarda os dados e manda os e-mails é o programa <b>nep</b>. Aberto direto, ele não mostra o site.</p>
+  <ol>
+    <li><b>Ver como ficou:</b> abra a <a href="site-previa.html">prévia (site-previa.html)</a>. Para criar ou atualizar a prévia: <code>nep previa site.nep.html</code></li>
+    <li><b>No computador:</b> <code>nep dev site.nep.html</code> e abra <code>http://localhost:8000</code></li>
+    <li><b>No ar:</b> envie para a hospedagem com o <code>nep.cgi</code> e o <code>.htaccess</code>.</li>
+  </ol>
+</aside>
+
 <nep-config nome="Clínica Veterinária Bem-te-vi" tema="nepenthes" cor="#0e7490" fonte="geometrica"
   movimento="suave" timezone="America/Sao_Paulo" lang="pt-BR"
   lowii="Você atende a Clínica Veterinária Bem-te-vi. Fale de serviços, horários (segunda a sábado, 8h às 18h) e indique a página de agendamento. Emergência: ligar no telefone da clínica.">

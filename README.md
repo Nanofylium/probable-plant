@@ -101,6 +101,7 @@ nep disasm programa.nep     mostra o bytecode
 
 nep novo meu-site           cria meu-site/site.nep.html (site de empresa pronto; --modelo blog para um blog)
 nep dev site.nep.html       roda o site no computador (http://localhost:8000), erros com a linha exata
+nep previa site.nep.html    cria site-previa.html: o site pronto num arquivo só, abre com dois cliques
 nep serve site.nep.html     roda em produção num VPS: --porta 8000 --dados /var/lib/site --base /loja
 ```
 

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -30,5 +31,34 @@ func TestNovoCriaModelos(t *testing.T) {
 	}
 	if novo([]string{filepath.Join(t.TempDir(), "x"), "--modelo", "nao-existe"}) == 0 {
 		t.Error("modelo inexistente deveria falhar")
+	}
+}
+
+func TestPreviaDaClinica(t *testing.T) {
+	src, err := os.ReadFile(filepath.Join("..", "..", "exemplos", "clinica", "site.nep.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := filepath.Join(t.TempDir(), "site.nep.html")
+	os.WriteFile(f, src, 0o644)
+	html, n, err := gerarPrevia(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n < 8 {
+		t.Errorf("prévia com poucas páginas: %d", n)
+	}
+	for _, ruim := range []string{"{{", "<nep>", "nep-fonte>", `href="/servicos"`, "/_nep/tema.css"} {
+		if strings.Contains(html, ruim) {
+			t.Errorf("a prévia não deveria ter %q", ruim)
+		}
+	}
+	for _, bom := range []string{`data-rota="/agendar"`, `href="#/servicos"`, "--nep-cor"} {
+		if !strings.Contains(html, bom) {
+			t.Errorf("a prévia deveria ter %q", bom)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(filepath.Dir(f), "data")); err == nil {
+		t.Error("a prévia não deve criar data/ ao lado do site")
 	}
 }

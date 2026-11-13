@@ -45,3 +45,17 @@ func TestTemaCorInvalidaIgnorada(t *testing.T) {
 		t.Error("cor inválida entrou no CSS")
 	}
 }
+
+// O aviso para quem abre o .nep.html direto (nep-fonte) nunca chega ao visitante,
+// e as linhas dos erros continuam certas.
+func TestNepFonteSai(t *testing.T) {
+	src := strings.Replace(siteSemCSS, "<html>", "<style nep-fonte>\nbody>:not([nep-fonte]){display:none}\n</style>\n<aside nep-fonte>\n<h1>Código do site</h1>\n</aside>\n<html>", 1)
+	c, _ := newTCSite(t, src)
+	_, body, _ := c.get("/")
+	if strings.Contains(body, "nep-fonte") || strings.Contains(body, "Código do site") {
+		t.Errorf("o aviso de código apareceu no site: %s", body)
+	}
+	if got := tirarFonte("a\n<aside nep-fonte>\nx\n</aside>\nb"); got != "a\n\n\n\nb" {
+		t.Errorf("tirarFonte mudou as linhas: %q", got)
+	}
+}

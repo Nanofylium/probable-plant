@@ -24,6 +24,8 @@ Uso:
   nep check arquivo.nep    só verifica a sintaxe (também aceita um site .nep.html)
   nep novo pasta [--modelo empresa|blog]  cria um site pronto (pasta/site.nep.html)
   nep dev site.nep.html    roda o site no computador, com erros detalhados
+  nep previa site.nep.html cria site-previa.html: o site pronto num arquivo que abre
+                           com dois cliques, sem servidor (para mostrar a alguém)
   nep serve site.nep.html  roda o site em produção (VPS): --porta 8000 --dados pasta --base /sub
   nep cgi [site.nep.html]  atende um pedido CGI (hospedagem compartilhada; automático se o
                            executável for chamado pelo Apache)
@@ -60,6 +62,8 @@ func main() {
 		os.Exit(check(args[1:]))
 	case "serve", "servir":
 		os.Exit(serve(args[1:], false))
+	case "previa", "prévia", "preview":
+		os.Exit(previa(args[1:]))
 	case "novo", "new":
 		os.Exit(novo(args[1:]))
 	case "dev":
