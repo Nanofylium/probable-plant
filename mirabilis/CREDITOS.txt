@@ -1,0 +1,21 @@
+Mirabilis
+=========
+
+O Mirabilis é um CMS baseado no Joomla! 6.2, distribuído sob a mesma
+licença: GNU General Public License, versão 2 ou posterior (LICENSE.txt).
+
+Código do Joomla: (C) 2005 - 2026 Open Source Matters, Inc. <https://www.joomla.org>
+Todos os avisos de copyright originais foram mantidos nos arquivos.
+
+Joomla® é marca registrada da Open Source Matters, Inc. O Mirabilis não tem
+afiliação com o Projeto Joomla nem com a Open Source Matters e não é endossado
+por eles. Os links para joomla.org, documentação, fórum e diretório de
+extensões continuam apontando para o projeto original.
+
+O que é do Mirabilis (também GPL 2 ou posterior):
+  - componente "Descreva seu site" (administrator/components/com_mirabilis)
+  - comando de terminal mirabilis:criar (plugins/console/mirabilis)
+  - templates Rajah, Villosa, Ampullaria, Lowii, Truncata e Edwardsiana
+    (templates/mirabilis_*), filhos do Cassiopeia, o template gratuito do Joomla
+  - regras de leitura da descrição, exportadas da linguagem Nepenthes
+  - logotipo (jarro de Nepenthes mirabilis)

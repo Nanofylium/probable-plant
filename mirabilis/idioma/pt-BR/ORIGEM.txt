@@ -1,0 +1,2 @@
+5ed520bdcf089c4fa3d2b196bfd5a6a5fbd3d1ae 2026-05-16
+https://github.com/uzielweb/joomla6-pt-br (Use Joomla! - Comunidade Brasileira de Joomla!, GPL 2+)

@@ -17,11 +17,13 @@ func TestEntender(t *testing.T) {
 		{"restaurante italiano chamado Nonna Rosa em Belo Horizonte com cardápio e reservas, vermelho", "restaurante", "Nonna Rosa", "Belo Horizonte", "#b91c1c", []string{"catalogo", "agenda"}, []string{"idiomas"}},
 		{"academia de crossfit sem planos e sem equipe", "academia", "", "", "", []string{"servicos", "agenda"}, []string{"planos", "equipe"}},
 		{"pousada \"Maré Mansa\" com galeria e site em inglês e espanhol", "hotel", "Maré Mansa", "", "", []string{"galeria", "agenda", "idiomas"}, nil},
+		{"Escritório de advocacia Duarte & Lemos em Belo Horizonte, com equipe", "advocacia", "Duarte & Lemos", "Belo Horizonte", "", []string{"equipe"}, nil},
+		{"Fotógrafa Lia Campos, só galeria e contato", "", "Lia Campos", "", "", []string{"galeria"}, []string{"blog"}},
 		{"qualquer coisa", "generico", "Sua Empresa", "", "", []string{"servicos"}, nil},
 	}
 	for _, c := range casos {
 		p := Entender(c.desc)
-		if p.Setor.ID != c.setor {
+		if c.setor != "" && p.Setor.ID != c.setor {
 			t.Errorf("%q: setor %s, queria %s", c.desc, p.Setor.ID, c.setor)
 		}
 		if c.nome != "" && p.Nome != c.nome {

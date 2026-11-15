@@ -1,0 +1,2779 @@
+{
+ "chavesModulo": {
+  "agenda": [
+   "agendamento",
+   "agendar",
+   "agenda online",
+   "agenda de horarios",
+   "reserva",
+   "marcar",
+   "marcacao"
+  ],
+  "atendente": [
+   "atendente",
+   "chatbot",
+   "chat$",
+   "ia$",
+   "inteligencia artificial",
+   "assistente virtual"
+  ],
+  "blog": [
+   "blog",
+   "noticia",
+   "artigo",
+   "revista",
+   "jornal",
+   "novidades",
+   "posts$"
+  ],
+  "catalogo": [
+   "loja",
+   "produto",
+   "cardapio",
+   "catalogo",
+   "pedido",
+   "carrinho",
+   "e-commerce",
+   "ecommerce",
+   "delivery",
+   "encomenda",
+   "vender",
+   "vendas"
+  ],
+  "depoimentos": [
+   "depoimento",
+   "avaliac",
+   "testemunh",
+   "opinio"
+  ],
+  "downloads": [
+   "download",
+   "arquivos",
+   "documentos",
+   "edital",
+   "editais",
+   "pdf",
+   "transparencia",
+   "atas$"
+  ],
+  "equipe": [
+   "equipe",
+   "time$",
+   "professores",
+   "profissionais",
+   "corpo docente",
+   "medicos",
+   "advogados",
+   "diretoria",
+   "quem somos"
+  ],
+  "eventos": [
+   "evento",
+   "inscric",
+   "workshop",
+   "palestra",
+   "shows$",
+   "programacao",
+   "agenda de eventos",
+   "agenda cultural"
+  ],
+  "faq": [
+   "faq",
+   "perguntas frequentes",
+   "duvidas"
+  ],
+  "forum": [
+   "forum",
+   "comunidade",
+   "perguntas e respostas",
+   "discuss",
+   "debate"
+  ],
+  "galeria": [
+   "galeria",
+   "portfolio",
+   "fotos",
+   "album",
+   "trabalhos"
+  ],
+  "idiomas": [
+   "outros idiomas",
+   "varios idiomas",
+   "dois idiomas",
+   "tres idiomas",
+   "multi-idioma",
+   "em ingles",
+   "em espanhol",
+   "em frances",
+   "em alemao",
+   "em italiano",
+   "bilingue",
+   "multilingue",
+   "traduc",
+   "traduzid"
+  ],
+  "newsletter": [
+   "newsletter",
+   "boletim",
+   "lista de e-mail",
+   "lista de email",
+   "inscrever no e-mail"
+  ],
+  "planos": [
+   "plano",
+   "precos",
+   "tabela de preco",
+   "mensalidade",
+   "assinatura",
+   "pacotes"
+  ],
+  "servicos": [
+   "servico",
+   "especialidade",
+   "areas de atuacao",
+   "modalidade",
+   "acomodac"
+  ],
+  "vagas": [
+   "vaga",
+   "trabalhe conosco",
+   "curriculo",
+   "emprego",
+   "carreira",
+   "recrutamento"
+  ],
+  "wiki": [
+   "wiki",
+   "documentac",
+   "base de conhecimento",
+   "enciclopedia",
+   "tiki"
+  ]
+ },
+ "codigosIdioma": {
+  "alemao": "de",
+  "chines": "zh",
+  "espanhol": "es",
+  "frances": "fr",
+  "ingles": "en",
+  "italiano": "it",
+  "japones": "ja",
+  "portugues": "pt"
+ },
+ "cores": [
+  {
+   "Chave": "verde-agua",
+   "Hex": "#0f766e",
+   "Nome": "verde-água"
+  },
+  {
+   "Chave": "verde agua",
+   "Hex": "#0f766e",
+   "Nome": "verde-água"
+  },
+  {
+   "Chave": "azul-marinho",
+   "Hex": "#1e3a5f",
+   "Nome": "azul-marinho"
+  },
+  {
+   "Chave": "azul marinho",
+   "Hex": "#1e3a5f",
+   "Nome": "azul-marinho"
+  },
+  {
+   "Chave": "marinho",
+   "Hex": "#1e3a5f",
+   "Nome": "azul-marinho"
+  },
+  {
+   "Chave": "turquesa",
+   "Hex": "#0e7490",
+   "Nome": "turquesa"
+  },
+  {
+   "Chave": "verde",
+   "Hex": "#2f6b4f",
+   "Nome": "verde"
+  },
+  {
+   "Chave": "azul",
+   "Hex": "#1d4ed8",
+   "Nome": "azul"
+  },
+  {
+   "Chave": "vermelh",
+   "Hex": "#b91c1c",
+   "Nome": "vermelho"
+  },
+  {
+   "Chave": "vinho",
+   "Hex": "#7f1d1d",
+   "Nome": "vinho"
+  },
+  {
+   "Chave": "bordo",
+   "Hex": "#7f1d1d",
+   "Nome": "vinho"
+  },
+  {
+   "Chave": "roxo",
+   "Hex": "#6d28d9",
+   "Nome": "roxo"
+  },
+  {
+   "Chave": "lilas",
+   "Hex": "#8b5cf6",
+   "Nome": "lilás"
+  },
+  {
+   "Chave": "violeta",
+   "Hex": "#7c3aed",
+   "Nome": "violeta"
+  },
+  {
+   "Chave": "laranja",
+   "Hex": "#c2410c",
+   "Nome": "laranja"
+  },
+  {
+   "Chave": "rosa",
+   "Hex": "#be185d",
+   "Nome": "rosa"
+  },
+  {
+   "Chave": "pink",
+   "Hex": "#db2777",
+   "Nome": "rosa-choque"
+  },
+  {
+   "Chave": "amarel",
+   "Hex": "#b45309",
+   "Nome": "amarelo (tom escuro, para dar leitura)"
+  },
+  {
+   "Chave": "dourad",
+   "Hex": "#a16207",
+   "Nome": "dourado"
+  },
+  {
+   "Chave": "preto",
+   "Hex": "#111827",
+   "Nome": "preto"
+  },
+  {
+   "Chave": "grafite",
+   "Hex": "#374151",
+   "Nome": "grafite"
+  },
+  {
+   "Chave": "cinza",
+   "Hex": "#4b5563",
+   "Nome": "cinza"
+  },
+  {
+   "Chave": "marrom",
+   "Hex": "#7c4a2d",
+   "Nome": "marrom"
+  },
+  {
+   "Chave": "terracota",
+   "Hex": "#b4532a",
+   "Nome": "terracota"
+  },
+  {
+   "Chave": "coral",
+   "Hex": "#e2574c",
+   "Nome": "coral"
+  }
+ ],
+ "estilos": [
+  {
+   "Chave": "elegante",
+   "Fonte": "titulo-serifa",
+   "Nome": "elegante"
+  },
+  {
+   "Chave": "sofisticad",
+   "Fonte": "titulo-serifa",
+   "Nome": "sofisticado"
+  },
+  {
+   "Chave": "luxo",
+   "Fonte": "titulo-serifa",
+   "Nome": "luxo"
+  },
+  {
+   "Chave": "classic",
+   "Fonte": "classica",
+   "Nome": "clássico"
+  },
+  {
+   "Chave": "tradicional",
+   "Fonte": "classica",
+   "Nome": "tradicional"
+  },
+  {
+   "Chave": "serio",
+   "Fonte": "classica",
+   "Nome": "sério"
+  },
+  {
+   "Chave": "modern",
+   "Fonte": "geometrica",
+   "Nome": "moderno"
+  },
+  {
+   "Chave": "minimalist",
+   "Fonte": "geometrica",
+   "Nome": "minimalista"
+  },
+  {
+   "Chave": "tecnologic",
+   "Fonte": "geometrica",
+   "Nome": "tecnológico"
+  },
+  {
+   "Chave": "divertid",
+   "Fonte": "arredondada",
+   "Nome": "divertido"
+  },
+  {
+   "Chave": "infantil",
+   "Fonte": "arredondada",
+   "Nome": "infantil"
+  },
+  {
+   "Chave": "alegre",
+   "Fonte": "arredondada",
+   "Nome": "alegre"
+  },
+  {
+   "Chave": "descontraid",
+   "Fonte": "arredondada",
+   "Nome": "descontraído"
+  },
+  {
+   "Chave": "fofo",
+   "Fonte": "arredondada",
+   "Nome": "fofo"
+  },
+  {
+   "Chave": "acolhedor",
+   "Fonte": "humanista",
+   "Nome": "acolhedor"
+  },
+  {
+   "Chave": "humano",
+   "Fonte": "humanista",
+   "Nome": "humano"
+  },
+  {
+   "Chave": "leve",
+   "Fonte": "humanista",
+   "Nome": "leve"
+  }
+ ],
+ "modulos": [
+  "servicos",
+  "catalogo",
+  "agenda",
+  "eventos",
+  "planos",
+  "equipe",
+  "galeria",
+  "depoimentos",
+  "blog",
+  "wiki",
+  "forum",
+  "downloads",
+  "vagas",
+  "faq",
+  "newsletter",
+  "idiomas",
+  "atendente"
+ ],
+ "nomesModulo": {
+  "agenda": "agendamento / reservas online",
+  "atendente": "atendente virtual (lowii, com a IA ligada)",
+  "blog": "blog (categorias, tags, arquivo, comentários)",
+  "catalogo": "loja / cardápio com carrinho e pedidos",
+  "depoimentos": "depoimentos",
+  "downloads": "área de downloads",
+  "equipe": "equipe",
+  "eventos": "eventos com inscrição e vagas",
+  "faq": "perguntas frequentes",
+  "forum": "fórum moderado",
+  "galeria": "galeria / portfólio",
+  "idiomas": "tradução automática (com a IA ligada)",
+  "newsletter": "newsletter",
+  "planos": "planos e preços",
+  "servicos": "serviços",
+  "vagas": "trabalhe conosco (vagas + currículo)",
+  "wiki": "wiki (links [[Página]], índice A–Z, sugestões de edição)"
+ },
+ "setores": [
+  {
+   "ID": "generico",
+   "Rotulo": "empresa / negócio",
+   "Chaves": null,
+   "Nome": "Sua Empresa",
+   "Emoji": "✦",
+   "Cor": "#2f6b4f",
+   "Fonte": "titulo-serifa",
+   "Modulos": [
+    "servicos",
+    "blog",
+    "depoimentos",
+    "faq"
+   ],
+   "Chapeu": "Bem-vindo",
+   "Titulo": "Um texto curto que diz o que fazemos de melhor",
+   "Texto": "Uma ou duas frases para quem chegou agora entender por que vale a pena falar com a gente.",
+   "Chamada": "Vamos conversar sobre o que você precisa?",
+   "ServRotulo": "Serviços",
+   "ServIntro": "O que fazemos, explicado sem rodeio. Cada serviço tem a sua página.",
+   "Servicos": [
+    {
+     "Icone": "⚡",
+     "Titulo": "Atendimento rápido",
+     "Texto": "Resposta no mesmo dia e prazo combinado por escrito.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🎯",
+     "Titulo": "Solução sob medida",
+     "Texto": "Entendemos o seu caso antes de propor qualquer coisa.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🤝",
+     "Titulo": "Acompanhamento",
+     "Texto": "Do primeiro contato até depois da entrega, com a mesma pessoa.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🛡️",
+     "Titulo": "Garantia",
+     "Texto": "Se algo não sair como combinado, a gente resolve.",
+     "Preco": ""
+    }
+   ],
+   "EquipeRotulo": "Equipe",
+   "Equipe": [
+    {
+     "Nome": "Ana Ribeiro",
+     "Cargo": "Fundadora",
+     "Texto": "Cuida do atendimento e de cada projeto desde o começo."
+    },
+    {
+     "Nome": "Bruno Castro",
+     "Cargo": "Operações",
+     "Texto": "Garante que prazo combinado é prazo cumprido."
+    },
+    {
+     "Nome": "Carla Nunes",
+     "Cargo": "Relacionamento",
+     "Texto": "É quem responde quando você chama."
+    }
+   ],
+   "BlogRotulo": "Blog",
+   "Cats": [
+    "Novidades",
+    "Dicas",
+    "Bastidores"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Bem-vindo ao nosso novo site",
+     "Cat": "Novidades",
+     "Resumo": "Agora você encontra tudo num lugar só: serviços, contato e novidades.",
+     "Tags": "site, novidades"
+    },
+    {
+     "Titulo": "Três perguntas para fazer antes de contratar",
+     "Cat": "Dicas",
+     "Resumo": "Um guia curto para escolher bem, com a gente ou com qualquer outro.",
+     "Tags": "dicas, guia"
+    }
+   ],
+   "LojaRotulo": "Produtos",
+   "Produtos": [
+    {
+     "Titulo": "Vale-presente",
+     "Cat": "Presentes",
+     "Texto": "Para dar de presente: vale em qualquer serviço ou produto.",
+     "Icone": "🎁",
+     "Preco": 100
+    },
+    {
+     "Titulo": "Kit de boas-vindas",
+     "Cat": "Kits",
+     "Texto": "O essencial para começar, num pacote só.",
+     "Icone": "📦",
+     "Preco": 149.9
+    },
+    {
+     "Titulo": "Consultoria de 1 hora",
+     "Cat": "Serviços",
+     "Texto": "Uma hora com um especialista, online ou presencial.",
+     "Icone": "🗓️",
+     "Preco": 180
+    },
+    {
+     "Titulo": "Assinatura mensal",
+     "Cat": "Planos",
+     "Texto": "Atendimento contínuo, com prioridade.",
+     "Icone": "🔁",
+     "Preco": 89.9
+    }
+   ],
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Marque seu horário",
+   "AgendaModo": "",
+   "Horarios": [
+    "09:00",
+    "10:00",
+    "11:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00"
+   ],
+   "PorHorario": 1,
+   "Numeros": [
+    [
+     "10",
+     "anos de estrada"
+    ],
+    [
+     "1200",
+     "clientes atendidos"
+    ],
+    [
+     "98",
+     "% recomendam"
+    ]
+   ],
+   "Faq": [
+    [
+     "Como faço um orçamento?",
+     "Mande uma mensagem pela página de contato contando o que precisa. Respondemos em até um dia útil."
+    ],
+    [
+     "Quais as formas de pagamento?",
+     "Pix, cartão de crédito em até 6 vezes e boleto."
+    ],
+    [
+     "Vocês atendem fora da cidade?",
+     "Sim. Boa parte do atendimento pode ser feita online."
+    ]
+   ],
+   "Planos": [
+    {
+     "Nome": "Básico",
+     "Preco": "R$ 49",
+     "Periodo": "/mês",
+     "Itens": [
+      "Atendimento por e-mail",
+      "1 pedido por mês",
+      "Relatório simples"
+     ],
+     "Destaque": false
+    },
+    {
+     "Nome": "Completo",
+     "Preco": "R$ 99",
+     "Periodo": "/mês",
+     "Itens": [
+      "Atendimento por WhatsApp",
+      "Pedidos ilimitados",
+      "Relatório detalhado",
+      "Prioridade"
+     ],
+     "Destaque": true
+    },
+    {
+     "Nome": "Empresa",
+     "Preco": "Sob consulta",
+     "Periodo": "",
+     "Itens": [
+      "Tudo do Completo",
+      "Gerente dedicado",
+      "Contrato personalizado"
+     ],
+     "Destaque": false
+    }
+   ],
+   "Depo": [
+    [
+     "Atendimento rápido e resultado acima do esperado. Recomendo de olhos fechados.",
+     "Ana Souza, cliente desde 2021"
+    ],
+    [
+     "Explicaram tudo com paciência e cumpriram o prazo. Voltarei a contratar.",
+     "Carlos Lima, empresário"
+    ],
+    [
+     "Profissionais de verdade. Dá gosto ver o cuidado com cada detalhe.",
+     "Juliana Prates"
+    ]
+   ],
+   "Eventos": [
+    {
+     "Titulo": "Encontro aberto com clientes",
+     "Hora": "19:00",
+     "Local": "Nosso espaço",
+     "Resumo": "Uma conversa para apresentar as novidades do ano e ouvir sugestões.",
+     "Dias": 12,
+     "Vagas": 40
+    },
+    {
+     "Titulo": "Oficina prática",
+     "Hora": "14:00",
+     "Local": "Online",
+     "Resumo": "Duas horas mão na massa, com material para levar.",
+     "Dias": 26,
+     "Vagas": 25
+    }
+   ],
+   "Galeria": [
+    "Nosso espaço",
+    "Equipe em ação",
+    "Bastidores",
+    "Projeto entregue",
+    "Detalhes",
+    "Clientes felizes"
+   ]
+  },
+  {
+   "ID": "veterinaria",
+   "Rotulo": "clínica veterinária / pet",
+   "Chaves": [
+    "veterinari",
+    "pet shop",
+    "petshop",
+    "pet$",
+    "pets$",
+    "cachorro",
+    "gato",
+    "animais",
+    "banho e tosa"
+   ],
+   "Nome": "Patas \u0026 Cia",
+   "Emoji": "🐾",
+   "Cor": "#0e7490",
+   "Fonte": "arredondada",
+   "Modulos": [
+    "servicos",
+    "equipe",
+    "agenda",
+    "blog",
+    "faq",
+    "depoimentos"
+   ],
+   "Chapeu": "Clínica veterinária",
+   "Titulo": "Cuidado de verdade para quem é da família",
+   "Texto": "Consultas, vacinas, exames e banho e tosa com hora marcada e uma equipe que entende de bicho com medo.",
+   "Chamada": "Seu pet merece um check-up. Que tal marcar hoje?",
+   "ServRotulo": "Serviços",
+   "ServIntro": "Do check-up à cirurgia, tudo num lugar só.",
+   "Servicos": [
+    {
+     "Icone": "🩺",
+     "Titulo": "Consulta",
+     "Texto": "Avaliação completa e plano de cuidado para cães e gatos.",
+     "Preco": "150"
+    },
+    {
+     "Icone": "💉",
+     "Titulo": "Vacinação",
+     "Texto": "Calendário de vacinas com lembrete da próxima dose.",
+     "Preco": "90"
+    },
+    {
+     "Icone": "🔬",
+     "Titulo": "Exames",
+     "Texto": "Hemograma e ultrassom com resultado no mesmo dia.",
+     "Preco": "80"
+    },
+    {
+     "Icone": "🛁",
+     "Titulo": "Banho e tosa",
+     "Texto": "Produtos hipoalergênicos e hora marcada, sem gaiola de espera.",
+     "Preco": "60"
+    }
+   ],
+   "EquipeRotulo": "Equipe",
+   "Equipe": [
+    {
+     "Nome": "Dra. Helena Prado",
+     "Cargo": "Clínica geral e felinos",
+     "Texto": "Atende gatos há 12 anos."
+    },
+    {
+     "Nome": "Dr. Rafael Moura",
+     "Cargo": "Cirurgia",
+     "Texto": "Responsável pelo centro cirúrgico."
+    },
+    {
+     "Nome": "Lívia Santos",
+     "Cargo": "Banho e tosa",
+     "Texto": "Paciência infinita com pet ansioso."
+    }
+   ],
+   "BlogRotulo": "Dicas",
+   "Cats": [
+    "Cães",
+    "Gatos",
+    "Saúde",
+    "Comportamento"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Calendário de vacinas do filhote",
+     "Cat": "Saúde",
+     "Resumo": "Quando começar, quantas doses e quando o filhote pode passear na rua.",
+     "Tags": "vacina, filhote"
+    },
+    {
+     "Titulo": "Seu gato bebe pouca água? 5 truques",
+     "Cat": "Gatos",
+     "Resumo": "Gatos que bebem pouca água têm mais problema nos rins. Veja como ajudar.",
+     "Tags": "gatos, hidratação"
+    }
+   ],
+   "LojaRotulo": "Pet shop",
+   "Produtos": [
+    {
+     "Titulo": "Ração premium 10 kg",
+     "Cat": "Alimentação",
+     "Texto": "Ração super premium para cães adultos de porte médio.",
+     "Icone": "🦴",
+     "Preco": 219.9
+    },
+    {
+     "Titulo": "Areia higiênica",
+     "Cat": "Higiene",
+     "Texto": "Areia de sílica, sem cheiro, rende 30 dias.",
+     "Icone": "🐈",
+     "Preco": 49.9
+    },
+    {
+     "Titulo": "Coleira peitoral",
+     "Cat": "Acessórios",
+     "Texto": "Peitoral ajustável e acolchoado, do P ao GG.",
+     "Icone": "🦮",
+     "Preco": 79.9
+    },
+    {
+     "Titulo": "Brinquedo mordedor",
+     "Cat": "Brinquedos",
+     "Texto": "Borracha natural, resistente e fácil de lavar.",
+     "Icone": "🎾",
+     "Preco": 29.9
+    }
+   ],
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Agende a consulta do seu pet",
+   "AgendaModo": "",
+   "Horarios": [
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00"
+   ],
+   "PorHorario": 1,
+   "Numeros": [
+    [
+     "12",
+     "anos cuidando de pets"
+    ],
+    [
+     "8500",
+     "pets atendidos"
+    ],
+    [
+     "24",
+     "horas de plantão"
+    ]
+   ],
+   "Faq": [
+    [
+     "Vocês atendem emergência?",
+     "Sim, 24 horas. Ligue antes de vir para a equipe se preparar."
+    ],
+    [
+     "Preciso levar a carteirinha de vacinação?",
+     "Sim, e exames anteriores se tiver."
+    ],
+    [
+     "Atendem animais silvestres?",
+     "Atendemos cães, gatos, coelhos e pequenos roedores."
+    ]
+   ],
+   "Planos": null,
+   "Depo": null,
+   "Eventos": null,
+   "Galeria": null
+  },
+  {
+   "ID": "saude",
+   "Rotulo": "clínica / saúde",
+   "Chaves": [
+    "clinica",
+    "consultorio",
+    "medic",
+    "dentist",
+    "odonto",
+    "psicolog",
+    "fisioterap",
+    "nutricion",
+    "saude",
+    "hospital",
+    "terapia",
+    "terapeut",
+    "pediatr",
+    "dermatolog"
+   ],
+   "Nome": "Clínica Vida Plena",
+   "Emoji": "✚",
+   "Cor": "#0f766e",
+   "Fonte": "humanista",
+   "Modulos": [
+    "servicos",
+    "equipe",
+    "agenda",
+    "blog",
+    "faq",
+    "depoimentos"
+   ],
+   "Chapeu": "Saúde e bem-estar",
+   "Titulo": "Atendimento humano, sem pressa e sem fila",
+   "Texto": "Especialistas que escutam, consultas no horário marcado e resultado explicado em português claro.",
+   "Chamada": "Cuidar da saúde começa com uma consulta. Agende a sua.",
+   "ServRotulo": "Especialidades",
+   "ServIntro": "Profissionais de várias áreas trabalhando juntos pelo seu cuidado.",
+   "Servicos": [
+    {
+     "Icone": "🩺",
+     "Titulo": "Clínica geral",
+     "Texto": "Check-up, acompanhamento e encaminhamento quando preciso.",
+     "Preco": "220"
+    },
+    {
+     "Icone": "🦷",
+     "Titulo": "Odontologia",
+     "Texto": "Limpeza, restauração e clareamento.",
+     "Preco": "180"
+    },
+    {
+     "Icone": "🧠",
+     "Titulo": "Psicologia",
+     "Texto": "Terapia individual e de casal, presencial ou online.",
+     "Preco": "200"
+    },
+    {
+     "Icone": "🥗",
+     "Titulo": "Nutrição",
+     "Texto": "Plano alimentar possível de seguir no dia a dia.",
+     "Preco": "190"
+    }
+   ],
+   "EquipeRotulo": "Profissionais",
+   "Equipe": [
+    {
+     "Nome": "Dra. Marina Costa",
+     "Cargo": "Clínica geral · CRM 00000",
+     "Texto": "Medicina de família há 15 anos."
+    },
+    {
+     "Nome": "Dr. Paulo Sena",
+     "Cargo": "Odontologia · CRO 00000",
+     "Texto": "Especialista em reabilitação oral."
+    },
+    {
+     "Nome": "Júlia Fontes",
+     "Cargo": "Psicologia · CRP 00/00000",
+     "Texto": "Terapia cognitivo-comportamental."
+    }
+   ],
+   "BlogRotulo": "Artigos",
+   "Cats": [
+    "Prevenção",
+    "Alimentação",
+    "Saúde mental",
+    "Novidades"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Check-up anual: quais exames fazer",
+     "Cat": "Prevenção",
+     "Resumo": "A lista básica por idade e o que cada exame mostra.",
+     "Tags": "check-up, exames"
+    },
+    {
+     "Titulo": "Ansiedade: quando procurar ajuda",
+     "Cat": "Saúde mental",
+     "Resumo": "Sinais de que é hora de conversar com um profissional.",
+     "Tags": "ansiedade, terapia"
+    }
+   ],
+   "LojaRotulo": "",
+   "Produtos": null,
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Agende sua consulta",
+   "AgendaModo": "",
+   "Horarios": [
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00"
+   ],
+   "PorHorario": 1,
+   "Numeros": [
+    [
+     "15",
+     "anos de clínica"
+    ],
+    [
+     "20000",
+     "consultas realizadas"
+    ],
+    [
+     "9",
+     "especialidades"
+    ]
+   ],
+   "Faq": [
+    [
+     "Vocês aceitam convênio?",
+     "Atendemos particular e emitimos recibo para reembolso do seu plano."
+    ],
+    [
+     "Posso remarcar a consulta?",
+     "Pode, até 24 horas antes, respondendo o e-mail de confirmação."
+    ],
+    [
+     "Tem atendimento online?",
+     "Sim, para psicologia, nutrição e retornos."
+    ]
+   ],
+   "Planos": null,
+   "Depo": null,
+   "Eventos": null,
+   "Galeria": null
+  },
+  {
+   "ID": "beleza",
+   "Rotulo": "salão / beleza / estética",
+   "Chaves": [
+    "salao",
+    "barbearia",
+    "barbeiro",
+    "estetica",
+    "beleza",
+    "manicure",
+    "cabeleir",
+    "spa$",
+    "maquiag",
+    "sobrancelha",
+    "unhas"
+   ],
+   "Nome": "Studio Bela",
+   "Emoji": "✂️",
+   "Cor": "#be185d",
+   "Fonte": "titulo-serifa",
+   "Modulos": [
+    "servicos",
+    "equipe",
+    "agenda",
+    "galeria",
+    "depoimentos"
+   ],
+   "Chapeu": "Beleza e cuidado",
+   "Titulo": "Seu momento, no seu horário",
+   "Texto": "Corte, cor, unhas e estética com profissionais experientes e agenda online.",
+   "Chamada": "Bora se cuidar? Escolha o horário que cabe na sua semana.",
+   "ServRotulo": "Serviços",
+   "ServIntro": "Tudo com produto de qualidade e hora marcada.",
+   "Servicos": [
+    {
+     "Icone": "✂️",
+     "Titulo": "Corte",
+     "Texto": "Feminino, masculino e infantil, com lavagem.",
+     "Preco": "70"
+    },
+    {
+     "Icone": "🎨",
+     "Titulo": "Coloração",
+     "Texto": "Mechas, luzes e cor global com produtos sem amônia.",
+     "Preco": "180"
+    },
+    {
+     "Icone": "💅",
+     "Titulo": "Manicure e pedicure",
+     "Texto": "Esmaltação tradicional ou em gel.",
+     "Preco": "55"
+    },
+    {
+     "Icone": "✨",
+     "Titulo": "Limpeza de pele",
+     "Texto": "Limpeza profunda com hidratação.",
+     "Preco": "140"
+    }
+   ],
+   "EquipeRotulo": "Profissionais",
+   "Equipe": [
+    {
+     "Nome": "Bia Moreira",
+     "Cargo": "Cabeleireira e colorista",
+     "Texto": "Especialista em loiros."
+    },
+    {
+     "Nome": "Dani Alves",
+     "Cargo": "Manicure",
+     "Texto": "Unhas em gel e nail art."
+    },
+    {
+     "Nome": "Rô Carvalho",
+     "Cargo": "Esteticista",
+     "Texto": "Limpeza de pele e massagem."
+    }
+   ],
+   "BlogRotulo": "Dicas",
+   "Cats": [
+    "Cabelo",
+    "Unhas",
+    "Pele",
+    "Tendências"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Como manter o loiro em casa",
+     "Cat": "Cabelo",
+     "Resumo": "Matizador, hidratação e o que evitar entre uma visita e outra.",
+     "Tags": "loiro, cabelo"
+    },
+    {
+     "Titulo": "Unha em gel: mitos e verdades",
+     "Cat": "Unhas",
+     "Resumo": "Estraga a unha? Quanto dura? Respondemos tudo.",
+     "Tags": "unhas, gel"
+    }
+   ],
+   "LojaRotulo": "Produtos",
+   "Produtos": [
+    {
+     "Titulo": "Shampoo matizador",
+     "Cat": "Cabelo",
+     "Texto": "Tira o amarelado do loiro, 300 ml.",
+     "Icone": "🧴",
+     "Preco": 69.9
+    },
+    {
+     "Titulo": "Óleo reparador",
+     "Cat": "Cabelo",
+     "Texto": "Pontas secas nunca mais.",
+     "Icone": "💧",
+     "Preco": 59.9
+    },
+    {
+     "Titulo": "Kit esmaltes",
+     "Cat": "Unhas",
+     "Texto": "Seis cores da estação.",
+     "Icone": "💅",
+     "Preco": 49.9
+    }
+   ],
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Agende seu horário",
+   "AgendaModo": "",
+   "Horarios": [
+    "09:00",
+    "10:00",
+    "11:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00"
+   ],
+   "PorHorario": 2,
+   "Numeros": [
+    [
+     "8",
+     "anos de salão"
+    ],
+    [
+     "4",
+     "profissionais"
+    ],
+    [
+     "4.9",
+     "nota no Google"
+    ]
+   ],
+   "Faq": [
+    [
+     "Preciso agendar?",
+     "Recomendamos: com hora marcada você não espera."
+    ],
+    [
+     "Fazem teste de mecha?",
+     "Sim, sem custo, antes de qualquer coloração."
+    ],
+    [
+     "Atendem noivas?",
+     "Sim, com pacote de prova e dia da festa."
+    ]
+   ],
+   "Planos": [
+    {
+     "Nome": "Mãos",
+     "Preco": "R$ 150",
+     "Periodo": "/mês",
+     "Itens": [
+      "4 manicures",
+      "1 pedicure"
+     ],
+     "Destaque": false
+    },
+    {
+     "Nome": "Cabelo em dia",
+     "Preco": "R$ 220",
+     "Periodo": "/mês",
+     "Itens": [
+      "1 corte",
+      "2 hidratações",
+      "Escova ilimitada"
+     ],
+     "Destaque": true
+    },
+    {
+     "Nome": "Completo",
+     "Preco": "R$ 390",
+     "Periodo": "/mês",
+     "Itens": [
+      "Tudo do Cabelo em dia",
+      "Manicure semanal",
+      "1 limpeza de pele"
+     ],
+     "Destaque": false
+    }
+   ],
+   "Depo": null,
+   "Eventos": null,
+   "Galeria": [
+    "Antes e depois: loiro",
+    "Corte bob",
+    "Nail art",
+    "Nosso espaço",
+    "Noiva",
+    "Barba"
+   ]
+  },
+  {
+   "ID": "restaurante",
+   "Rotulo": "restaurante / padaria / café",
+   "Chaves": [
+    "restaurante",
+    "padaria",
+    "cafeteria",
+    "cafe$",
+    "pizzaria",
+    "lanchonete",
+    "hamburgueria",
+    "confeitaria",
+    "bar$",
+    "doceria",
+    "bistro",
+    "comida",
+    "sorveteria",
+    "acai",
+    "cozinha",
+    "marmita",
+    "buffet"
+   ],
+   "Nome": "Sabor da Casa",
+   "Emoji": "🍽️",
+   "Cor": "#b45309",
+   "Fonte": "titulo-serifa",
+   "Modulos": [
+    "catalogo",
+    "agenda",
+    "galeria",
+    "depoimentos",
+    "faq"
+   ],
+   "Chapeu": "Comida de verdade",
+   "Titulo": "Feito na hora, com ingrediente bom e tempero de casa",
+   "Texto": "Veja o cardápio, faça o pedido pelo site e retire ou receba em casa. Ou reserve uma mesa.",
+   "Chamada": "Bateu a fome? O cardápio está a um clique.",
+   "ServRotulo": "Serviços",
+   "ServIntro": "Além do salão, a gente vai até você.",
+   "Servicos": [
+    {
+     "Icone": "🛵",
+     "Titulo": "Delivery",
+     "Texto": "Entregamos num raio de 5 km.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🎉",
+     "Titulo": "Eventos",
+     "Texto": "Buffet para aniversários e confraternizações.",
+     "Preco": ""
+    },
+    {
+     "Icone": "☕",
+     "Titulo": "Café da manhã",
+     "Texto": "De segunda a sábado, das 7h às 10h.",
+     "Preco": ""
+    }
+   ],
+   "EquipeRotulo": "",
+   "Equipe": null,
+   "BlogRotulo": "Novidades",
+   "Cats": [
+    "Cardápio",
+    "Receitas",
+    "Eventos"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Prato novo no cardápio",
+     "Cat": "Cardápio",
+     "Resumo": "Chegou o prato que vocês pediram. Vem provar!",
+     "Tags": "cardápio, novidade"
+    },
+    {
+     "Titulo": "A receita do nosso pão de queijo",
+     "Cat": "Receitas",
+     "Resumo": "Contamos o segredo (quase todo).",
+     "Tags": "receita"
+    }
+   ],
+   "LojaRotulo": "Cardápio",
+   "Produtos": [
+    {
+     "Titulo": "Prato executivo",
+     "Cat": "Pratos",
+     "Texto": "Arroz, feijão, salada e a carne do dia.",
+     "Icone": "🍛",
+     "Preco": 32
+    },
+    {
+     "Titulo": "Lasanha à bolonhesa",
+     "Cat": "Pratos",
+     "Texto": "Massa fresca e molho de 6 horas.",
+     "Icone": "🍝",
+     "Preco": 42
+    },
+    {
+     "Titulo": "Salada da casa",
+     "Cat": "Pratos",
+     "Texto": "Folhas, grão-de-bico, tomate e molho de mostarda e mel.",
+     "Icone": "🥗",
+     "Preco": 28
+    },
+    {
+     "Titulo": "Pão de queijo (6 un.)",
+     "Cat": "Lanches",
+     "Texto": "Assado na hora.",
+     "Icone": "🧀",
+     "Preco": 15
+    },
+    {
+     "Titulo": "Suco natural",
+     "Cat": "Bebidas",
+     "Texto": "Laranja, limão ou maracujá, 500 ml.",
+     "Icone": "🍊",
+     "Preco": 12
+    },
+    {
+     "Titulo": "Pudim de leite",
+     "Cat": "Sobremesas",
+     "Texto": "A receita da vó.",
+     "Icone": "🍮",
+     "Preco": 14
+    }
+   ],
+   "AgendaVerbo": "Reservar",
+   "AgendaTitulo": "Reserve sua mesa",
+   "AgendaModo": "",
+   "Horarios": [
+    "12:00",
+    "12:30",
+    "13:00",
+    "13:30",
+    "19:00",
+    "19:30",
+    "20:00",
+    "20:30",
+    "21:00"
+   ],
+   "PorHorario": 6,
+   "Numeros": [
+    [
+     "20",
+     "anos de casa"
+    ],
+    [
+     "300",
+     "refeições por dia"
+    ],
+    [
+     "100",
+     "% feito aqui"
+    ]
+   ],
+   "Faq": [
+    [
+     "Vocês entregam?",
+     "Sim, num raio de 5 km. Faça o pedido pelo cardápio do site."
+    ],
+    [
+     "Tem opção vegetariana?",
+     "Sempre. Pergunte também pelo prato do dia sem carne."
+    ],
+    [
+     "Aceitam reserva para grupos?",
+     "Sim, até 20 pessoas. Para mais, fale com a gente."
+    ]
+   ],
+   "Planos": null,
+   "Depo": null,
+   "Eventos": [
+    {
+     "Titulo": "Noite de massas",
+     "Hora": "19:30",
+     "Local": "Salão principal",
+     "Resumo": "Rodízio de massas frescas com música ao vivo.",
+     "Dias": 9,
+     "Vagas": 60
+    },
+    {
+     "Titulo": "Oficina de pão caseiro",
+     "Hora": "15:00",
+     "Local": "Nossa cozinha",
+     "Resumo": "Aprenda a fazer pão de fermentação natural.",
+     "Dias": 20,
+     "Vagas": 12
+    }
+   ],
+   "Galeria": [
+    "Nosso salão",
+    "Prato do dia",
+    "Cozinha",
+    "Sobremesas",
+    "Varanda",
+    "Equipe"
+   ]
+  },
+  {
+   "ID": "hotel",
+   "Rotulo": "pousada / hotel",
+   "Chaves": [
+    "hotel",
+    "pousada",
+    "hostel",
+    "chale",
+    "hospedag",
+    "resort",
+    "camping",
+    "albergue"
+   ],
+   "Nome": "Pousada Maré Mansa",
+   "Emoji": "🌊",
+   "Cor": "#0e7490",
+   "Fonte": "titulo-serifa",
+   "Modulos": [
+    "servicos",
+    "agenda",
+    "galeria",
+    "depoimentos",
+    "faq"
+   ],
+   "Chapeu": "Hospedagem",
+   "Titulo": "Descanso de verdade, a poucos passos do mar",
+   "Texto": "Quartos confortáveis, café da manhã caprichado e reserva online com confirmação na hora.",
+   "Chamada": "Suas férias começam aqui. Veja as datas livres.",
+   "ServRotulo": "Acomodações",
+   "ServIntro": "Todas com ar-condicionado, Wi-Fi e café da manhã incluso.",
+   "Servicos": [
+    {
+     "Icone": "🛏️",
+     "Titulo": "Quarto Standard",
+     "Texto": "Cama de casal, ventilador de teto e varanda.",
+     "Preco": "280"
+    },
+    {
+     "Icone": "🌅",
+     "Titulo": "Quarto Vista Mar",
+     "Texto": "Varanda de frente para o mar e banheira.",
+     "Preco": "420"
+    },
+    {
+     "Icone": "👨‍👩‍👧",
+     "Titulo": "Suíte Família",
+     "Texto": "Até 4 pessoas, com dois ambientes.",
+     "Preco": "520"
+    }
+   ],
+   "EquipeRotulo": "",
+   "Equipe": null,
+   "BlogRotulo": "Roteiros",
+   "Cats": [
+    "Passeios",
+    "Gastronomia",
+    "Novidades"
+   ],
+   "Posts": [
+    {
+     "Titulo": "5 passeios imperdíveis na região",
+     "Cat": "Passeios",
+     "Resumo": "Praias, trilhas e mirantes a menos de 30 minutos daqui.",
+     "Tags": "passeios, praia"
+    },
+    {
+     "Titulo": "Onde comer bem perto da pousada",
+     "Cat": "Gastronomia",
+     "Resumo": "Nossa lista de restaurantes testados e aprovados.",
+     "Tags": "restaurantes"
+    }
+   ],
+   "LojaRotulo": "",
+   "Produtos": null,
+   "AgendaVerbo": "Reservar",
+   "AgendaTitulo": "Reserve sua estadia",
+   "AgendaModo": "diarias",
+   "Horarios": null,
+   "PorHorario": 0,
+   "Numeros": [
+    [
+     "50",
+     "metros da praia"
+    ],
+    [
+     "12",
+     "acomodações"
+    ],
+    [
+     "4.9",
+     "nota dos hóspedes"
+    ]
+   ],
+   "Faq": [
+    [
+     "Qual o horário de check-in e check-out?",
+     "Check-in a partir das 14h e check-out até as 12h."
+    ],
+    [
+     "Aceitam pets?",
+     "Sim, pets de pequeno porte, com aviso prévio."
+    ],
+    [
+     "Tem estacionamento?",
+     "Sim, gratuito e coberto."
+    ]
+   ],
+   "Planos": null,
+   "Depo": null,
+   "Eventos": null,
+   "Galeria": [
+    "Piscina",
+    "Café da manhã",
+    "Quarto Vista Mar",
+    "Jardim",
+    "Pôr do sol",
+    "Recepção"
+   ]
+  },
+  {
+   "ID": "escola",
+   "Rotulo": "escola / cursos",
+   "Chaves": [
+    "escola",
+    "curso",
+    "colegio",
+    "faculdade",
+    "aulas",
+    "ensino",
+    "creche",
+    "professor",
+    "educac",
+    "treinamento",
+    "conservatorio",
+    "idiomas"
+   ],
+   "Nome": "Escola Aprender",
+   "Emoji": "🎓",
+   "Cor": "#1d4ed8",
+   "Fonte": "geometrica",
+   "Modulos": [
+    "servicos",
+    "equipe",
+    "eventos",
+    "blog",
+    "faq",
+    "depoimentos"
+   ],
+   "Chapeu": "Matrículas abertas",
+   "Titulo": "Aprender com gosto, do primeiro dia ao certificado",
+   "Texto": "Turmas pequenas, professores que acompanham de perto e aulas presenciais ou online.",
+   "Chamada": "Venha fazer uma aula experimental, sem compromisso.",
+   "ServRotulo": "Cursos",
+   "ServIntro": "Do básico ao avançado, para todas as idades.",
+   "Servicos": [
+    {
+     "Icone": "🌱",
+     "Titulo": "Iniciante",
+     "Texto": "Para quem nunca estudou: base sólida e sem pressa.",
+     "Preco": "290"
+    },
+    {
+     "Icone": "📘",
+     "Titulo": "Intermediário",
+     "Texto": "Aprofunde o que já sabe com projetos práticos.",
+     "Preco": "320"
+    },
+    {
+     "Icone": "🏆",
+     "Titulo": "Avançado",
+     "Texto": "Preparação para provas, certificações e palco.",
+     "Preco": "380"
+    },
+    {
+     "Icone": "🧒",
+     "Titulo": "Infantil",
+     "Texto": "Aprender brincando, de 6 a 11 anos.",
+     "Preco": "260"
+    }
+   ],
+   "EquipeRotulo": "Professores",
+   "Equipe": [
+    {
+     "Nome": "Prof.ª Renata Lopes",
+     "Cargo": "Coordenação pedagógica",
+     "Texto": "Mestre em educação, 18 anos de sala de aula."
+    },
+    {
+     "Nome": "Prof. André Silva",
+     "Cargo": "Turmas avançadas",
+     "Texto": "Prepara alunos para provas e concursos."
+    },
+    {
+     "Nome": "Prof.ª Camila Rocha",
+     "Cargo": "Turmas infantis",
+     "Texto": "Especialista em ensino para crianças."
+    }
+   ],
+   "BlogRotulo": "Notícias",
+   "Cats": [
+    "Escola",
+    "Dicas de estudo",
+    "Eventos",
+    "Alunos"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Matrículas abertas para o próximo semestre",
+     "Cat": "Escola",
+     "Resumo": "Turmas novas de manhã, tarde e noite. Veja como garantir a vaga.",
+     "Tags": "matrícula"
+    },
+    {
+     "Titulo": "Como estudar 30 minutos por dia e render mais",
+     "Cat": "Dicas de estudo",
+     "Resumo": "Um método simples que nossos alunos usam.",
+     "Tags": "estudo, rotina"
+    }
+   ],
+   "LojaRotulo": "",
+   "Produtos": null,
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Agende uma aula experimental",
+   "AgendaModo": "",
+   "Horarios": [
+    "09:00",
+    "10:00",
+    "14:00",
+    "15:00",
+    "18:00",
+    "19:00"
+   ],
+   "PorHorario": 3,
+   "Numeros": [
+    [
+     "15",
+     "anos ensinando"
+    ],
+    [
+     "3000",
+     "alunos formados"
+    ],
+    [
+     "12",
+     "alunos por turma, no máximo"
+    ]
+   ],
+   "Faq": [
+    [
+     "Tem aula experimental?",
+     "Sim, gratuita. Agende pelo site ou WhatsApp."
+    ],
+    [
+     "Os cursos dão certificado?",
+     "Sim, ao fim de cada nível, com carga horária."
+    ],
+    [
+     "Posso trancar a matrícula?",
+     "Pode, uma vez por ano, sem multa."
+    ]
+   ],
+   "Planos": [
+    {
+     "Nome": "Mensal",
+     "Preco": "R$ 320",
+     "Periodo": "/mês",
+     "Itens": [
+      "2 aulas por semana",
+      "Material digital",
+      "Sem fidelidade"
+     ],
+     "Destaque": false
+    },
+    {
+     "Nome": "Semestral",
+     "Preco": "R$ 280",
+     "Periodo": "/mês",
+     "Itens": [
+      "2 aulas por semana",
+      "Material impresso",
+      "Aula de reforço"
+     ],
+     "Destaque": true
+    },
+    {
+     "Nome": "Anual",
+     "Preco": "R$ 250",
+     "Periodo": "/mês",
+     "Itens": [
+      "Tudo do Semestral",
+      "Certificado internacional",
+      "Evento de formatura"
+     ],
+     "Destaque": false
+    }
+   ],
+   "Depo": null,
+   "Eventos": [
+    {
+     "Titulo": "Aula aberta para a comunidade",
+     "Hora": "10:00",
+     "Local": "Auditório",
+     "Resumo": "Venha conhecer a escola e assistir a uma aula de verdade.",
+     "Dias": 10,
+     "Vagas": 50
+    },
+    {
+     "Titulo": "Apresentação de fim de semestre",
+     "Hora": "19:00",
+     "Local": "Teatro municipal",
+     "Resumo": "Os alunos mostram o que aprenderam. Entrada gratuita com inscrição.",
+     "Dias": 35,
+     "Vagas": 200
+    }
+   ],
+   "Galeria": [
+    "Sala de aula",
+    "Formatura",
+    "Apresentação",
+    "Biblioteca",
+    "Laboratório",
+    "Pátio"
+   ]
+  },
+  {
+   "ID": "academia",
+   "Rotulo": "academia / estúdio",
+   "Chaves": [
+    "academia",
+    "crossfit",
+    "pilates",
+    "yoga",
+    "ioga",
+    "musculac",
+    "personal",
+    "danca",
+    "luta",
+    "jiu",
+    "funcional",
+    "natacao",
+    "treino"
+   ],
+   "Nome": "Academia Movimento",
+   "Emoji": "💪",
+   "Cor": "#c2410c",
+   "Fonte": "geometrica",
+   "Modulos": [
+    "servicos",
+    "planos",
+    "equipe",
+    "agenda",
+    "depoimentos",
+    "faq"
+   ],
+   "Chapeu": "Treine com quem entende",
+   "Titulo": "Mais saúde, mais disposição, no seu ritmo",
+   "Texto": "Musculação, funcional e aulas coletivas com acompanhamento de verdade. A primeira aula é por nossa conta.",
+   "Chamada": "Agende sua aula experimental gratuita.",
+   "ServRotulo": "Modalidades",
+   "ServIntro": "Escolha a sua ou combine várias no mesmo plano.",
+   "Servicos": [
+    {
+     "Icone": "🏋️",
+     "Titulo": "Musculação",
+     "Texto": "Treino montado por professor e revisto todo mês.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🔥",
+     "Titulo": "Funcional",
+     "Texto": "Aulas de 45 minutos em grupo, cheias de energia.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🧘",
+     "Titulo": "Pilates e yoga",
+     "Texto": "Postura, força e respiração.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🥊",
+     "Titulo": "Lutas",
+     "Texto": "Muay thai e boxe para iniciantes e avançados.",
+     "Preco": ""
+    }
+   ],
+   "EquipeRotulo": "Professores",
+   "Equipe": [
+    {
+     "Nome": "Léo Martins",
+     "Cargo": "Musculação · CREF 000000",
+     "Texto": "Especialista em hipertrofia e reabilitação."
+    },
+    {
+     "Nome": "Fernanda Dias",
+     "Cargo": "Funcional e pilates",
+     "Texto": "Aulas que passam voando."
+    },
+    {
+     "Nome": "Diego Ramos",
+     "Cargo": "Lutas",
+     "Texto": "Faixa preta e paciência de professor."
+    }
+   ],
+   "BlogRotulo": "Blog",
+   "Cats": [
+    "Treino",
+    "Alimentação",
+    "Motivação"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Treino de 30 minutos para quem não tem tempo",
+     "Cat": "Treino",
+     "Resumo": "Um circuito completo que cabe no horário de almoço.",
+     "Tags": "treino, rápido"
+    },
+    {
+     "Titulo": "O que comer antes de treinar",
+     "Cat": "Alimentação",
+     "Resumo": "Opções simples para ter energia sem pesar.",
+     "Tags": "alimentação"
+    }
+   ],
+   "LojaRotulo": "",
+   "Produtos": null,
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Agende sua aula experimental",
+   "AgendaModo": "",
+   "Horarios": [
+    "06:00",
+    "07:00",
+    "08:00",
+    "12:00",
+    "17:00",
+    "18:00",
+    "19:00",
+    "20:00"
+   ],
+   "PorHorario": 4,
+   "Numeros": [
+    [
+     "1500",
+     "alunos ativos"
+    ],
+    [
+     "60",
+     "aulas por semana"
+    ],
+    [
+     "6",
+     "às 23h, todo dia útil"
+    ]
+   ],
+   "Faq": [
+    [
+     "Preciso de exame médico?",
+     "Pedimos um atestado simples ou o questionário de prontidão na matrícula."
+    ],
+    [
+     "Tem fidelidade?",
+     "Só no plano anual, que tem o melhor preço."
+    ],
+    [
+     "Posso congelar o plano?",
+     "Sim, até 30 dias por ano."
+    ]
+   ],
+   "Planos": [
+    {
+     "Nome": "Mensal",
+     "Preco": "R$ 119",
+     "Periodo": "/mês",
+     "Itens": [
+      "Musculação",
+      "Avaliação física",
+      "Sem fidelidade"
+     ],
+     "Destaque": false
+    },
+    {
+     "Nome": "Total",
+     "Preco": "R$ 159",
+     "Periodo": "/mês",
+     "Itens": [
+      "Musculação",
+      "Todas as aulas coletivas",
+      "App de treino",
+      "Avaliação mensal"
+     ],
+     "Destaque": true
+    },
+    {
+     "Nome": "Anual",
+     "Preco": "R$ 99",
+     "Periodo": "/mês",
+     "Itens": [
+      "Tudo do Total",
+      "2 meses de bônus",
+      "Leve um amigo 1x por mês"
+     ],
+     "Destaque": false
+    }
+   ],
+   "Depo": null,
+   "Eventos": [
+    {
+     "Titulo": "Aulão beneficente",
+     "Hora": "09:00",
+     "Local": "Praça central",
+     "Resumo": "Aula aberta de funcional. Doe 1 kg de alimento.",
+     "Dias": 15,
+     "Vagas": 120
+    },
+    {
+     "Titulo": "Desafio 30 dias",
+     "Hora": "07:00",
+     "Local": "Na academia",
+     "Resumo": "Um mês de metas com prêmio para quem completar.",
+     "Dias": 5,
+     "Vagas": 80
+    }
+   ],
+   "Galeria": [
+    "Sala de musculação",
+    "Aula de funcional",
+    "Estúdio de pilates",
+    "Ringue",
+    "Vestiário",
+    "Recepção"
+   ]
+  },
+  {
+   "ID": "advocacia",
+   "Rotulo": "escritório / serviços profissionais",
+   "Chaves": [
+    "advoca",
+    "advogad",
+    "juridic",
+    "escritorio",
+    "contabil",
+    "contador",
+    "consultoria",
+    "arquitet",
+    "engenharia",
+    "imobiliaria",
+    "corretor",
+    "despachante"
+   ],
+   "Nome": "Moura \u0026 Prado Advogados",
+   "Emoji": "⚖️",
+   "Cor": "#1e3a5f",
+   "Fonte": "classica",
+   "Modulos": [
+    "servicos",
+    "equipe",
+    "blog",
+    "faq",
+    "depoimentos"
+   ],
+   "Chapeu": "Escritório",
+   "Titulo": "Orientação clara para decisões importantes",
+   "Texto": "Atendimento próximo, linguagem sem juridiquês e acompanhamento de cada etapa do seu caso.",
+   "Chamada": "Conte o seu caso. A primeira conversa é sem compromisso.",
+   "ServRotulo": "Áreas de atuação",
+   "ServIntro": "Cada área com um profissional responsável.",
+   "Servicos": [
+    {
+     "Icone": "👪",
+     "Titulo": "Família",
+     "Texto": "Divórcio, guarda, pensão e inventário.",
+     "Preco": ""
+    },
+    {
+     "Icone": "💼",
+     "Titulo": "Trabalhista",
+     "Texto": "Para empresas e trabalhadores.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🏠",
+     "Titulo": "Imobiliário",
+     "Texto": "Contratos, usucapião e regularização.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🏢",
+     "Titulo": "Empresarial",
+     "Texto": "Abertura de empresa, contratos e recuperação de crédito.",
+     "Preco": ""
+    }
+   ],
+   "EquipeRotulo": "Equipe",
+   "Equipe": [
+    {
+     "Nome": "Dra. Luísa Moura",
+     "Cargo": "Sócia · OAB/SP 000.000",
+     "Texto": "Direito de família e sucessões."
+    },
+    {
+     "Nome": "Dr. Henrique Prado",
+     "Cargo": "Sócio · OAB/SP 000.001",
+     "Texto": "Direito empresarial e contratos."
+    },
+    {
+     "Nome": "Dra. Paula Teixeira",
+     "Cargo": "Associada · OAB/SP 000.002",
+     "Texto": "Direito do trabalho."
+    }
+   ],
+   "BlogRotulo": "Artigos",
+   "Cats": [
+    "Família",
+    "Trabalho",
+    "Empresas",
+    "Imóveis"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Inventário: quanto tempo leva e quanto custa",
+     "Cat": "Família",
+     "Resumo": "O passo a passo do inventário em cartório e na Justiça.",
+     "Tags": "inventário, herança"
+    },
+    {
+     "Titulo": "Demissão: quais direitos você tem",
+     "Cat": "Trabalho",
+     "Resumo": "Aviso prévio, FGTS e seguro-desemprego explicados.",
+     "Tags": "demissão, direitos"
+    }
+   ],
+   "LojaRotulo": "",
+   "Produtos": null,
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Agende uma conversa",
+   "AgendaModo": "",
+   "Horarios": [
+    "09:00",
+    "10:00",
+    "11:00",
+    "14:00",
+    "15:00",
+    "16:00"
+   ],
+   "PorHorario": 1,
+   "Numeros": [
+    [
+     "20",
+     "anos de atuação"
+    ],
+    [
+     "2500",
+     "casos acompanhados"
+    ],
+    [
+     "4",
+     "áreas do direito"
+    ]
+   ],
+   "Faq": [
+    [
+     "A primeira consulta é paga?",
+     "A primeira conversa, de até 30 minutos, é sem custo."
+    ],
+    [
+     "Atendem online?",
+     "Sim, por videochamada, em todo o Brasil."
+    ],
+    [
+     "Como acompanho meu processo?",
+     "Você recebe atualizações por e-mail a cada movimentação."
+    ]
+   ],
+   "Planos": null,
+   "Depo": null,
+   "Eventos": null,
+   "Galeria": null
+  },
+  {
+   "ID": "tecnologia",
+   "Rotulo": "tecnologia / agência",
+   "Chaves": [
+    "tecnologia",
+    "software",
+    "startup",
+    "agencia",
+    "aplicativo",
+    "app$",
+    "sistema",
+    "desenvolviment",
+    "marketing digital",
+    "ti$",
+    "design",
+    "saas"
+   ],
+   "Nome": "Nuvem Azul",
+   "Emoji": "◆",
+   "Cor": "#4338ca",
+   "Fonte": "geometrica",
+   "Modulos": [
+    "servicos",
+    "galeria",
+    "planos",
+    "blog",
+    "depoimentos",
+    "faq"
+   ],
+   "Chapeu": "Tecnologia que resolve",
+   "Titulo": "Software sob medida para a sua empresa crescer",
+   "Texto": "Sites, sistemas e aplicativos feitos com método, prazo claro e suporte depois da entrega.",
+   "Chamada": "Tem um projeto em mente? Vamos tirar do papel.",
+   "ServRotulo": "Soluções",
+   "ServIntro": "Do primeiro protótipo à operação no ar.",
+   "Servicos": [
+    {
+     "Icone": "🌐",
+     "Titulo": "Sites",
+     "Texto": "Rápidos, bonitos e fáceis de atualizar.",
+     "Preco": ""
+    },
+    {
+     "Icone": "📱",
+     "Titulo": "Aplicativos",
+     "Texto": "Android e iPhone com um código só.",
+     "Preco": ""
+    },
+    {
+     "Icone": "⚙️",
+     "Titulo": "Sistemas",
+     "Texto": "Automatize o que hoje vive em planilha.",
+     "Preco": ""
+    },
+    {
+     "Icone": "📈",
+     "Titulo": "Marketing digital",
+     "Texto": "Anúncios e conteúdo que trazem cliente.",
+     "Preco": ""
+    }
+   ],
+   "EquipeRotulo": "Time",
+   "Equipe": [
+    {
+     "Nome": "Rafa Teles",
+     "Cargo": "CEO",
+     "Texto": "15 anos construindo produtos digitais."
+    },
+    {
+     "Nome": "Nina Okada",
+     "Cargo": "Design",
+     "Texto": "Interfaces que qualquer pessoa entende."
+    },
+    {
+     "Nome": "Igor Brandão",
+     "Cargo": "Engenharia",
+     "Texto": "Código limpo e sistemas que não caem."
+    }
+   ],
+   "BlogRotulo": "Blog",
+   "Cats": [
+    "Produto",
+    "Engenharia",
+    "Marketing",
+    "Cases"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Quanto custa fazer um aplicativo",
+     "Cat": "Produto",
+     "Resumo": "Os fatores que mudam o preço e como economizar sem perder qualidade.",
+     "Tags": "aplicativo, custo"
+    },
+    {
+     "Titulo": "Planilha ou sistema? Como saber a hora de mudar",
+     "Cat": "Engenharia",
+     "Resumo": "Cinco sinais de que a planilha já não dá conta.",
+     "Tags": "sistemas, automação"
+    }
+   ],
+   "LojaRotulo": "",
+   "Produtos": null,
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Agende uma conversa",
+   "AgendaModo": "",
+   "Horarios": [
+    "09:00",
+    "10:00",
+    "11:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00"
+   ],
+   "PorHorario": 1,
+   "Numeros": [
+    [
+     "120",
+     "projetos entregues"
+    ],
+    [
+     "40",
+     "clientes ativos"
+    ],
+    [
+     "99.9",
+     "% de disponibilidade"
+    ]
+   ],
+   "Faq": [
+    [
+     "Quanto tempo leva um projeto?",
+     "Um site, de 2 a 4 semanas. Sistemas, combinamos por etapas."
+    ],
+    [
+     "Vocês dão suporte depois?",
+     "Sim, com planos mensais de manutenção."
+    ],
+    [
+     "O código fica comigo?",
+     "Fica. Você é dono de tudo o que pagamos para fazer."
+    ]
+   ],
+   "Planos": [
+    {
+     "Nome": "Site",
+     "Preco": "R$ 2.900",
+     "Periodo": "uma vez",
+     "Itens": [
+      "Até 8 páginas",
+      "Painel para editar",
+      "Hospedagem no 1º ano"
+     ],
+     "Destaque": false
+    },
+    {
+     "Nome": "Crescimento",
+     "Preco": "R$ 1.490",
+     "Periodo": "/mês",
+     "Itens": [
+      "Site + blog",
+      "Gestão de anúncios",
+      "Relatório mensal"
+     ],
+     "Destaque": true
+    },
+    {
+     "Nome": "Sob medida",
+     "Preco": "Sob consulta",
+     "Periodo": "",
+     "Itens": [
+      "Sistemas e aplicativos",
+      "Equipe dedicada",
+      "Contrato por etapas"
+     ],
+     "Destaque": false
+    }
+   ],
+   "Depo": null,
+   "Eventos": null,
+   "Galeria": [
+    "App de delivery",
+    "Sistema de estoque",
+    "Site institucional",
+    "Painel de vendas",
+    "Loja virtual",
+    "Identidade visual"
+   ]
+  },
+  {
+   "ID": "loja",
+   "Rotulo": "loja / vendas",
+   "Chaves": [
+    "loja",
+    "e-commerce",
+    "ecommerce",
+    "boutique",
+    "moda",
+    "roupa",
+    "artesanato",
+    "presente",
+    "vender",
+    "venda",
+    "brecho",
+    "produtos",
+    "acessorios"
+   ],
+   "Nome": "Loja Ipê",
+   "Emoji": "🛍️",
+   "Cor": "#7c3aed",
+   "Fonte": "geometrica",
+   "Modulos": [
+    "catalogo",
+    "blog",
+    "faq",
+    "depoimentos",
+    "newsletter"
+   ],
+   "Chapeu": "Coleção nova",
+   "Titulo": "Peças escolhidas a dedo, entregues na sua porta",
+   "Texto": "Compre pelo site, pague como preferir e receba em casa ou retire na loja.",
+   "Chamada": "Frete grátis acima de R$ 199. Aproveite.",
+   "ServRotulo": "Serviços",
+   "ServIntro": "Comprar com a gente é simples.",
+   "Servicos": [
+    {
+     "Icone": "🚚",
+     "Titulo": "Entrega rápida",
+     "Texto": "Em até 2 dias úteis na cidade.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🔁",
+     "Titulo": "Troca fácil",
+     "Texto": "30 dias para trocar, sem burocracia.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🎁",
+     "Titulo": "Embrulho de presente",
+     "Texto": "Grátis em qualquer compra.",
+     "Preco": ""
+    }
+   ],
+   "EquipeRotulo": "",
+   "Equipe": null,
+   "BlogRotulo": "Blog",
+   "Cats": [
+    "Coleção",
+    "Estilo",
+    "Novidades"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Chegou a coleção de verão",
+     "Cat": "Coleção",
+     "Resumo": "Tecidos leves e cores da estação.",
+     "Tags": "coleção, verão"
+    },
+    {
+     "Titulo": "Como montar um guarda-roupa cápsula",
+     "Cat": "Estilo",
+     "Resumo": "Menos peças, mais combinações.",
+     "Tags": "estilo, dicas"
+    }
+   ],
+   "LojaRotulo": "Loja",
+   "Produtos": [
+    {
+     "Titulo": "Camisa de linho",
+     "Cat": "Roupas",
+     "Texto": "Linho puro, corte reto, do P ao GG.",
+     "Icone": "👕",
+     "Preco": 189.9
+    },
+    {
+     "Titulo": "Vestido midi",
+     "Cat": "Roupas",
+     "Texto": "Viscose estampada com bolsos.",
+     "Icone": "👗",
+     "Preco": 229.9
+    },
+    {
+     "Titulo": "Bolsa de couro",
+     "Cat": "Acessórios",
+     "Texto": "Couro legítimo, feita à mão.",
+     "Icone": "👜",
+     "Preco": 349
+    },
+    {
+     "Titulo": "Brinco de prata",
+     "Cat": "Acessórios",
+     "Texto": "Prata 925, hipoalergênico.",
+     "Icone": "💍",
+     "Preco": 99.9
+    },
+    {
+     "Titulo": "Vela aromática",
+     "Cat": "Casa",
+     "Texto": "Cera vegetal, 40 horas de queima.",
+     "Icone": "🕯️",
+     "Preco": 59.9
+    },
+    {
+     "Titulo": "Caneca artesanal",
+     "Cat": "Casa",
+     "Texto": "Cerâmica feita à mão; cada uma é única.",
+     "Icone": "☕",
+     "Preco": 69.9
+    }
+   ],
+   "AgendaVerbo": "",
+   "AgendaTitulo": "",
+   "AgendaModo": "",
+   "Horarios": null,
+   "PorHorario": 0,
+   "Numeros": [
+    [
+     "5000",
+     "clientes"
+    ],
+    [
+     "2",
+     "dias para entregar"
+    ],
+    [
+     "30",
+     "dias para trocar"
+    ]
+   ],
+   "Faq": [
+    [
+     "Qual o prazo de entrega?",
+     "Na cidade, até 2 dias úteis. Para outras cidades, de 3 a 8 dias úteis."
+    ],
+    [
+     "Como faço uma troca?",
+     "Fale com a gente em até 30 dias com a peça sem uso e com etiqueta."
+    ],
+    [
+     "Quais as formas de pagamento?",
+     "Pix com 5% de desconto, cartão em até 6 vezes ou boleto."
+    ]
+   ],
+   "Planos": null,
+   "Depo": null,
+   "Eventos": null,
+   "Galeria": [
+    "Vitrine",
+    "Coleção verão",
+    "Provador",
+    "Embalagem",
+    "Acessórios",
+    "Nossa loja"
+   ]
+  },
+  {
+   "ID": "associacao",
+   "Rotulo": "associação / ONG / igreja",
+   "Chaves": [
+    "associac",
+    "ong$",
+    "igreja",
+    "paroquia",
+    "moradores",
+    "condominio",
+    "clube",
+    "sindicato",
+    "cooperativa",
+    "instituto",
+    "projeto social",
+    "voluntari",
+    "fundacao",
+    "coletivo"
+   ],
+   "Nome": "Associação Viva o Bairro",
+   "Emoji": "🤝",
+   "Cor": "#15803d",
+   "Fonte": "humanista",
+   "Modulos": [
+    "blog",
+    "eventos",
+    "downloads",
+    "galeria",
+    "faq",
+    "newsletter"
+   ],
+   "Chapeu": "Juntos somos mais",
+   "Titulo": "Gente que se junta para cuidar do lugar onde vive",
+   "Texto": "Notícias, assembleias, eventos e documentos da associação num lugar só, aberto a todos.",
+   "Chamada": "Participe. Toda ajuda conta.",
+   "ServRotulo": "O que fazemos",
+   "ServIntro": "Nossas frentes de trabalho.",
+   "Servicos": [
+    {
+     "Icone": "🌳",
+     "Titulo": "Meio ambiente",
+     "Texto": "Mutirões de limpeza e plantio de árvores.",
+     "Preco": ""
+    },
+    {
+     "Icone": "📚",
+     "Titulo": "Educação",
+     "Texto": "Reforço escolar e biblioteca comunitária.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🛡️",
+     "Titulo": "Segurança",
+     "Texto": "Rede de vizinhos e diálogo com o poder público.",
+     "Preco": ""
+    },
+    {
+     "Icone": "🎭",
+     "Titulo": "Cultura",
+     "Texto": "Festas, feiras e oficinas para todas as idades.",
+     "Preco": ""
+    }
+   ],
+   "EquipeRotulo": "Diretoria",
+   "Equipe": [
+    {
+     "Nome": "Maria das Graças",
+     "Cargo": "Presidente",
+     "Texto": "Moradora há 30 anos e voz da associação."
+    },
+    {
+     "Nome": "João Batista",
+     "Cargo": "Tesoureiro",
+     "Texto": "Presta contas todo mês, com recibo."
+    },
+    {
+     "Nome": "Sônia Freitas",
+     "Cargo": "Secretária",
+     "Texto": "Cuida das atas e da comunicação."
+    }
+   ],
+   "BlogRotulo": "Notícias",
+   "Cats": [
+    "Assembleias",
+    "Conquistas",
+    "Avisos",
+    "Eventos"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Praça reformada: conquista dos moradores",
+     "Cat": "Conquistas",
+     "Resumo": "Depois de dois anos de pedidos, a praça ganhou iluminação e brinquedos novos.",
+     "Tags": "praça, conquista"
+    },
+    {
+     "Titulo": "Resumo da última assembleia",
+     "Cat": "Assembleias",
+     "Resumo": "O que foi decidido e os próximos passos.",
+     "Tags": "assembleia"
+    }
+   ],
+   "LojaRotulo": "",
+   "Produtos": null,
+   "AgendaVerbo": "Agendar",
+   "AgendaTitulo": "Agende um atendimento",
+   "AgendaModo": "",
+   "Horarios": [
+    "09:00",
+    "10:00",
+    "14:00",
+    "15:00"
+   ],
+   "PorHorario": 2,
+   "Numeros": [
+    [
+     "25",
+     "anos de história"
+    ],
+    [
+     "800",
+     "famílias associadas"
+    ],
+    [
+     "40",
+     "voluntários"
+    ]
+   ],
+   "Faq": [
+    [
+     "Como me associo?",
+     "Preencha a ficha de associação (está em Documentos) e entregue na sede ou pelo site."
+    ],
+    [
+     "Quanto custa?",
+     "A contribuição é voluntária, a partir de R$ 10 por mês."
+    ],
+    [
+     "Onde vejo a prestação de contas?",
+     "Todo mês publicamos o balancete em Documentos."
+    ]
+   ],
+   "Planos": [
+    {
+     "Nome": "Amigo",
+     "Preco": "R$ 10",
+     "Periodo": "/mês",
+     "Itens": [
+      "Carteirinha",
+      "Voto na assembleia"
+     ],
+     "Destaque": false
+    },
+    {
+     "Nome": "Apoiador",
+     "Preco": "R$ 30",
+     "Periodo": "/mês",
+     "Itens": [
+      "Tudo do Amigo",
+      "Nome no mural de apoiadores"
+     ],
+     "Destaque": true
+    },
+    {
+     "Nome": "Padrinho",
+     "Preco": "R$ 100",
+     "Periodo": "/mês",
+     "Itens": [
+      "Apoia uma criança no reforço escolar",
+      "Relatório trimestral"
+     ],
+     "Destaque": false
+    }
+   ],
+   "Depo": null,
+   "Eventos": [
+    {
+     "Titulo": "Assembleia geral",
+     "Hora": "19:00",
+     "Local": "Salão da associação",
+     "Resumo": "Pauta: prestação de contas e eleição da nova diretoria.",
+     "Dias": 8,
+     "Vagas": 150
+    },
+    {
+     "Titulo": "Mutirão de plantio",
+     "Hora": "08:00",
+     "Local": "Praça central",
+     "Resumo": "Traga luvas e disposição. Mudas por nossa conta.",
+     "Dias": 18,
+     "Vagas": 50
+    },
+    {
+     "Titulo": "Festa junina do bairro",
+     "Hora": "17:00",
+     "Local": "Rua de lazer",
+     "Resumo": "Quadrilha, comidas típicas e sorteios.",
+     "Dias": 40,
+     "Vagas": 400
+    }
+   ],
+   "Galeria": [
+    "Mutirão",
+    "Festa junina",
+    "Assembleia",
+    "Praça reformada",
+    "Biblioteca",
+    "Voluntários"
+   ]
+  },
+  {
+   "ID": "comunidade",
+   "Rotulo": "comunidade / documentação / wiki",
+   "Chaves": [
+    "wiki",
+    "documentac",
+    "base de conhecimento",
+    "forum",
+    "enciclopedia",
+    "open source",
+    "codigo aberto",
+    "comunidade",
+    "fa clube",
+    "fas$",
+    "projeto livre",
+    "manual"
+   ],
+   "Nome": "Comunidade Jarro Aberto",
+   "Emoji": "📖",
+   "Cor": "#0f766e",
+   "Fonte": "humanista",
+   "Modulos": [
+    "wiki",
+    "forum",
+    "blog",
+    "downloads",
+    "faq"
+   ],
+   "Chapeu": "Feito por muita gente",
+   "Titulo": "O conhecimento da comunidade, organizado e aberto",
+   "Texto": "Uma wiki que todo mundo pode melhorar, um fórum para tirar dúvidas e as novidades do projeto.",
+   "Chamada": "Encontrou algo para melhorar? Sugira uma edição.",
+   "ServRotulo": "O que tem aqui",
+   "ServIntro": "Comece por onde fizer mais sentido para você.",
+   "Servicos": [
+    {
+     "Icone": "📖",
+     "Titulo": "Wiki",
+     "Texto": "Guias, tutoriais e referência, escritos pela comunidade.",
+     "Preco": ""
+    },
+    {
+     "Icone": "💬",
+     "Titulo": "Fórum",
+     "Texto": "Pergunte, responda e compartilhe.",
+     "Preco": ""
+    },
+    {
+     "Icone": "📦",
+     "Titulo": "Downloads",
+     "Texto": "Versões, manuais e materiais.",
+     "Preco": ""
+    }
+   ],
+   "EquipeRotulo": "Mantenedores",
+   "Equipe": [
+    {
+     "Nome": "Tainá Lopes",
+     "Cargo": "Coordenação",
+     "Texto": "Organiza a wiki e os encontros."
+    },
+    {
+     "Nome": "Marcos Vieira",
+     "Cargo": "Moderação",
+     "Texto": "Mantém o fórum acolhedor."
+    },
+    {
+     "Nome": "Yuri Sato",
+     "Cargo": "Documentação",
+     "Texto": "Revisa as sugestões de edição."
+    }
+   ],
+   "BlogRotulo": "Novidades",
+   "Cats": [
+    "Lançamentos",
+    "Comunidade",
+    "Tutoriais"
+   ],
+   "Posts": [
+    {
+     "Titulo": "Versão nova no ar",
+     "Cat": "Lançamentos",
+     "Resumo": "O que mudou e como atualizar.",
+     "Tags": "versão, lançamento"
+    },
+    {
+     "Titulo": "Como contribuir pela primeira vez",
+     "Cat": "Comunidade",
+     "Resumo": "Do primeiro comentário à primeira página da wiki.",
+     "Tags": "contribuir"
+    }
+   ],
+   "LojaRotulo": "",
+   "Produtos": null,
+   "AgendaVerbo": "",
+   "AgendaTitulo": "",
+   "AgendaModo": "",
+   "Horarios": null,
+   "PorHorario": 0,
+   "Numeros": [
+    [
+     "350",
+     "páginas na wiki"
+    ],
+    [
+     "2000",
+     "membros"
+    ],
+    [
+     "15",
+     "mil respostas no fórum"
+    ]
+   ],
+   "Faq": [
+    [
+     "Preciso me cadastrar para ler?",
+     "Não. Tudo é aberto. Para sugerir edições basta informar nome e e-mail."
+    ],
+    [
+     "Quem aprova as edições?",
+     "Os mantenedores revisam cada sugestão, normalmente em até dois dias."
+    ],
+    [
+     "Posso usar o conteúdo?",
+     "Sim, citando a fonte."
+    ]
+   ],
+   "Planos": null,
+   "Depo": null,
+   "Eventos": [
+    {
+     "Titulo": "Encontro mensal online",
+     "Hora": "20:00",
+     "Local": "Online",
+     "Resumo": "Uma hora para conversar sobre os rumos do projeto.",
+     "Dias": 7,
+     "Vagas": 300
+    },
+    {
+     "Titulo": "Maratona de documentação",
+     "Hora": "10:00",
+     "Local": "Online",
+     "Resumo": "Um sábado inteiro melhorando a wiki juntos.",
+     "Dias": 21,
+     "Vagas": 100
+    }
+   ],
+   "Galeria": null
+  }
+ ],
+ "versao": 1
+}

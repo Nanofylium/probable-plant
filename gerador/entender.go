@@ -135,12 +135,13 @@ var encadeado = regexp.MustCompile(`(?:^|[^\p{L}])(sem|nem)\s+[\p{L}-]+(?:\s+[\p
 func semEncadeado(antes string) bool { return encadeado.MatchString(antes) }
 
 var (
-	reAspas   = regexp.MustCompile(`["“”«»']([^"“”«»']{2,60})["“”«»']`)
-	reChamado = regexp.MustCompile(`(?i)\b(?:chamad[oa]s?|de nome|com o nome|nomead[oa]|nome)\s*:?\s+(.{2,60}?)(?:\s+(?:em|no|na|nos|nas|com|que|para|pra|onde|e|sem|so|só|apenas|cor|de cor)\s|[,.;!?(]|$)`)
-	reCidade  = regexp.MustCompile(`\b(?:em|de)\s+((?:São|Santo|Santa|Rio|Belo|Porto|Campo|Vila|Nova|Novo|Foz|Juiz|Ribeirão|Feira|Praia|[A-ZÁÉÍÓÚÂÊÔÃÕÇ])[\p{L}'-]*(?:\s+(?:do|da|de|dos|das)?\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ][\p{L}'-]*){0,3})`)
-	reInicio  = regexp.MustCompile(`^(?:(?:uma?|o|a|site d[aeo]|um site d[aeo]|site para|um site para)\s+)*((?:[\p{Ll}\p{Lu}]+\s+){1,4}(?:de|do|da|dos|das)\s+\p{Lu}[\p{L}'-]*(?:\s+(?:de|do|da|dos|das)?\s*\p{Lu}[\p{L}'-]*){0,3})`)
-	reHex     = regexp.MustCompile(`#[0-9a-fA-F]{6}\b`)
-	reSo      = regexp.MustCompile(`(?:^|[^\p{L}])(so|somente|apenas|unicamente|so com|so quero)\s`)
+	reAspas    = regexp.MustCompile(`["“”«»']([^"“”«»']{2,60})["“”«»']`)
+	reChamado  = regexp.MustCompile(`(?i)\b(?:chamad[oa]s?|de nome|com o nome|nomead[oa]|nome)\s*:?\s+(.{2,60}?)(?:\s+(?:em|no|na|nos|nas|com|que|para|pra|onde|e|sem|so|só|apenas|cor|de cor)\s|[,.;!?(]|$)`)
+	reCidade   = regexp.MustCompile(`\b(?:em|de)\s+((?:São|Santo|Santa|Rio|Belo|Porto|Campo|Vila|Nova|Novo|Foz|Juiz|Ribeirão|Feira|Praia|[A-ZÁÉÍÓÚÂÊÔÃÕÇ])[\p{L}'-]*(?:\s+(?:do|da|de|dos|das)?\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ][\p{L}'-]*){0,3})`)
+	reNomeMeio = regexp.MustCompile(`(\p{Lu}[\p{L}'’-]*(?:\s+(?:&|e|de|da|do|dos|das)\s+\p{Lu}[\p{L}'’-]*|\s+\p{Lu}[\p{L}'’-]*){0,4})(?:\s+(?:em|no|na|com|so|só|sem|de cor|cor)\b|\s*[,.;!?(]|\s*$)`)
+	reInicio   = regexp.MustCompile(`^(?:(?:uma?|o|a|site d[aeo]|um site d[aeo]|site para|um site para)\s+)*((?:[\p{Ll}\p{Lu}]+\s+){1,4}(?:de|do|da|dos|das)\s+\p{Lu}[\p{L}'-]*(?:\s+(?:de|do|da|dos|das)?\s*\p{Lu}[\p{L}'-]*){0,3})`)
+	reHex      = regexp.MustCompile(`#[0-9a-fA-F]{6}\b`)
+	reSo       = regexp.MustCompile(`(?:^|[^\p{L}])(so|somente|apenas|unicamente|so com|so quero)\s`)
 )
 
 // Entender lê a descrição e devolve o plano do site.
@@ -183,6 +184,9 @@ func Entender(desc string) *Plano {
 			r[0] = unicode.ToUpper(r[0])
 			p.Nome = limparNome(string(r))
 		}
+	}
+	if p.Nome == "" {
+		p.Nome = nomeNoMeio(desc)
 	}
 	if p.Nome == "" {
 		p.Nome = p.Setor.Nome
@@ -378,4 +382,31 @@ func Pasta(p *Plano) string {
 		return s
 	}
 	return "meu-site"
+}
+
+// nomeNoMeio acha um nome próprio no meio da frase: "Escritório de advocacia
+// Duarte & Lemos em Belo Horizonte" -> "Duarte & Lemos". Pula a primeira
+// palavra da frase (maiúscula só por começar) e as cidades ("em Recife").
+func nomeNoMeio(desc string) string {
+	for _, ix := range reNomeMeio.FindAllStringSubmatchIndex(desc, -1) {
+		ini, fim := ix[2], ix[3]
+		if ini == 0 { // a 1ª palavra é maiúscula só por abrir a frase
+			sp := strings.IndexByte(desc[:fim], ' ')
+			if sp < 0 {
+				continue
+			}
+			ini = sp + 1
+		}
+		antes := strings.Fields(semAcento(desc[:ini]))
+		if len(antes) > 0 {
+			switch antes[len(antes)-1] {
+			case "em", "no", "na", "de", "da", "do", "para", "pra", "cor", "estilo":
+				continue
+			}
+		}
+		if n := limparNome(desc[ini:fim]); n != "" {
+			return n
+		}
+	}
+	return ""
 }

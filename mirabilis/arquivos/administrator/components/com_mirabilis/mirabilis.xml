@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="component" method="upgrade">
+	<name>com_mirabilis</name>
+	<author>Mirabilis</author>
+	<creationDate>2026-11</creationDate>
+	<copyright>(C) 2026 Mirabilis</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<version>1.0.0</version>
+	<description>COM_MIRABILIS_XML_DESCRIPTION</description>
+	<namespace path="src">Mirabilis\Component\Mirabilis</namespace>
+	<media destination="com_mirabilis" folder="media">
+		<folder>css</folder>
+	</media>
+	<administration>
+		<menu img="class:magic">COM_MIRABILIS</menu>
+		<files folder="admin">
+			<filename>mirabilis.xml</filename>
+			<filename>regras.json</filename>
+			<filename>tema.php</filename>
+			<folder>services</folder>
+			<folder>src</folder>
+			<folder>tmpl</folder>
+		</files>
+	</administration>
+</extension>

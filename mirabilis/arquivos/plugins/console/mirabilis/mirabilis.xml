@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="console" method="upgrade">
+	<name>plg_console_mirabilis</name>
+	<author>Mirabilis</author>
+	<creationDate>2026-11</creationDate>
+	<copyright>(C) 2026 Mirabilis</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<version>1.0.0</version>
+	<description>PLG_CONSOLE_MIRABILIS_XML_DESCRIPTION</description>
+	<namespace path="src">Mirabilis\Plugin\Console\Mirabilis</namespace>
+	<files>
+		<folder plugin="mirabilis">services</folder>
+		<folder>src</folder>
+	</files>
+</extension>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="package" method="upgrade">
+	<name>Portuguese (Brazil) Language Pack</name>
+	<packagename>pt-BR</packagename>
+	<version>6.1.0.1</version>
+	<creationDate>2026-05-16</creationDate>
+	<author>Use Joomla!</author>
+	<authorEmail>traducao@usejoomla.com.br</authorEmail>
+	<authorUrl>https://www.usejoomla.com.br</authorUrl>
+	<copyright>(C) 2005 Open Source Matters, Inc. Tradução: Use Joomla!</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<url></url>
+	<packager></packager>
+	<packagerurl></packagerurl>
+	<description><![CDATA[
+		<h2>Pacote de Idioma Português (Brasil) para Joomla! 6.1.0.1</h2>
+		<p><strong>Traduzido por:</strong> Use Joomla! - Comunidade Brasileira de Joomla!</p>
+		<p><strong>Website:</strong> <a href="https://www.usejoomla.com.br" target="_blank">www.usejoomla.com.br</a></p>
+		<p><strong>Email:</strong> traducao@usejoomla.com.br</p>
+		<hr>
+		<h3>Conteúdo do Pacote:</h3>
+		<ul>
+			<li>Tradução completa do Site (Frontend)</li>
+			<li>Tradução completa do Administrador (Backend)</li>
+			<li>Tradução completa da API</li>
+			<li>Arquivos localise.php para regras específicas do PT-BR</li>
+			<li>Metadados de idioma atualizados</li>
+		</ul>
+		<hr>
+		<p><small>Este pacote contém as traduções para Português (Brasil) do Joomla! 6.1.0.1, incluindo todos os componentes core, módulos, plugins e temas.</small></p>
+	]]></description>
+	<blockChildUninstall>true</blockChildUninstall>
+	<files>
+		<folder type="language" client="site" id="pt-BR">site_pt-BR</folder>
+		<folder type="language" client="administrator" id="pt-BR">admin_pt-BR</folder>
+		<folder type="language" client="api" id="pt-BR">api_pt-BR</folder>
+	</files>
+	<updateservers>
+		<server type="collection" priority="1" name="Joomla! Official Language Package Updates">https://updates.usejoomla.com.br/translationlist_6.xml</server>
+	</updateservers>
+</extension>

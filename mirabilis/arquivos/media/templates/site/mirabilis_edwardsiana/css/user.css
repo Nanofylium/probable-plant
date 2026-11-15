@@ -1,0 +1,15 @@
+/* Edwardsiana: escolas, associações e comunidades. Cabeçalho na cor do site, amigável e colorido. */
+.mira-edwardsiana { --mira-raio: 20px; }
+.mira-edwardsiana .container-header { background: var(--mira-cor); box-shadow: none; }
+.mira-edwardsiana .container-header .brand-logo span, .mira-edwardsiana .container-header .mod-menu > li > a, .mira-edwardsiana .container-header .metismenu > li > a { color: #fff; }
+.mira-edwardsiana .container-header .brand-logo span::before { background: radial-gradient(circle at 70% 28%, var(--mira-cor) 0 13%, transparent 14%), #fff; }
+.mira-edwardsiana .container-header .mod-menu > li > a:hover, .mira-edwardsiana .container-header .metismenu > li > a:hover,
+.mira-edwardsiana .container-header .mod-menu > li.active > a, .mira-edwardsiana .container-header .metismenu > li.active > a { background: rgba(255,255,255,.16); color: #fff; }
+.mira-edwardsiana .container-header .site-description { color: rgba(255,255,255,.8); }
+.mira-edwardsiana .container-header .navbar-toggler { color: #fff; border-color: rgba(255,255,255,.4); }
+.mira-edwardsiana .mira-capa { background: radial-gradient(900px 400px at 85% 0%, color-mix(in srgb, var(--mira-cor) 14%, transparent), transparent 70%), var(--mira-claro); }
+.mira-edwardsiana .mira-cartao:nth-child(4n+1) .mira-icone { background: #fef3c7; }
+.mira-edwardsiana .mira-cartao:nth-child(4n+2) .mira-icone { background: #dcfce7; }
+.mira-edwardsiana .mira-cartao:nth-child(4n+3) .mira-icone { background: #fce7f3; }
+.mira-edwardsiana .mira-cartao:nth-child(4n+4) .mira-icone { background: #e0f2fe; }
+.mira-edwardsiana .mira-chamada { background: radial-gradient(600px 300px at 10% 100%, rgba(255,255,255,.2), transparent 70%), linear-gradient(120deg, var(--mira-cor), color-mix(in srgb, var(--mira-cor) 60%, #f59e0b)); }
