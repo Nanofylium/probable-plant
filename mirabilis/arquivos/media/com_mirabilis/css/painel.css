@@ -1,0 +1,23 @@
+.mira-painel{max-width:1100px}
+.mira-p-topo{background:var(--body-bg,#fff);border:1px solid var(--template-bg-dark-7,#dfe3e7);border-radius:.6rem;padding:1.5rem 1.6rem;margin-bottom:1.5rem}
+.mira-p-topo h2{font-size:1.5rem;margin:0 0 .4rem}
+.mira-p-topo textarea{font-size:1.1rem;margin:1rem 0 .6rem}
+.mira-p-exemplos{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;font-size:.85rem;margin-bottom:1rem}
+.mira-p-exemplos button{white-space:normal;text-align:left}
+.mira-p-acoes{display:flex;flex-wrap:wrap;gap:.6rem}
+.mira-p-nota{margin:.8rem 0 0;font-size:.9rem;opacity:.8}
+.mira-p-plano{border-left:4px solid #2f6b4f;background:rgba(47,107,79,.06);padding:1.1rem 1.4rem;border-radius:.4rem;margin-bottom:1.5rem}
+.mira-p-plano h3{font-size:1.2rem;margin:0 0 .6rem}
+.mira-p-plano dl{display:grid;grid-template-columns:8rem 1fr;gap:.3rem 1rem;margin:0}
+.mira-p-plano dt{font-weight:600}
+.mira-p-plano dd{margin:0}
+.mira-p-cor{display:inline-block;width:1rem;height:1rem;border-radius:50%;vertical-align:-2px;border:1px solid rgba(0,0,0,.2)}
+.mira-p-notas{font-size:.85rem;opacity:.8;margin:.8rem 0 0}
+.mira-p-titulo{font-size:1.2rem;margin-top:1rem}
+.mira-p-galeria{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.mira-p-galeria figure{margin:0;border:1px solid var(--template-bg-dark-7,#dfe3e7);border-radius:.5rem;overflow:hidden;background:var(--body-bg,#fff)}
+.mira-p-galeria figure.escolhido{outline:3px solid #2f6b4f;outline-offset:2px}
+.mira-p-galeria img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;object-position:top;background:#eef1f3}
+.mira-p-galeria figcaption{padding:.6rem .8rem;display:flex;flex-direction:column;font-size:.85rem}
+.mira-p-galeria figcaption b{font-size:1rem}
+@media (max-width:600px){.mira-p-plano dl{grid-template-columns:1fr}}

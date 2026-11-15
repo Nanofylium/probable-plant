@@ -1,0 +1,20 @@
+/* Villosa: blogs e revistas. Marca centralizada, filetes finos, leitura de jornal. */
+.mira-villosa { --mira-raio: 4px; --mira-fundo: #fffdf9; --mira-alt: #f6f1e8; --mira-linha: #e8e0d2; --mira-sombra: none; }
+.mira-villosa .container-header .grid-child { justify-content: center; text-align: center; }
+.mira-villosa .container-header .navbar-brand { width: 100%; text-align: center; padding: 28px 0 10px; }
+.mira-villosa .container-header .brand-logo span { font-size: clamp(1.9rem, 4vw, 2.8rem); letter-spacing: -.03em; }
+.mira-villosa .container-header .brand-logo span::before { display: none; }
+.mira-villosa .container-header .container-nav { justify-content: center; border-top: 1px solid var(--mira-texto); border-bottom: 3px double var(--mira-texto); padding: 2px 0; }
+.mira-villosa .container-header .mod-menu > li > a, .mira-villosa .container-header .metismenu > li > a { text-transform: uppercase; font-size: .8rem; letter-spacing: .14em; border-radius: 0; }
+.mira-villosa .mira-capa { background: var(--mira-fundo); border-bottom: 1px solid var(--mira-linha); }
+.mira-villosa .mira-capa h1 { font-size: clamp(2.4rem, 5.5vw, 4rem); }
+.mira-villosa .mira-arte { border-radius: 2px; box-shadow: none; }
+.mira-villosa .mira-arte::after { border-radius: 0; }
+.mira-villosa .mira-cartao, .mira-villosa .blog-item { box-shadow: none; border-width: 0 0 1px; border-radius: 0; background: transparent; padding-left: 0; padding-right: 0; }
+.mira-villosa .blog-item .item-content { padding: 18px 0; }
+.mira-villosa .blog-item h2 { font-size: 1.55rem; }
+.mira-villosa .mira-chapeu { color: var(--mira-cor); border-bottom: 2px solid var(--mira-cor); padding-bottom: 2px; }
+.mira-villosa .com-content-article__body { font-family: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif; font-size: 1.18rem; line-height: 1.75; }
+.mira-villosa .com-content-article__body > p:first-of-type::first-letter { float: left; font-size: 3.4em; line-height: .9; padding: 4px 8px 0 0; font-family: var(--mira-fonte-titulo); color: var(--mira-cor); }
+.mira-villosa .mira-botao { border-radius: 2px; box-shadow: none; }
+.mira-villosa .container-footer { background: #17140f; }

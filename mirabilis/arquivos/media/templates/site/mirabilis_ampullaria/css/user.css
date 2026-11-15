@@ -1,0 +1,12 @@
+/* Ampullaria: lojas e catálogos. Vitrine, cartões de produto, faixa de oferta no topo. */
+.mira-ampullaria { --mira-raio: 18px; --mira-fundo: #fafafa; }
+.mira-ampullaria .container-header::before { content: "Frete grátis acima de R$ 199 · Troca fácil em 30 dias"; display: block; text-align: center; font-size: .82rem; font-weight: 700;
+  background: var(--mira-cor); color: #fff; padding: 6px 12px; }
+.mira-ampullaria .mira-capa { background: linear-gradient(120deg, color-mix(in srgb, var(--mira-cor) 14%, #fff), color-mix(in srgb, var(--mira-cor) 4%, #fff)); }
+.mira-ampullaria .mira-capa h1 { font-weight: 900; letter-spacing: -.035em; }
+.mira-ampullaria .mira-cartao { text-align: center; }
+.mira-ampullaria .mira-cartao .mira-icone { width: 100%; height: auto; aspect-ratio: 4/3; font-size: 3.6rem; border-radius: 14px; margin-bottom: 10px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--mira-cor) 8%, #fff), color-mix(in srgb, var(--mira-cor) 24%, #fff)); }
+.mira-ampullaria .mira-preco { font-size: 1.25rem; }
+.mira-ampullaria .mira-cartao .mira-botao { margin-top: 12px; width: 100%; box-sizing: border-box; text-align: center; }
+.mira-ampullaria .mira-botao { border-radius: 12px; }

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="template" client="site">
+	<name>mirabilis_edwardsiana</name>
+	<version>1.0.0</version>
+	<creationDate>2026-11</creationDate>
+	<author>Mirabilis</author>
+	<copyright>(C) 2026 Mirabilis. Derivado do Cassiopeia, (C) Open Source Matters, Inc.</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<description>Edwardsiana: Escolas, associações, ONGs, igrejas e comunidades: amigável e colorido.</description>
+	<inheritable>0</inheritable>
+	<parent>cassiopeia</parent>
+	<files>
+		<filename>index.php</filename>
+		<filename>templateDetails.xml</filename>
+	</files>
+	<media destination="templates/site/mirabilis_edwardsiana" folder="media">
+		<folder>css</folder>
+		<folder>images</folder>
+	</media>
+	<positions>
+		<position>topbar</position>
+		<position>below-top</position>
+		<position>menu</position>
+		<position>search</position>
+		<position>banner</position>
+		<position>top-a</position>
+		<position>top-b</position>
+		<position>main-top</position>
+		<position>main-bottom</position>
+		<position>breadcrumbs</position>
+		<position>sidebar-left</position>
+		<position>sidebar-right</position>
+		<position>bottom-a</position>
+		<position>bottom-b</position>
+		<position>footer</position>
+		<position>debug</position>
+		<position>error-403</position>
+		<position>error-404</position>
+	</positions>
+	<config>
+		<fields name="params">
+			<fieldset name="advanced">
+				<field name="cor" type="color" default="#1d4ed8" label="Cor principal" />
+				<field name="fonte" type="list" default="arredondada" label="Fontes">
+					<option value="sem-serifa">Sem serifa (sistema)</option>
+					<option value="humanista">Humanista</option>
+					<option value="geometrica">Geométrica</option>
+					<option value="arredondada">Arredondada</option>
+					<option value="serifa">Serifa</option>
+					<option value="titulo-serifa">Títulos com serifa</option>
+					<option value="classica">Clássica</option>
+				</field>
+				<field name="brand" type="radio" label="TPL_CASSIOPEIA_BRAND_LABEL" default="1" layout="joomla.form.field.radio.switcher" filter="options">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="logoFile" type="media" schemes="http,https,ftp,ftps,data,file" validate="url" relative="true" default="" label="TPL_CASSIOPEIA_LOGO_LABEL" showon="brand:1" />
+				<field name="siteTitle" type="text" default="" label="TPL_CASSIOPEIA_TITLE" filter="string" showon="brand:1" />
+				<field name="siteDescription" type="text" default="" label="TPL_CASSIOPEIA_TAGLINE_LABEL" description="TPL_CASSIOPEIA_TAGLINE_DESC" filter="string" showon="brand:1" />
+				<field name="fluidContainer" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="TPL_CASSIOPEIA_FLUID_LABEL">
+					<option value="0">TPL_CASSIOPEIA_STATIC</option>
+					<option value="1">TPL_CASSIOPEIA_FLUID</option>
+				</field>
+				<field name="stickyHeader" type="radio" label="TPL_CASSIOPEIA_STICKY_LABEL" layout="joomla.form.field.radio.switcher" default="1" filter="integer">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="backTop" type="radio" label="TPL_CASSIOPEIA_BACKTOTOP_LABEL" layout="joomla.form.field.radio.switcher" default="1" filter="integer">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+</extension>

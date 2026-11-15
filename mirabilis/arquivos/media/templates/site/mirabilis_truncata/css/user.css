@@ -1,0 +1,16 @@
+/* Truncata: restaurantes, cafés e hospedagem. Fundo creme, serifa, capa escura e acolhedora. */
+.mira-truncata { --mira-raio: 10px; --mira-fundo: #fbf7f0; --mira-alt: #f3ebdd; --mira-linha: #e7dccb; --mira-texto: #2a211a; --mira-suave: #6c5f53; }
+.mira-truncata .container-header { background: #1f1813; box-shadow: none; }
+.mira-truncata .container-header .brand-logo span, .mira-truncata .container-header .mod-menu > li > a, .mira-truncata .container-header .metismenu > li > a { color: #f7efe3; }
+.mira-truncata .container-header .mod-menu > li > a:hover, .mira-truncata .container-header .metismenu > li > a:hover { background: rgba(255,255,255,.08); color: #fff; }
+.mira-truncata .container-header .site-description { color: #c8b9a6; }
+.mira-truncata .container-header .navbar-toggler { color: #fff; border-color: rgba(255,255,255,.3); }
+.mira-truncata .mira-capa { background: radial-gradient(800px 420px at 80% 30%, color-mix(in srgb, var(--mira-cor) 45%, transparent), transparent 70%), #1f1813; color: #f7efe3; }
+.mira-truncata .mira-capa h1 { color: #fff; font-style: italic; font-weight: 600; }
+.mira-truncata .mira-capa p { color: #d8cab7; }
+.mira-truncata .mira-capa .mira-botao.secundario { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+.mira-truncata .mira-arte { border-radius: 999px 999px 24px 24px; }
+.mira-truncata .mira-chapeu { color: color-mix(in srgb, var(--mira-cor) 60%, #fff); }
+.mira-truncata .mira-secao .mira-chapeu { color: var(--mira-cor); }
+.mira-truncata h2 { font-style: italic; font-weight: 600; }
+.mira-truncata .container-footer { background: #1f1813; }

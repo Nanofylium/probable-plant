@@ -31,6 +31,14 @@ func criar(args []string) int {
 			dir = strings.TrimPrefix(a, "--pasta=")
 		case a == "--plano" || a == "--so-plano":
 			verPlano = true
+		case a == "--regras":
+			j, err := gerador.RegrasJSON()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+			fmt.Println(string(j))
+			return 0
 		case a == "--forcar" || a == "--force":
 			forcar = true
 		default:

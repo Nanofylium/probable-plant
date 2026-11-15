@@ -1,0 +1,10 @@
+/* Lowii: saúde, bem-estar, beleza e pets. Suave, muito arredondado, fundo levemente tingido. */
+.mira-lowii { --mira-raio: 24px; --mira-fundo: color-mix(in srgb, var(--mira-cor) 3%, #fff); --mira-alt: color-mix(in srgb, var(--mira-cor) 7%, #fff); --mira-linha: color-mix(in srgb, var(--mira-cor) 14%, #fff); }
+.mira-lowii .container-header { background: color-mix(in srgb, #fff 85%, transparent); backdrop-filter: blur(10px); }
+.mira-lowii .container-header .brand-logo span::before { border-radius: 50%; }
+.mira-lowii .mira-capa { background: radial-gradient(700px 400px at 90% 20%, color-mix(in srgb, var(--mira-cor) 22%, transparent), transparent 70%), radial-gradient(500px 300px at 0% 100%, color-mix(in srgb, var(--mira-cor) 10%, transparent), transparent 70%), var(--mira-fundo); }
+.mira-lowii .mira-arte { border-radius: 50% 50% 46% 54% / 55% 45% 55% 45%; aspect-ratio: 1; }
+.mira-lowii .mira-arte::after { display: none; }
+.mira-lowii .mira-icone { border-radius: 50%; }
+.mira-lowii .mira-cartao { border: 0; }
+.mira-lowii .mira-chamada { border-radius: 32px; margin: 0 clamp(16px, 4vw, 32px) 48px; }

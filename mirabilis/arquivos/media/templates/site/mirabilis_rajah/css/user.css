@@ -1,0 +1,7 @@
+/* Rajah: empresas e serviços. Limpo, sério, cantos médios, faixa fina no topo. */
+.mira-rajah { --mira-raio: 14px; }
+.mira-rajah .container-header { border-top: 4px solid var(--mira-cor); }
+.mira-rajah .mira-capa { background: linear-gradient(115deg, #fff 0 52%, var(--mira-claro) 52%); }
+.mira-rajah .mira-arte { border-radius: 18px; }
+.mira-rajah .mira-cartao { border-top: 3px solid var(--mira-cor); }
+.mira-rajah .mira-icone { border-radius: 10px; background: var(--mira-cor); color: #fff; }
