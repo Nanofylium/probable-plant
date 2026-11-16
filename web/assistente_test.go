@@ -71,6 +71,13 @@ func TestAssistenteNepenthes(t *testing.T) {
 	if est["ideia"] != "uma padaria em Olinda" || est["servidor"] != "" || !strings.Contains(est["prompt_site"].(string), "JSON") {
 		t.Fatalf("estado: %v", est)
 	}
+	// a IA do Nepenthes (ialocal) aparece no estado; visitante não vê nem baixa
+	if loc, _ := est["local"].(map[string]any); loc == nil || loc["modelo"] != "Granite 3.3 2B" {
+		t.Fatalf("estado da IA local: %v", est["local"])
+	}
+	if w := pedir(s, "POST", "/_nep/assistente/local", "", "203.0.113.9"); w.Code != 503 {
+		t.Fatalf("visitante mandou baixar a IA: %d", w.Code)
+	}
 	w = pedir(s, "POST", "/_nep/assistente/perguntas", `{"descricao":"uma padaria em Olinda","motor":"regras"}`, "127.0.0.1")
 	if !strings.Contains(w.Body.String(), "nome") {
 		t.Fatalf("perguntas: %s", w.Body.String())

@@ -27,6 +27,9 @@ Uso:
                            nep criar "escola de música chamada Sol Maior em Salvador,
                            com blog, eventos e wiki, azul e elegante"
                            (--pasta X escolhe a pasta; --plano só mostra o que entendeu)
+  nep ia baixar            baixa a IA do Nepenthes (llama.cpp + Granite 3.3 2B, 1,5 GB, uma vez
+                           só); com ela, a tag <nepenthes> cria sites sem GPU e sem chave
+  nep ia                   mostra se a IA do Nepenthes já está baixada e onde
   nep dev site.nep.html    roda o site no computador, com erros detalhados
   nep previa site.nep.html cria site-previa.html: o site pronto num arquivo que abre
                            com dois cliques, sem servidor (para mostrar a alguém)
@@ -72,6 +75,8 @@ func main() {
 		os.Exit(criar(args[1:]))
 	case "novo", "new":
 		os.Exit(novo(args[1:]))
+	case "ia":
+		os.Exit(ia(args[1:]))
 	case "dev":
 		os.Exit(serve(args[1:], true))
 	case "cgi":

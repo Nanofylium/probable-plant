@@ -58,6 +58,8 @@ code{font-size:.88em;background:color-mix(in srgb,var(--cor) 10%,transparent);pa
       <label class="campo">Quem escreve o site</label>
       <div class="motores">
         <label class="motor" id="m-servidor" hidden><input type="radio" name="motor" value="servidor"><span><b>Qwen no servidor</b><small id="m-servidor-nome"></small></span></label>
+        <label class="motor" id="m-local"><input type="radio" name="motor" value="local"><span><b>IA do Nepenthes</b>
+          <small id="m-local-txt">O Granite 3.3 2B roda neste computador pelo llama.cpp: sem placa de vídeo, sem chave e sem internet depois de baixado. Baixa uma vez (1,5 GB). Leva de 1 a 3 minutos para escrever.</small></span></label>
         <label class="motor" id="m-navegador"><input type="radio" name="motor" value="navegador"><span><b>Qwen aqui no navegador</b>
           <small id="m-navegador-txt">Nada para instalar e sem chave: o modelo é baixado uma vez e fica guardado neste navegador. Precisa de um navegador com WebGPU (Chrome ou Edge recentes).</small>
           <br><select id="modelo" aria-label="Tamanho do modelo">
@@ -142,6 +144,23 @@ async function qwen(sistema, usuario, maxTokens, temp) {
   });
   return r.choices[0].message.content || "";
 }
+// ---- IA do Nepenthes (llama.cpp + Granite, no computador que roda o nep) ----
+const espera = ms => new Promise(r => setTimeout(r, ms));
+async function preparaLocal() {
+  let e = await post("local", {});
+  while (e.fase === "baixando") {
+    const mb = n => Math.round(n / 1048576);
+    status(`Baixando a IA do Nepenthes (só na primeira vez): ${mb(e.baixado)} de ${mb(e.total)} MB`, e.total ? e.baixado / e.total : 0);
+    await espera(1000);
+    e = await (await fetch(BASE + "/_nep/assistente/local")).json();
+  }
+  if (e.fase === "erro") throw new Error("A IA do Nepenthes não ficou pronta: " + e.erro);
+}
+function relogio(texto) {
+  const t0 = Date.now();
+  const tick = () => { const s = Math.round((Date.now() - t0) / 1000); status(`${texto} ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`); };
+  tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
+}
 function lerJSON(t) { const m = t.match(/\{[\s\S]*\}/); try { return m ? JSON.parse(m[0]) : null } catch { return null } }
 
 // ---- passo 1 ----
@@ -152,7 +171,10 @@ async function inicio() {
   let temGPU = false;
   try { const a = navigator.gpu && await navigator.gpu.requestAdapter(); temGPU = !!a; f16 = !!a && a.features.has("shader-f16"); } catch {}
   if (!temGPU) { $("#m-navegador").classList.add("off"); $("#m-navegador input").disabled = true; $("#m-navegador-txt").textContent = "Este navegador não tem WebGPU. Abra no Chrome ou Edge recentes para usar o Qwen aqui, sem instalar nada."; }
-  const pref = estado.servidor ? "servidor" : temGPU ? "navegador" : "regras";
+  const local = estado.local || {};
+  if (local.fase === "erro") { $("#m-local").classList.add("off"); $("#m-local input").disabled = true; $("#m-local-txt").textContent = local.erro; }
+  else if (local.fase !== "ausente") $("#m-local-txt").textContent = "O Granite 3.3 2B roda neste computador pelo llama.cpp, já baixado: sem placa de vídeo, sem chave e sem internet. Leva de 1 a 3 minutos para escrever.";
+  const pref = estado.servidor ? "servidor" : local.fase !== "erro" ? "local" : temGPU ? "navegador" : "regras";
   document.querySelector(`input[name=motor][value=${pref}]`).checked = true;
 }
 $("#ir1").onclick = async () => {
@@ -167,6 +189,11 @@ $("#ir1").onclick = async () => {
       const r = lerJSON(await qwen(estado.prompt_perguntas, desc, 300, 0.7));
       perguntas = (r && Array.isArray(r.perguntas) ? r.perguntas : []).filter(p => typeof p === "string" && p.trim()).slice(0, 4);
       if (!perguntas.length) perguntas = (await post("perguntas", {descricao: desc, motor: "regras"})).perguntas;
+    } else if (motor === "local") {
+      mostra("passo3");
+      await preparaLocal();
+      const para = relogio("A IA do Nepenthes está lendo o seu pedido…");
+      try { perguntas = (await post("perguntas", {descricao: desc, motor})).perguntas; } finally { para(); }
     } else {
       perguntas = (await post("perguntas", {descricao: desc, motor})).perguntas;
     }
@@ -195,10 +222,13 @@ $("#ir2").onclick = async () => {
       respostas.forEach(([p, r]) => { if (r.trim()) msg += "Pergunta: " + p + "\nResposta: " + r.trim() + "\n"; });
       conteudo = await qwen(estado.prompt_site, msg, 2500, 0.9);
     }
-    status(motor === "servidor" ? "O Qwen do servidor está escrevendo e o Nepenthes está montando…" : "O Nepenthes está montando as páginas…");
-    const r = await post("criar", {descricao: desc, respostas, conteudo, motor});
+    let para = () => {};
+    if (motor === "local") { await preparaLocal(); para = relogio("A IA do Nepenthes está escrevendo o site, sem placa de vídeo (leva de 1 a 3 minutos)…"); }
+    else status(motor === "servidor" ? "O Qwen do servidor está escrevendo e o Nepenthes está montando…" : "O Nepenthes está montando as páginas…");
+    let r;
+    try { r = await post("criar", {descricao: desc, respostas, conteudo, motor}); } finally { para(); }
     $("#pronto-titulo").textContent = (r.nome ? r.nome + " está pronto!" : "Pronto!");
-    $("#pronto-motor").textContent = {servidor: "Escrito pelo Qwen do servidor e montado pelo Nepenthes.", navegador: "Escrito pelo Qwen no seu navegador e montado pelo Nepenthes.", regras: "Montado pelas regras do Nepenthes."}[r.motor] || "";
+    $("#pronto-motor").textContent = {servidor: "Escrito pelo Qwen do servidor e montado pelo Nepenthes.", local: "Escrito pela IA do Nepenthes (Granite, neste computador) e montado pelo Nepenthes.", navegador: "Escrito pelo Qwen no seu navegador e montado pelo Nepenthes.", regras: "Montado pelas regras do Nepenthes."}[r.motor] || "";
     $("#pronto-notas").innerHTML = ""; (r.notas || []).forEach(n => { const li = document.createElement("li"); li.textContent = n; $("#pronto-notas").appendChild(li); });
     $("#pronto-arquivos").textContent = (r.arquivos || []).map(a => a.split(/[\\/]/).pop()).join(", ");
     $("#pronto-copia").textContent = (r.copia || "").split(/[\\/]/).pop();

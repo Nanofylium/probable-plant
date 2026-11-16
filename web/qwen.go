@@ -107,13 +107,23 @@ func (s *Server) chat(who string, msgs []iaMsg, maxTokens int, temp float64) (st
 	if !c.ready() {
 		return "", errNoIA
 	}
+	return s.chatCom(c, iaTimeout, nil, who, msgs, maxTokens, temp)
+}
+
+// chatCom fala com uma API de chat qualquer (a do painel ou a IA local).
+// schema, se não for nil, prende a resposta a esse JSON Schema.
+func (s *Server) chatCom(c iaConf, timeout time.Duration, schema map[string]any, who string, msgs []iaMsg, maxTokens int, temp float64) (string, error) {
 	if ok, _ := s.Store.Rate("ia:hora", 600, 3600, true); !ok {
 		err := errors.New("limite de 600 pedidos de IA por hora atingido")
 		s.addIALog(iaLog{Quando: stamp(), Quem: who, Erro: err.Error()})
 		return "", err
 	}
-	body, _ := json.Marshal(map[string]any{"model": c.Modelo, "messages": msgs, "max_tokens": maxTokens, "temperature": temp})
-	ctx, cancel := context.WithTimeout(context.Background(), iaTimeout)
+	pedido := map[string]any{"model": c.Modelo, "messages": msgs, "max_tokens": maxTokens, "temperature": temp}
+	if schema != nil {
+		pedido["response_format"] = map[string]any{"type": "json_schema", "json_schema": map[string]any{"name": "resposta", "schema": schema}}
+	}
+	body, _ := json.Marshal(pedido)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL+"/chat/completions", bytes.NewReader(body))
 	if err != nil {

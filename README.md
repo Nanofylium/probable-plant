@@ -114,7 +114,7 @@ nep criar "escola de música chamada Sol Maior em Salvador, com blog, eventos e 
 
 O `nep criar` entende o ramo, o nome, a cidade, a cor e o estilo, e monta um `site.nep.html` com a complexidade de um Joomla, WordPress, Backdrop ou TikiWiki: loja com carrinho, agendamento e reservas, eventos com inscrição, blog completo, wiki com `[[links]]`, fórum moderado, downloads, vagas, newsletter, painel e SEO. `com X` acrescenta, `sem X` tira e `só X` deixa só o que você pediu. Sai junto o `site-previa.html`. Detalhes na seção 10.16 da SPEC.
 
-**Com IA:** escreva `<nepenthes></nepenthes>` num `index.html` e rode `nep serve index.html`. Ao abrir o site, uma tela pergunta como você quer o site, o Qwen escreve o conteúdo (no servidor, se configurado no painel, ou no seu próprio navegador, sem instalar nada) e o Nepenthes reescreve o arquivo inteiro com o site pronto. Cada pedido sai diferente. Veja a seção 10.17 da SPEC.
+**Com IA:** escreva `<nepenthes></nepenthes>` num `index.html` e rode `nep serve index.html`. Ao abrir o site, uma tela pergunta como você quer o site, a IA escreve o conteúdo (a IA do Nepenthes, que roda no próprio computador sem GPU e sem chave, baixada uma vez com `nep ia baixar` ou pela tela; o Qwen do servidor, se configurado no painel; ou o Qwen no seu navegador) e o Nepenthes reescreve o arquivo inteiro com o site pronto. Cada pedido sai diferente. Veja a seção 10.17 da SPEC.
 
 ## Colocar um site no ar
 

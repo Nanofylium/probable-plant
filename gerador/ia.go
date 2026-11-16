@@ -12,8 +12,10 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -92,10 +94,10 @@ Responda SÓ com um objeto JSON com estes campos:
  "chapeu": "2 a 4 palavras acima do título", "titulo": "frase de capa com até 60 letras", "texto": "1 ou 2 frases da capa",
  "chamada": "frase da faixa final convidando a entrar em contato",
  "servicos_titulo": "", "servicos_intro": "", "servicos": [{"icone": "um emoji", "titulo": "", "texto": "uma frase", "preco": "0 se não tiver"}],
- "numeros": [{"numero": "", "rotulo": ""}], "faq": [{"pergunta": "", "resposta": ""}],
+ "numeros": [{"numero": "número de destaque, como 20 ou 98%, nunca telefone", "rotulo": "anos de casa, clientes..."}], "faq": [{"pergunta": "", "resposta": ""}],
  "depoimentos": [{"texto": "", "autor": "Nome, detalhe"}], "equipe": [{"nome": "", "cargo": "", "texto": ""}],
  "posts": [{"titulo": "", "resumo": ""}],
- "secoes": ["só ids desta lista: ` + strings.Join(ModulosTodos, ", ") + `"]}
+ "secoes": ["de 2 a 5 ids, só os que o negócio precisa, desta lista: ` + strings.Join(ModulosTodos, ", ") + `"]}
 Use de 3 a 4 serviços, 3 números, 3 perguntas, 3 depoimentos, 2 a 3 pessoas na equipe e 2 posts.`
 }
 
@@ -120,10 +122,80 @@ func LerConteudo(txt string) (Conteudo, error) {
 	if m == "" {
 		return c, errors.New("a IA não devolveu JSON")
 	}
-	if err := json.Unmarshal([]byte(m), &c); err != nil {
+	var campos map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(m), &campos); err != nil {
 		return c, fmt.Errorf("JSON da IA inválido: %w", err)
 	}
+	// campo por campo (e item por item nas listas): um campo no formato
+	// errado, comum em modelos pequenos, não joga fora o resto
+	for k, v := range campos {
+		um := func(raw json.RawMessage) error {
+			b, _ := json.Marshal(map[string]json.RawMessage{k: raw})
+			return json.Unmarshal(b, &c)
+		}
+		if um(v) == nil {
+			continue
+		}
+		var itens []json.RawMessage
+		if json.Unmarshal(v, &itens) != nil {
+			continue
+		}
+		var bons []json.RawMessage
+		for _, it := range itens {
+			var teste Conteudo
+			b, _ := json.Marshal(map[string][]json.RawMessage{k: {it}})
+			if json.Unmarshal(b, &teste) == nil {
+				bons = append(bons, it)
+			}
+		}
+		if b, err := json.Marshal(bons); err == nil {
+			um(b)
+		}
+	}
 	return c, nil
+}
+
+// SchemaSite é o formato da resposta em JSON Schema. Motores que aceitam
+// (o llama.cpp da IA do Nepenthes) ficam presos a ele e não erram os tipos.
+func SchemaSite() map[string]any {
+	str := map[string]any{"type": "string"}
+	obj := func(campos ...string) map[string]any {
+		props := map[string]any{}
+		for _, c := range campos {
+			props[c] = str
+		}
+		return map[string]any{"type": "object", "properties": props, "required": campos}
+	}
+	lista := func(item map[string]any, min, max int) map[string]any {
+		return map[string]any{"type": "array", "items": item, "minItems": min, "maxItems": max}
+	}
+	var ramos []any
+	for _, r := range Ramos() {
+		ramos = append(ramos, r[0])
+	}
+	var mods []any
+	for _, m := range ModulosTodos {
+		mods = append(mods, m)
+	}
+	props := map[string]any{
+		"nome": str, "ramo": map[string]any{"type": "string", "enum": ramos}, "cidade": str,
+		"cor":    map[string]any{"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"},
+		"estilo": map[string]any{"type": "string", "enum": []any{"moderno", "elegante", "classico", "divertido", "acolhedor"}},
+		"chapeu": str, "titulo": str, "texto": str, "chamada": str, "servicos_titulo": str, "servicos_intro": str,
+		"servicos":    lista(obj("icone", "titulo", "texto", "preco"), 3, 4),
+		"numeros":     lista(obj("numero", "rotulo"), 3, 3),
+		"faq":         lista(obj("pergunta", "resposta"), 3, 3),
+		"depoimentos": lista(obj("texto", "autor"), 3, 3),
+		"equipe":      lista(obj("nome", "cargo", "texto"), 2, 3),
+		"posts":       lista(obj("titulo", "resumo"), 2, 2),
+		"secoes":      lista(map[string]any{"type": "string", "enum": mods}, 2, 5),
+	}
+	var req []string
+	for k := range props {
+		req = append(req, k)
+	}
+	sort.Strings(req)
+	return map[string]any{"type": "object", "properties": props, "required": req}
 }
 
 // LerPerguntas tira a lista de perguntas da resposta da IA.
@@ -181,7 +253,8 @@ func DescricaoComRespostas(desc string, respostas [][2]string) string {
 
 var (
 	reCorIA   = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
-	rePrecoIA = regexp.MustCompile(`^\d{1,6}(\.\d{1,2})?$`)
+	rePrecoIA = regexp.MustCompile(`\d{1,6}(\.\d{1,2})?`)
+	reDigito  = regexp.MustCompile(`\d`)
 )
 
 func curto(s string, n int) string {
@@ -209,7 +282,9 @@ func texto(v any) string {
 // Aplicar põe o conteúdo da IA no plano. O que vier vazio ou fora do formato
 // fica como as regras decidiram.
 func Aplicar(p *Plano, c Conteudo) {
-	if c.Ramo != "" && c.Ramo != p.Setor.ID {
+	// modelos pequenos erram o ramo e a cor com facilidade: quando a pessoa
+	// já disse (e as regras acharam), vale o que ela disse
+	if c.Ramo != "" && c.Ramo != p.Setor.ID && !p.RamoAchado {
 		for _, s := range append([]Setor{generico}, setores...) {
 			if s.ID == c.Ramo {
 				p.Setor = completar(s)
@@ -227,7 +302,7 @@ func Aplicar(p *Plano, c Conteudo) {
 	if n := curto(c.Cidade, 40); n != "" {
 		p.Cidade = n
 	}
-	if reCorIA.MatchString(c.Cor) {
+	if reCorIA.MatchString(c.Cor) && !p.CorPedida {
 		p.Cor = strings.ToLower(c.Cor)
 	}
 	if e := semAcento(c.Estilo); e != "" {
@@ -255,11 +330,19 @@ func Aplicar(p *Plano, c Conteudo) {
 	for _, x := range c.Servicos {
 		if t := curto(x.Titulo, 50); t != "" && len(serv) < 6 {
 			ic := curto(x.Icone, 4)
+			if strings.IndexFunc(ic, unicode.IsLetter) >= 0 { // "loaf", "bas…": queria um emoji
+				ic = ""
+			}
 			if ic == "" {
 				ic = "✦"
 			}
-			preco := strings.TrimSpace(strings.NewReplacer("R$", "", ",", ".").Replace(texto(x.Preco)))
-			if !rePrecoIA.MatchString(preco) || strings.Trim(preco, "0.") == "" {
+			// "R$ 12,50", "A partir de R$ 3,00" -> 12.50, 3.00
+			preco := texto(x.Preco)
+			if strings.Contains(preco, ",") { // 1.250,00
+				preco = strings.ReplaceAll(strings.ReplaceAll(preco, ".", ""), ",", ".")
+			}
+			preco = rePrecoIA.FindString(preco)
+			if strings.Trim(preco, "0.") == "" {
 				preco = ""
 			}
 			serv = append(serv, Item{ic, t, curto(x.Texto, 160), preco})
@@ -270,7 +353,12 @@ func Aplicar(p *Plano, c Conteudo) {
 	}
 	var nums [][2]string
 	for _, x := range c.Numeros {
-		if n, r := curto(texto(x.Numero), 10), curto(x.Rotulo, 40); n != "" && r != "" && len(nums) < 4 {
+		n, r := curto(texto(x.Numero), 10), curto(x.Rotulo, 40)
+		// número de destaque ("20", "+3 mil", "98%"), não telefone
+		if len(reDigito.FindAllString(n, -1)) > 6 || !reDigito.MatchString(n) {
+			continue
+		}
+		if r != "" && len(nums) < 4 {
 			nums = append(nums, [2]string{n, r})
 		}
 	}
@@ -320,7 +408,8 @@ func Aplicar(p *Plano, c Conteudo) {
 
 	// seções: a IA pode acrescentar às que as regras escolheram, mas o que a
 	// pessoa tirou continua fora
-	if len(c.Secoes) > 0 {
+	// quem lista quase todas as seções só copiou a lista do pedido: ignora
+	if len(c.Secoes) > 0 && len(c.Secoes) <= 7 {
 		quer := map[string]bool{}
 		for _, m := range p.Modulos {
 			quer[m] = true

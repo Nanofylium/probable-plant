@@ -497,15 +497,20 @@ Um arquivo de site (`index.html`, `site.nep.html`) com a tag `<nepenthes>` não 
 <nepenthes>uma doceria em Salvador, com encomendas</nepenthes>  <!-- já começa com a ideia -->
 ```
 
-Quem escreve o conteúdo é o **Qwen**. A tela oferece três motores:
+Quem escreve o conteúdo é uma IA. A tela oferece quatro motores:
 
 | Motor | Onde roda | Precisa de |
 |---|---|---|
 | Qwen no servidor | na API configurada no painel (IA): DashScope, ou Ollama/vLLM no seu servidor | chave no painel ou `NEP_IA_*` |
+| IA do Nepenthes | no computador (ou VPS) que roda o `nep`: o motor [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) com o modelo IBM Granite 3.3 2B Instruct (Apache 2.0). Só processador, sem GPU; no Mac usa a GPU pelo Metal. Leva de 1 a 3 minutos por site | baixar uma vez, 1,5 GB: pela própria tela ou `nep ia baixar` |
 | Qwen no navegador | no navegador de quem cria, com WebLLM (WebGPU). O modelo (Qwen 2.5 de 0.5B, 1.5B ou 3B) é baixado uma vez e fica guardado no navegador | Chrome ou Edge recentes. Nada para instalar, sem chave |
 | Sem IA | regras do `nep criar` | nada |
 
 A IA não escreve código: devolve um JSON com nome, ramo, cor, estilo, frases da capa, serviços, preços, números, perguntas, depoimentos, equipe, posts e seções. O gerador confere cada campo (tamanho, cor `#RRGGBB`, preço numérico, ramo e seções que existem, o que a pessoa tirou continua fora) e monta o `.nep.html` com o tema profissional. Assim o mesmo pedido gera sites diferentes, mas o site sempre funciona e nada do texto da IA entra sem escapar.
+
+**A IA do Nepenthes** (pacote `ialocal`) não vai dentro do executável. O `nep` baixa o `llama-server` do seu sistema (Linux, macOS e Windows, x64 e arm64) e o modelo dos Releases do probable-plant (`ia-1`); se lá não estiver, das fontes originais (Releases do llama.cpp e Hugging Face da IBM). Cada arquivo tem o SHA-256 fixado no código e é conferido; download interrompido continua de onde parou. Fica em `<cache do usuário>/nepenthes/ia` (ou na pasta de `NEP_IA_LOCAL`) e depois roda sem internet. O `llama-server` escuta só em `127.0.0.1`, numa porta livre, e é desligado quando o `nep` sai. A resposta fica presa a um JSON Schema, então o modelo não erra o formato. `nep ia` mostra o estado.
+
+Como modelos pequenos erram mais, o gerador dá preferência ao que a pessoa escreveu: se as regras reconheceram o ramo ou a cor na descrição, a IA não troca; telefone não entra como "número de destaque"; ícone tem de ser emoji; e uma lista de seções que copia quase todas as opções é ignorada.
 
 Só vê a tela e pode criar quem acessa do próprio computador (`localhost`, sem proxy) ou entrou no painel como administrador. Os outros visitantes veem "site em construção". Em CGI (hospedagem compartilhada) é sempre pelo painel.
 

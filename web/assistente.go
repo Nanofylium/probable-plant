@@ -7,8 +7,10 @@ package web
 //	<nepenthes></nepenthes>                       abre a tela em branco
 //	<nepenthes>uma padaria em Olinda</nepenthes>  já começa com essa ideia
 //
-// A IA pode rodar em três lugares, nesta ordem de preferência na tela:
+// A IA pode rodar em quatro lugares, nesta ordem de preferência na tela:
 //   - no servidor, se o painel (IA) tiver Qwen configurado (DashScope ou Ollama);
+//   - a IA do Nepenthes (pacote ialocal): llama.cpp + Granite 3.3 2B rodando no
+//     próprio computador, sem GPU e sem chave; baixa uma vez (1,5 GB);
 //   - no navegador de quem está criando, com o Qwen do WebLLM: nada para
 //     instalar, o modelo é baixado uma vez e fica guardado no navegador;
 //   - sem IA, pelas regras do gerador (o mesmo `nep criar`).
@@ -19,6 +21,7 @@ package web
 // administrador vê a tela e pode criar. Os outros veem "site em construção".
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -31,6 +34,7 @@ import (
 	"time"
 
 	"github.com/Nanofylium/probable-plant/gerador"
+	"github.com/Nanofylium/probable-plant/ialocal"
 )
 
 //go:embed assets/assistente.html
@@ -88,7 +92,18 @@ func (s *Server) assistente(rq *request, ideia string) {
 		writeJSON(w, map[string]any{
 			"servidor": modelo, "ideia": ideia, "arquivo": s.file,
 			"prompt_perguntas": gerador.PromptPerguntas(), "prompt_site": gerador.PromptSite(),
+			"local": ialocal.Ver(), "local_pasta": ialocal.Pasta(),
 		})
+		return
+	case "/_nep/assistente/local":
+		if rq.r.Method == http.MethodPost {
+			if o := rq.r.Header.Get("Origin"); o != "" && !sameOrigin(o, rq.r) {
+				http.Error(w, "use a própria tela", http.StatusBadRequest)
+				return
+			}
+			ialocal.Baixar()
+		}
+		writeJSON(w, ialocal.Ver())
 		return
 	case "/_nep/assistente/perguntas", "/_nep/assistente/criar":
 		if rq.r.Method != http.MethodPost || !sameOrigin(rq.r.Header.Get("Origin"), rq.r) && rq.r.Header.Get("Origin") != "" {
@@ -132,13 +147,36 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
+var schemaPerguntas = map[string]any{"type": "object", "required": []string{"perguntas"}, "properties": map[string]any{
+	"perguntas": map[string]any{"type": "array", "minItems": 2, "maxItems": 4, "items": map[string]any{"type": "string"}}}}
+
+// askLocal pergunta à IA do Nepenthes (llama.cpp + Granite), ligando-a se
+// preciso. Sem GPU leva de 30 segundos a uns minutos.
+func (s *Server) askLocal(rq *request, schema map[string]any, system, user string, maxTokens int, temp float64) (string, error) {
+	ctx, cancel := context.WithTimeout(rq.r.Context(), 4*time.Minute)
+	defer cancel()
+	u, err := ialocal.URL(ctx)
+	if err != nil {
+		return "", err
+	}
+	return s.chatCom(iaConf{URL: u, Modelo: "granite"}, 15*time.Minute, schema, "assistente (IA do Nepenthes)",
+		[]iaMsg{{"system", system}, {"user", user}}, maxTokens, temp)
+}
+
 func (s *Server) assistentePerguntas(rq *request, desc, motor string) {
-	if motor == "servidor" && s.iaConf().ready() {
-		txt, err := s.ask("assistente", gerador.PromptPerguntas(), desc, 400, 0.7)
-		if p := gerador.LerPerguntas(txt); err == nil && len(p) > 0 {
-			writeJSON(rq.w, map[string]any{"perguntas": p, "motor": "servidor"})
-			return
-		}
+	var txt string
+	var err error
+	switch {
+	case motor == "servidor" && s.iaConf().ready():
+		txt, err = s.ask("assistente", gerador.PromptPerguntas(), desc, 400, 0.7)
+	case motor == "local":
+		txt, err = s.askLocal(rq, schemaPerguntas, gerador.PromptPerguntas(), desc, 400, 0.7)
+	default:
+		err = errNoIA
+	}
+	if p := gerador.LerPerguntas(txt); err == nil && len(p) > 0 {
+		writeJSON(rq.w, map[string]any{"perguntas": p, "motor": motor})
+		return
 	}
 	writeJSON(rq.w, map[string]any{"perguntas": gerador.PerguntasPorRegras(desc), "motor": "regras"})
 }
@@ -148,13 +186,19 @@ func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, con
 	p := gerador.Entender(completa)
 	usado := "regras"
 	var aviso string
-	if conteudo == "" && motor == "servidor" && s.iaConf().ready() {
-		txt, err := s.ask("assistente", gerador.PromptSite(), gerador.MensagemSite(desc, resp), 2500, 0.9)
-		if err != nil {
-			aviso = "A IA do servidor não respondeu (" + err.Error() + "); montei pelas regras."
+	if conteudo == "" && (motor == "servidor" && s.iaConf().ready() || motor == "local") {
+		var txt string
+		var err error
+		if motor == "local" {
+			txt, err = s.askLocal(rq, gerador.SchemaSite(), gerador.PromptSite(), gerador.MensagemSite(desc, resp), 2500, 0.9)
+		} else {
+			txt, err = s.ask("assistente", gerador.PromptSite(), gerador.MensagemSite(desc, resp), 2500, 0.9)
 		}
-		conteudo = txt
-		usado = "servidor"
+		if err != nil {
+			aviso = "A IA não respondeu (" + err.Error() + "); montei pelas regras."
+		} else {
+			conteudo, usado = txt, motor
+		}
 	} else if conteudo != "" {
 		usado = "navegador"
 	}

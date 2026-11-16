@@ -224,6 +224,14 @@ final class Entender
                 $pedidos[$mod] = true;
             }
         }
+        // "cardápio com preços" é preço de produto, não tabela de planos (igual ao entender.go)
+        if (!empty($pedidos['planos']) && !empty($pedidos['catalogo'])) {
+            $outras = array_values(array_diff($r['chavesModulo']['planos'] ?? [], ['precos']));
+
+            if (self::mencao($txt, $outras)[0] === 0) {
+                unset($pedidos['planos']);
+            }
+        }
         $so        = (bool) preg_match('/(?:^|[^\p{L}])(so|somente|apenas|unicamente)\s/u', $txt);
         $soContato = $so && !$pedidos && self::achar($txt, 'contato');
         $escolhe   = [];

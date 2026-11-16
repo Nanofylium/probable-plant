@@ -27,6 +27,9 @@ type Plano struct {
 	Notas     []string // frases curtas do que foi entendido (o comando mostra)
 	Pedidos   []string // módulos que a pessoa pediu com todas as letras
 	Tirados   []string // módulos que a pessoa pediu para tirar
+
+	RamoAchado bool // as regras reconheceram o ramo pelas palavras da descrição
+	CorPedida  bool // a pessoa disse a cor
 }
 
 // ModulosTodos, na ordem em que aparecem no site.
@@ -163,6 +166,7 @@ func Entender(desc string) *Plano {
 	}
 	p.Setor = completar(melhor)
 	if pontos > 0 {
+		p.RamoAchado = true
 		p.Notas = append(p.Notas, "ramo: "+p.Setor.Rotulo)
 	} else {
 		p.Notas = append(p.Notas, "ramo: não reconheci um ramo específico, usei o modelo de empresa")
@@ -210,12 +214,14 @@ func Entender(desc string) *Plano {
 	p.Cor = p.Setor.Cor
 	if m := reHex.FindString(desc); m != "" {
 		p.Cor = strings.ToLower(m)
+		p.CorPedida = true
 		p.Notas = append(p.Notas, "cor: "+p.Cor)
 	} else {
 		achou := false
 		for _, c := range cores {
 			if len(achar(txt, c.chave)) > 0 {
 				p.Cor = c.hex
+				p.CorPedida = true
 				p.Notas = append(p.Notas, "cor: "+c.nome)
 				achou = true
 				break
@@ -244,6 +250,18 @@ func Entender(desc string) *Plano {
 			tirados[m] = true
 		} else if sim > 0 {
 			pedidos[m] = true
+		}
+	}
+	// "cardápio com preços" é preço de produto, não tabela de planos
+	if pedidos["planos"] && pedidos["catalogo"] {
+		var outras []string
+		for _, c := range chavesModulo["planos"] {
+			if c != "precos" {
+				outras = append(outras, c)
+			}
+		}
+		if sim, _ := mencao(txt, outras); sim == 0 {
+			delete(pedidos, "planos")
 		}
 	}
 	// palavras do próprio ramo ("loja", "comunidade") não contam como pedido de módulo
