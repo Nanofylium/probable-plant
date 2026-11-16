@@ -40,6 +40,9 @@ type Options struct {
 	CGI      bool   // rodando como CGI (hospedagem compartilhada)
 	Base     string // prefixo de URL quando o site fica numa subpasta
 	Log      io.Writer
+	// AposCriar roda depois que o assistente (<nepenthes>) grava o site;
+	// devolve os arquivos extras que criou (o nep usa para a prévia).
+	AposCriar func(site string) []string
 }
 
 type Server struct {
@@ -245,6 +248,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err := s.admin(rq); err != nil {
 			s.fail(rq, err)
 		}
+		return
+	}
+	if ok, ideia := s.pedeAssistente(); ok {
+		s.assistente(rq, ideia)
 		return
 	}
 

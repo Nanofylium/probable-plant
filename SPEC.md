@@ -488,6 +488,27 @@ nep criar "pousada em Paraty chamada Maré Mansa" --plano     # só mostra o que
 - **Seções (módulos):** serviços com página de cada um; loja ou cardápio com categorias, carrinho na sessão e pedido (o total vem do banco, nunca do navegador) e `/api/produtos`; agendamento com horários livres ao vivo, vagas por horário e recusa de horário ocupado ou passado (`/api/horarios`); reservas por diária para hotel, que recusam datas sobrepostas (`/api/disponibilidade`); eventos com inscrição, vagas que diminuem ao vivo e recusa de e-mail repetido (`/api/eventos`); planos e preços; equipe; galeria com álbuns; depoimentos; blog com categorias, tags, arquivo por mês, paginação, tempo de leitura, posts relacionados, comentários e widgets; wiki no estilo TikiWiki com `[[Página]]` e `[[Página|texto]]`, índice A–Z, busca, mudanças recentes, "páginas que apontam para cá", página que não existe convidando a criá-la e sugestões de edição revisadas pela equipe (o histórico fica nas versões do painel); fórum moderado (tópico novo entra como rascunho, respostas pelos comentários); downloads por categoria; trabalhe conosco com envio de currículo restrito ao painel; perguntas frequentes; newsletter; tradução com `?idioma=en` pela villosa (com a IA ligada).
 - Todo conteúdo de exemplo entra uma vez só (a marca fica na coleção `instalacao`); depois, tudo pelo painel. O arquivo gerado é Nepenthes comum, com comentários, para a pessoa mudar à vontade.
 
+### 10.17 A tag `<nepenthes>`: o site pergunta e se escreve
+
+Um arquivo de site (`index.html`, `site.nep.html`) com a tag `<nepenthes>` não é mostrado: o `nep` abre uma tela que pergunta como a pessoa quer o site, faz de 2 a 4 perguntas sobre o que faltar e então **reescreve o arquivo inteiro** com o site pronto. Também grava a prévia (`*-previa.html`) e guarda o arquivo anterior como `ARQUIVO.antes-AAAAMMDD-HHMMSS`.
+
+```html
+<nepenthes></nepenthes>                                    <!-- tela em branco -->
+<nepenthes>uma doceria em Salvador, com encomendas</nepenthes>  <!-- já começa com a ideia -->
+```
+
+Quem escreve o conteúdo é o **Qwen**. A tela oferece três motores:
+
+| Motor | Onde roda | Precisa de |
+|---|---|---|
+| Qwen no servidor | na API configurada no painel (IA): DashScope, ou Ollama/vLLM no seu servidor | chave no painel ou `NEP_IA_*` |
+| Qwen no navegador | no navegador de quem cria, com WebLLM (WebGPU). O modelo (Qwen 2.5 de 0.5B, 1.5B ou 3B) é baixado uma vez e fica guardado no navegador | Chrome ou Edge recentes. Nada para instalar, sem chave |
+| Sem IA | regras do `nep criar` | nada |
+
+A IA não escreve código: devolve um JSON com nome, ramo, cor, estilo, frases da capa, serviços, preços, números, perguntas, depoimentos, equipe, posts e seções. O gerador confere cada campo (tamanho, cor `#RRGGBB`, preço numérico, ramo e seções que existem, o que a pessoa tirou continua fora) e monta o `.nep.html` com o tema profissional. Assim o mesmo pedido gera sites diferentes, mas o site sempre funciona e nada do texto da IA entra sem escapar.
+
+Só vê a tela e pode criar quem acessa do próprio computador (`localhost`, sem proxy) ou entrou no painel como administrador. Os outros visitantes veem "site em construção". Em CGI (hospedagem compartilhada) é sempre pelo painel.
+
 ## 11. Lua 5.4 na mesma máquina virtual
 
 O `nep` roda programas Lua 5.4: `nep jogo.lua [args]`. O código Lua é lido por um leitor próprio e compilado para o mesmo bytecode do Nepenthes, então os dois se misturam:

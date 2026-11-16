@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nepenthes · criar o site</title>
+<style>
+:root{--cor:#2f6b4f;--escuro:#1d4532;--fundo:#f5f7f4;--cartao:#fff;--texto:#1c2420;--suave:#5d6b63;--linha:#dde5df;--raio:16px}
+@media (prefers-color-scheme:dark){:root{--fundo:#121815;--cartao:#1a221e;--texto:#e8eee9;--suave:#9fb0a6;--linha:#2c3832;--cor:#5fae86;--escuro:#8fd0ad}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--texto);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:40px 16px 80px}
+.marca{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--cor);letter-spacing:.02em}
+.marca svg{width:30px;height:30px}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);line-height:1.15;margin:18px 0 8px;letter-spacing:-.02em}
+.sub{color:var(--suave);margin:0 0 26px}
+.cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.05);margin-bottom:18px}
+label.campo{display:block;font-weight:600;margin:0 0 8px}
+textarea,input[type=text]{width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--linha);border-radius:12px;padding:12px 14px}
+textarea{min-height:120px;resize:vertical}
+textarea:focus,input:focus{outline:3px solid color-mix(in srgb,var(--cor) 30%,transparent);border-color:var(--cor)}
+.motores{display:grid;gap:10px;margin-top:6px}
+.motor{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--linha);border-radius:12px;padding:12px 14px;cursor:pointer}
+.motor:has(input:checked){border-color:var(--cor);background:color-mix(in srgb,var(--cor) 7%,transparent)}
+.motor.off{opacity:.5;cursor:not-allowed}
+.motor b{display:block}.motor small{color:var(--suave)}
+.motor select{margin-top:6px;font:inherit;font-size:.9rem;padding:4px 6px;border-radius:8px;border:1px solid var(--linha);background:var(--cartao);color:inherit}
+.acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:12px 22px;cursor:pointer;background:var(--cor);color:#fff}
+button.sec{background:transparent;color:var(--texto);border:1px solid var(--linha)}
+button:disabled{opacity:.55;cursor:wait}
+.pergunta{margin-bottom:16px}
+.status{display:flex;gap:12px;align-items:center;color:var(--suave)}
+.giro{width:20px;height:20px;border-radius:50%;border:3px solid var(--linha);border-top-color:var(--cor);animation:g 1s linear infinite;flex:none}
+@keyframes g{to{transform:rotate(360deg)}}
+.barra{height:8px;background:var(--linha);border-radius:99px;overflow:hidden;margin-top:10px}
+.barra i{display:block;height:100%;width:0;background:var(--cor);transition:width .3s}
+.erro{color:#b42318;background:#fef3f2;border:1px solid #fecdca;border-radius:12px;padding:10px 14px;margin-top:12px}
+@media (prefers-color-scheme:dark){.erro{background:#3a1512;border-color:#7a271a;color:#fda29b}}
+ul.notas{color:var(--suave);font-size:.92rem;padding-left:20px}
+code{font-size:.88em;background:color-mix(in srgb,var(--cor) 10%,transparent);padding:1px 6px;border-radius:6px;word-break:break-all}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <div class="marca"><svg viewBox="0 0 150 150" aria-hidden="true"><g fill="currentColor"><path d="M50 14c14-10 40-10 56 2 6 5 9 11 9 17-16-8-40-10-62-4-4-5-5-10-3-15z"/><path d="M43 46c6-7 18-10 32-10s26 3 32 10c-3 6-7 10-8 17 0 8 6 14 12 24 7 12 7 28-3 39-9 10-21 14-33 14s-24-4-33-14c-10-11-10-27-3-39 6-10 12-16 12-24-1-7-5-11-8-17zm14 2c4 3 10 5 18 5s14-2 18-5c-4-3-10-5-18-5s-14 2-18 5z"/></g></svg>Nepenthes</div>
+
+  <!-- 1. o pedido -->
+  <section id="passo1">
+    <h1>Como você quer o seu site?</h1>
+    <p class="sub">Conte do seu jeito: o que é, para quem, o que não pode faltar. O Nepenthes pergunta o que faltar e depois escreve o site inteiro.</p>
+    <div class="cartao">
+      <label class="campo" for="desc">Seu site</label>
+      <textarea id="desc" placeholder="Ex.: Uma doceria artesanal em Salvador chamada Cacau & Coco, com cardápio, encomendas pelo WhatsApp e um jeito alegre"></textarea>
+    </div>
+    <div class="cartao">
+      <label class="campo">Quem escreve o site</label>
+      <div class="motores">
+        <label class="motor" id="m-servidor" hidden><input type="radio" name="motor" value="servidor"><span><b>Qwen no servidor</b><small id="m-servidor-nome"></small></span></label>
+        <label class="motor" id="m-navegador"><input type="radio" name="motor" value="navegador"><span><b>Qwen aqui no navegador</b>
+          <small id="m-navegador-txt">Nada para instalar e sem chave: o modelo é baixado uma vez e fica guardado neste navegador. Precisa de um navegador com WebGPU (Chrome ou Edge recentes).</small>
+          <br><select id="modelo" aria-label="Tamanho do modelo">
+            <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Mínimo: Qwen 2.5 0.5B (cerca de 400 MB, mais simples)</option>
+            <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC" selected>Leve: Qwen 2.5 1.5B (cerca de 1 GB)</option>
+            <option value="Qwen2.5-3B-Instruct-q4f16_1-MLC">Melhor: Qwen 2.5 3B (cerca de 2 GB)</option>
+          </select></span></label>
+        <label class="motor"><input type="radio" name="motor" value="regras"><span><b>Sem IA</b><small>As regras do Nepenthes montam na hora. A mesma frase dá sempre o mesmo site.</small></span></label>
+      </div>
+    </div>
+    <div class="acoes"><button id="ir1">Continuar</button></div>
+    <div id="erro1" class="erro" hidden></div>
+  </section>
+
+  <!-- 2. perguntas -->
+  <section id="passo2" hidden>
+    <h1>Só mais umas perguntas</h1>
+    <p class="sub">Responda o que quiser. O que ficar em branco, o Nepenthes decide.</p>
+    <div class="cartao" id="perguntas"></div>
+    <div class="acoes"><button id="ir2">Criar meu site</button><button class="sec" id="voltar2">Voltar</button></div>
+  </section>
+
+  <!-- 3. trabalhando -->
+  <section id="passo3" hidden>
+    <h1>Criando o seu site…</h1>
+    <div class="cartao">
+      <div class="status"><span class="giro"></span><span id="status">Começando</span></div>
+      <div class="barra" id="barra" hidden><i></i></div>
+    </div>
+    <div id="erro3" class="erro" hidden></div>
+    <div class="acoes" id="acoes3" hidden><button class="sec" id="voltar3">Voltar</button></div>
+  </section>
+
+  <!-- 4. pronto -->
+  <section id="passo4" hidden>
+    <h1 id="pronto-titulo">Pronto!</h1>
+    <div class="cartao">
+      <p id="pronto-motor"></p>
+      <ul class="notas" id="pronto-notas"></ul>
+      <p style="font-size:.9rem;color:var(--suave)">Arquivos gravados: <span id="pronto-arquivos"></span><br>O anterior ficou guardado em <code id="pronto-copia"></code>.</p>
+      <div id="pronto-aviso" class="erro" hidden></div>
+    </div>
+    <div class="acoes"><button id="abrir">Abrir o site</button></div>
+  </section>
+</main>
+
+<script type="module">
+const BASE = "{{BASE}}";
+const WEBLLM = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm";
+const $ = s => document.querySelector(s);
+const mostra = id => ["passo1","passo2","passo3","passo4"].forEach(p => $("#"+p).hidden = p !== id);
+let estado = {}, perguntas = [], motor = "regras", engine = null, f16 = true;
+
+async function post(rota, dados) {
+  const r = await fetch(BASE + "/_nep/assistente/" + rota, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(dados)});
+  if (!r.ok) throw new Error((await r.text()).trim() || ("erro " + r.status));
+  return r.json();
+}
+function status(t, pct) {
+  $("#status").textContent = t;
+  $("#barra").hidden = pct == null;
+  if (pct != null) $("#barra i").style.width = Math.round(pct * 100) + "%";
+}
+function erro(onde, e) { const el = $(onde); el.textContent = e.message || String(e); el.hidden = false; }
+
+// ---- Qwen no navegador (WebLLM) ----
+async function carregaQwen() {
+  if (engine) return engine;
+  // placas sem números de 16 bits (shader-f16) usam a versão de 32 bits do mesmo modelo
+  const modelo = f16 ? $("#modelo").value : $("#modelo").value.replace("q4f16_1", "q4f32_1");
+  status("Baixando o Qwen para este navegador (só na primeira vez)…", 0);
+  const webllm = await import(WEBLLM);
+  engine = await webllm.CreateMLCEngine(modelo, {initProgressCallback: p => status(p.text || "Preparando o Qwen…", p.progress ?? null)});
+  return engine;
+}
+async function qwen(sistema, usuario, maxTokens, temp) {
+  const e = await carregaQwen();
+  status("O Qwen está escrevendo…");
+  const r = await e.chat.completions.create({
+    messages: [{role: "system", content: sistema}, {role: "user", content: usuario}],
+    temperature: temp, max_tokens: maxTokens, response_format: {type: "json_object"},
+  });
+  return r.choices[0].message.content || "";
+}
+function lerJSON(t) { const m = t.match(/\{[\s\S]*\}/); try { return m ? JSON.parse(m[0]) : null } catch { return null } }
+
+// ---- passo 1 ----
+async function inicio() {
+  estado = await (await fetch(BASE + "/_nep/assistente/estado")).json();
+  if (estado.ideia) $("#desc").value = estado.ideia;
+  if (estado.servidor) { $("#m-servidor").hidden = false; $("#m-servidor-nome").textContent = "Modelo " + estado.servidor + ", configurado no painel. Escreve rápido e não pesa no seu computador."; }
+  let temGPU = false;
+  try { const a = navigator.gpu && await navigator.gpu.requestAdapter(); temGPU = !!a; f16 = !!a && a.features.has("shader-f16"); } catch {}
+  if (!temGPU) { $("#m-navegador").classList.add("off"); $("#m-navegador input").disabled = true; $("#m-navegador-txt").textContent = "Este navegador não tem WebGPU. Abra no Chrome ou Edge recentes para usar o Qwen aqui, sem instalar nada."; }
+  const pref = estado.servidor ? "servidor" : temGPU ? "navegador" : "regras";
+  document.querySelector(`input[name=motor][value=${pref}]`).checked = true;
+}
+$("#ir1").onclick = async () => {
+  const desc = $("#desc").value.trim();
+  $("#erro1").hidden = true;
+  if (!desc) { erro("#erro1", new Error("Escreva como você quer o site.")); return; }
+  motor = document.querySelector("input[name=motor]:checked").value;
+  $("#ir1").disabled = true;
+  try {
+    if (motor === "navegador") {
+      mostra("passo3");
+      const r = lerJSON(await qwen(estado.prompt_perguntas, desc, 300, 0.7));
+      perguntas = (r && Array.isArray(r.perguntas) ? r.perguntas : []).filter(p => typeof p === "string" && p.trim()).slice(0, 4);
+      if (!perguntas.length) perguntas = (await post("perguntas", {descricao: desc, motor: "regras"})).perguntas;
+    } else {
+      perguntas = (await post("perguntas", {descricao: desc, motor})).perguntas;
+    }
+    const box = $("#perguntas"); box.innerHTML = "";
+    perguntas.forEach((p, i) => {
+      const d = document.createElement("div"); d.className = "pergunta";
+      d.innerHTML = `<label class="campo" for="r${i}"></label><input type="text" id="r${i}">`;
+      d.querySelector("label").textContent = p; box.appendChild(d);
+    });
+    mostra("passo2"); $("#r0")?.focus();
+  } catch (e) { mostra("passo1"); erro("#erro1", e); }
+  $("#ir1").disabled = false;
+};
+
+// ---- passo 2 e 3 ----
+$("#voltar2").onclick = () => mostra("passo1");
+$("#voltar3").onclick = () => { $("#erro3").hidden = true; $("#acoes3").hidden = true; mostra("passo2"); };
+$("#ir2").onclick = async () => {
+  const desc = $("#desc").value.trim();
+  const respostas = perguntas.map((p, i) => [p, $("#r" + i).value]);
+  mostra("passo3"); $("#erro3").hidden = true; $("#acoes3").hidden = true;
+  try {
+    let conteudo = "";
+    if (motor === "navegador") {
+      let msg = "Pedido: " + desc + "\n";
+      respostas.forEach(([p, r]) => { if (r.trim()) msg += "Pergunta: " + p + "\nResposta: " + r.trim() + "\n"; });
+      conteudo = await qwen(estado.prompt_site, msg, 2500, 0.9);
+    }
+    status(motor === "servidor" ? "O Qwen do servidor está escrevendo e o Nepenthes está montando…" : "O Nepenthes está montando as páginas…");
+    const r = await post("criar", {descricao: desc, respostas, conteudo, motor});
+    $("#pronto-titulo").textContent = (r.nome ? r.nome + " está pronto!" : "Pronto!");
+    $("#pronto-motor").textContent = {servidor: "Escrito pelo Qwen do servidor e montado pelo Nepenthes.", navegador: "Escrito pelo Qwen no seu navegador e montado pelo Nepenthes.", regras: "Montado pelas regras do Nepenthes."}[r.motor] || "";
+    $("#pronto-notas").innerHTML = ""; (r.notas || []).forEach(n => { const li = document.createElement("li"); li.textContent = n; $("#pronto-notas").appendChild(li); });
+    $("#pronto-arquivos").textContent = (r.arquivos || []).map(a => a.split(/[\\/]/).pop()).join(", ");
+    $("#pronto-copia").textContent = (r.copia || "").split(/[\\/]/).pop();
+    if (r.aviso) { $("#pronto-aviso").textContent = r.aviso; $("#pronto-aviso").hidden = false; }
+    $("#abrir").onclick = () => location.href = r.ir || (BASE + "/");
+    mostra("passo4");
+  } catch (e) { erro("#erro3", e); $("#acoes3").hidden = false; }
+};
+inicio().catch(e => erro("#erro1", e));
+</script>
+</body>
+</html>

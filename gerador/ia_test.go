@@ -1,0 +1,75 @@
+package gerador
+
+import (
+	"strings"
+	"testing"
+)
+
+const respostaIA = "Aqui está:\n```json\n" + `{"nome": "Cacau & Coco", "ramo": "restaurante", "cidade": "Salvador", "cor": "#C2410C", "estilo": "divertido",
+ "chapeu": "Doceria artesanal", "titulo": "Doce de verdade <script>alert(1)</script>", "texto": "Brigadeiros e bolos feitos no dia.",
+ "chamada": "Encomende pelo WhatsApp", "servicos_titulo": "Cardápio",
+ "servicos": [{"icone": "🍫", "titulo": "Brigadeiro gourmet", "texto": "Cento com 12 sabores.", "preco": "R$ 1.250,00"},
+              {"icone": "🎂", "titulo": "Bolo de festa", "texto": "Massa amanteigada.", "preco": 180},
+              {"icone": "🥥", "titulo": "Cocada de forno", "texto": "Receita da avó.", "preco": "12,50"}],
+ "numeros": [{"numero": 15, "rotulo": "anos de doce"}, {"numero": "4.9", "rotulo": "nota no Google"}],
+ "faq": [{"pergunta": "Entregam?", "resposta": "Sim, em Salvador."}, {"pergunta": "Tem sem lactose?", "resposta": "Tem, por encomenda."}],
+ "depoimentos": [{"texto": "\"Melhor brigadeiro da Bahia\"", "autor": "Lia, Barra"}, {"texto": "Bolo lindo", "autor": "Rui, Pituba"}],
+ "equipe": [{"nome": "Dona Cida", "cargo": "Confeiteira"}],
+ "posts": [{"titulo": "Como guardar brigadeiro", "resumo": "Dicas rápidas."}],
+ "secoes": ["catalogo", "faq", "blog", "inexistente"]}` + "\n```"
+
+func TestAplicarIA(t *testing.T) {
+	c, err := LerConteudo(respostaIA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := Entender("doceria em Salvador sem blog")
+	Aplicar(p, c)
+	if p.Nome != "Cacau & Coco" || p.Setor.ID != "restaurante" || p.Cor != "#c2410c" || p.Fonte != "arredondada" {
+		t.Fatalf("plano: %+v", p)
+	}
+	if len(p.Setor.Servicos) != 3 || p.Setor.Servicos[0].Preco != "" || p.Setor.Servicos[1].Preco != "180" || p.Setor.Servicos[2].Preco != "12.50" {
+		t.Errorf("serviços: %+v", p.Setor.Servicos)
+	}
+	for _, m := range p.Modulos {
+		if m == "blog" || m == "inexistente" {
+			t.Errorf("seção %q não devia entrar (tirado ou inexistente): %v", m, p.Modulos)
+		}
+	}
+	site := Montar(p)
+	for _, want := range []string{"Cacau &amp; Coco", "Bolo de festa", "Cocada de forno", "Melhor brigadeiro da Bahia", "Tem sem lactose?"} {
+		if !strings.Contains(site, want) {
+			t.Errorf("site sem %q", want)
+		}
+	}
+	if strings.Contains(site, "<script>alert(1)") {
+		t.Error("texto da IA entrou sem escapar")
+	}
+
+	// lixo da IA não estraga o plano
+	p2 := Entender("academia em Natal")
+	antes := p2.Setor.Titulo
+	c2, _ := LerConteudo(`{"cor": "vermelho", "ramo": "foguete", "servicos": [{"titulo": "só um"}], "titulo": ""}`)
+	Aplicar(p2, c2)
+	if p2.Setor.ID != "academia" || p2.Setor.Titulo != antes || len(p2.Setor.Servicos) < 2 || p2.Cor == "vermelho" {
+		t.Errorf("IA com lixo mudou o plano: %+v", p2)
+	}
+	if _, err := LerConteudo("desculpe, não sei"); err == nil {
+		t.Error("devia reclamar de resposta sem JSON")
+	}
+}
+
+func TestPerguntasERespostas(t *testing.T) {
+	q := PerguntasPorRegras("uma padaria")
+	if len(q) < 3 || !strings.Contains(q[0], "nome") {
+		t.Fatalf("perguntas: %v", q)
+	}
+	d := DescricaoComRespostas("uma padaria", [][2]string{{q[0], "Pão de Mel"}, {q[1], "Olinda"}, {q[3], "galeria e blog"}})
+	p := Entender(d)
+	if p.Nome != "Pão de Mel" || p.Cidade != "Olinda" || !p.Tem("galeria") || !p.Tem("blog") {
+		t.Errorf("%q -> nome %q cidade %q mods %v", d, p.Nome, p.Cidade, p.Modulos)
+	}
+	if got := LerPerguntas(`{"perguntas": ["Qual o nome?", "", "Tem delivery?"]}`); len(got) != 2 {
+		t.Errorf("LerPerguntas: %v", got)
+	}
+}
