@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -17,7 +18,9 @@ import (
 const ajuda = `Nepenthes %s
 
 Uso:
-  nep                      abre o modo interativo
+  nep                      abre o modo interativo (ou, se houver um index.html com
+                           <nepenthes> na pasta, abre a tela de criar o site no navegador)
+  nep repl                 abre o modo interativo
   nep arquivo.nep [args]   executa um programa
   nep arquivo.lua [args]   executa um programa em Lua 5.4 (na mesma máquina virtual)
   nep run arquivo.nep      o mesmo que acima
@@ -47,11 +50,17 @@ func main() {
 		os.Exit(cgiMode(""))
 	}
 	if len(args) == 0 {
+		// dois cliques no nep ao lado de um index.html com <nepenthes>: abre o assistente
+		if b, err := os.ReadFile("index.html"); err == nil && reTagNepenthes.Match(b) {
+			os.Exit(abrirAssistente("index.html"))
+		}
 		os.Exit(repl())
 	}
 	switch args[0] {
 	case "-h", "--help", "help", "ajuda":
 		fmt.Printf(ajuda, lang.Version)
+	case "repl", "interativo":
+		os.Exit(repl())
 	case "-v", "--version", "version", "versao":
 		fmt.Println("nepenthes", lang.Version)
 	case "run":
@@ -270,6 +279,14 @@ func repl() int {
 		}
 		if buf.Len() == 0 && (strings.TrimSpace(line) == "sair" || strings.TrimSpace(line) == "exit") {
 			return 0
+		}
+		// quem digita "nep serve index.html" (ou .\nep.exe ...) aqui queria o terminal: roda o comando
+		if m := reComandoNep.FindStringSubmatch(strings.TrimSpace(line)); buf.Len() == 0 && m != nil {
+			fmt.Println("(isso é um comando do nep, não código: rodando " + m[1] + ")")
+			c := exec.Command(os.Args[0], strings.Fields(m[1])...)
+			c.Stdin, c.Stdout, c.Stderr = os.Stdin, os.Stdout, os.Stderr
+			c.Run()
+			continue
 		}
 		buf.WriteString(line)
 		src := buf.String()
