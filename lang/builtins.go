@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"github.com/Nanofylium/probable-plant/icones"
 	"math"
 	"strconv"
 	"strings"
@@ -549,6 +550,11 @@ func coreBuiltins() map[string]Value {
 			return math.Abs(x), nil
 		}
 		return nil, argErr("abs", 0, "um número", arg(a, 0))
+	})
+	// icone("☕") — o ícone de traço (Lucide) para o emoji ou nome; sem ícone, o próprio texto
+	def("icone", func(vm *VM, a []Value) (Value, error) {
+		x, _ := arg(a, 0).(string)
+		return HTML(icones.HTML(x)), nil
 	})
 	def("money", func(vm *VM, a []Value) (Value, error) {
 		n, _ := numVal(arg(a, 0))

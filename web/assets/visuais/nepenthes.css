@@ -1,0 +1,7 @@
+/* Visual "nepenthes": o tema de sempre, com letras de verdade (Outfit no
+   texto, Fraunces nos títulos) no lugar das fontes do sistema. */
+@font-face { font-family: "Outfit"; src: url("{{fontes}}/outfit.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Fraunces"; src: url("{{fontes}}/fraunces.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+:root { --nep-fonte: "Outfit", system-ui, sans-serif; --nep-fonte-titulo: "Fraunces", Georgia, serif; }
+:root h1, :root h2 { font-weight: 600; letter-spacing: -.02em; }
+:root h3 { font-family: var(--nep-fonte); font-weight: 700; }

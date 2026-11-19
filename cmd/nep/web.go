@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"net/http/cgi"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/Nanofylium/probable-plant/ialocal"
 	"github.com/Nanofylium/probable-plant/web"
 )
 
@@ -44,7 +46,7 @@ func serve(args []string, dev bool) int {
 	if *host == "" && dev {
 		*host = "127.0.0.1"
 	}
-	srv, err := web.New(web.Options{SiteFile: file, DataDir: *data, Dev: dev, Base: *base})
+	srv, err := web.New(web.Options{SiteFile: file, DataDir: *data, Dev: dev, Base: *base, AposCriar: previaAoCriar})
 	if srv == nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -64,6 +66,11 @@ func serve(args []string, dev bool) int {
 	fmt.Printf("Nepenthes servindo %s em http://%s%s/ (%s)\n", file, shown, *base, modo)
 	fmt.Printf("Painel: http://%s%s/_admin   ·   Ctrl+C para parar\n", shown, *base)
 	hs := &http.Server{Addr: addr, Handler: srv, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, IdleTimeout: 2 * time.Minute}
+	// ao sair, desliga a IA do Nepenthes se ela foi ligada
+	sinal := make(chan os.Signal, 1)
+	signal.Notify(sinal, os.Interrupt, sigTerm)
+	go func() { <-sinal; ialocal.Parar(); os.Exit(0) }()
+	defer ialocal.Parar()
 	if err := hs.ListenAndServe(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -101,7 +108,7 @@ func cgiMode(file string) int {
 	}
 	base := strings.TrimRight(path.Dir(os.Getenv("SCRIPT_NAME")), "/.")
 	dev := os.Getenv("NEP_DEV") == "1"
-	srv, err := web.New(web.Options{SiteFile: file, Dev: dev, CGI: true, Base: base, DataDir: os.Getenv("NEP_DATA")})
+	srv, err := web.New(web.Options{SiteFile: file, Dev: dev, CGI: true, Base: base, DataDir: os.Getenv("NEP_DATA"), AposCriar: previaAoCriar})
 	if srv == nil {
 		fmt.Print("Status: 500\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nNepenthes: " + err.Error() + "\n")
 		return 0
@@ -174,4 +181,15 @@ func checkSite(f string) int {
 		fmt.Printf("  editável %d trecho(s): %s\n", len(keys), strings.Join(keys, ", "))
 	}
 	return 0
+}
+
+// previaAoCriar: quando o assistente (<nepenthes>) grava o site, grava também
+// a prévia que abre sem servidor, ao lado.
+func previaAoCriar(site string) []string {
+	out := strings.TrimSuffix(strings.TrimSuffix(site, ".html"), ".nep") + "-previa.html"
+	h, _, err := gerarPrevia(site)
+	if err != nil || os.WriteFile(out, []byte(h), 0o644) != nil {
+		return nil
+	}
+	return []string{out}
 }

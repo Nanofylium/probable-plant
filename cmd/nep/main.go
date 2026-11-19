@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -17,7 +18,9 @@ import (
 const ajuda = `Nepenthes %s
 
 Uso:
-  nep                      abre o modo interativo
+  nep                      abre o modo interativo (ou, se houver um index.html com
+                           <nepenthes> na pasta, abre a tela de criar o site no navegador)
+  nep repl                 abre o modo interativo
   nep arquivo.nep [args]   executa um programa
   nep arquivo.lua [args]   executa um programa em Lua 5.4 (na mesma máquina virtual)
   nep run arquivo.nep      o mesmo que acima
@@ -26,7 +29,12 @@ Uso:
   nep criar "descrição"    monta um site completo a partir do que você escrever, ex.:
                            nep criar "escola de música chamada Sol Maior em Salvador,
                            com blog, eventos e wiki, azul e elegante"
-                           (--pasta X escolhe a pasta; --plano só mostra o que entendeu)
+                           (--pasta X escolhe a pasta; --plano só mostra o que entendeu;
+                           --visual X: nepenthes, editorial, noturno, vitrine, brutal,
+                           suave, minimo ou luxo)
+  nep ia baixar            baixa a IA do Nepenthes (llama.cpp + Granite 3.3 2B, 1,5 GB, uma vez
+                           só); com ela, a tag <nepenthes> cria sites sem GPU e sem chave
+  nep ia                   mostra se a IA do Nepenthes já está baixada e onde
   nep dev site.nep.html    roda o site no computador, com erros detalhados
   nep previa site.nep.html cria site-previa.html: o site pronto num arquivo que abre
                            com dois cliques, sem servidor (para mostrar a alguém)
@@ -44,11 +52,20 @@ func main() {
 		os.Exit(cgiMode(""))
 	}
 	if len(args) == 0 {
+		// dois cliques no nep ao lado de um index.html com <nepenthes>: abre o assistente
+		if b, err := os.ReadFile("index.html"); err == nil && reTagNepenthes.Match(b) {
+			os.Exit(abrirAssistente("index.html"))
+		}
+		if cliqueDuplo() || os.Getenv("NEP_CLIQUE") == "1" {
+			os.Exit(modoClique())
+		}
 		os.Exit(repl())
 	}
 	switch args[0] {
 	case "-h", "--help", "help", "ajuda":
 		fmt.Printf(ajuda, lang.Version)
+	case "repl", "interativo":
+		os.Exit(repl())
 	case "-v", "--version", "version", "versao":
 		fmt.Println("nepenthes", lang.Version)
 	case "run":
@@ -72,6 +89,8 @@ func main() {
 		os.Exit(criar(args[1:]))
 	case "novo", "new":
 		os.Exit(novo(args[1:]))
+	case "ia":
+		os.Exit(ia(args[1:]))
 	case "dev":
 		os.Exit(serve(args[1:], true))
 	case "cgi":
@@ -265,6 +284,14 @@ func repl() int {
 		}
 		if buf.Len() == 0 && (strings.TrimSpace(line) == "sair" || strings.TrimSpace(line) == "exit") {
 			return 0
+		}
+		// quem digita "nep serve index.html" (ou .\nep.exe ...) aqui queria o terminal: roda o comando
+		if m := reComandoNep.FindStringSubmatch(strings.TrimSpace(line)); buf.Len() == 0 && m != nil {
+			fmt.Println("(isso é um comando do nep, não código: rodando " + m[1] + ")")
+			c := exec.Command(os.Args[0], strings.Fields(m[1])...)
+			c.Stdin, c.Stdout, c.Stderr = os.Stdin, os.Stdout, os.Stderr
+			c.Run()
+			continue
 		}
 		buf.WriteString(line)
 		src := buf.String()

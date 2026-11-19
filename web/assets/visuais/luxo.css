@@ -1,0 +1,60 @@
+/* Visual "luxo": sofisticado. Capa escura com moldura dourada, títulos em
+   Cormorant Garamond, menu em caixa alta bem espaçada, fios dourados, muito
+   respiro e nada de cantos redondos. */
+@font-face { font-family: "Cormorant Garamond"; src: url("{{fontes}}/cormorant-garamond.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "Manrope"; src: url("{{fontes}}/manrope.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+:root {
+  --nep-fonte: "Manrope", system-ui, sans-serif; --nep-fonte-titulo: "Cormorant Garamond", Georgia, serif;
+  --v-ouro: #b08d57; --v-ouro-texto: #8a6a3a; --nep-fundo: #f7f3ec; --nep-superficie: #fffdf8; --nep-alt: #efe8dc; --nep-texto: #22201c; --nep-suave: #6d665b; --nep-linha: #ddd2bf; --nep-escuro: #15130f;
+  --nep-raio: 0px; --nep-sombra: none;
+}
+:root body { font-size: 16px; letter-spacing: .01em; }
+:root h1, :root h2, :root h3 { font-weight: 500; letter-spacing: 0; }
+:root h2 { font-size: clamp(2.2rem, 4.6vw, 3.4rem); }
+:root h3 { font-size: 1.55rem; }
+
+:root .topo-faixa { background: var(--nep-escuro); color: var(--v-ouro); justify-content: center; text-transform: uppercase; letter-spacing: .22em; font-size: .7rem; }
+:root .topo-faixa a { color: var(--v-ouro); }
+:root body > header { background: var(--nep-fundo); border-bottom: 1px solid var(--nep-linha); padding-top: 20px; padding-bottom: 20px; }
+:root .marca { font-family: var(--nep-fonte-titulo); font-size: 1.7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+:root .marca span { display: none; }
+:root body > header nav a { border-radius: 0; text-transform: uppercase; letter-spacing: .2em; font-size: .7rem; font-weight: 600; }
+:root body > header nav a:hover, :root body > header nav a[aria-current] { background: none; color: var(--v-ouro-texto); }
+:root body > header > .botao { background: transparent; color: var(--nep-texto); border: 1px solid var(--v-ouro); }
+
+:root .capa:not(.cor) { background: var(--nep-escuro); color: #f3ece0; }
+:root .capa h1 { color: #fff; font-weight: 400; font-size: clamp(2.8rem, 6.4vw, 5rem); line-height: 1.02; }
+:root .capa p { color: #cfc6b6; }
+:root .capa .chapeu { color: var(--v-ouro); opacity: 1; }
+:root .capa .ilustracao { border-radius: 0; box-shadow: none; outline: 1px solid var(--v-ouro); outline-offset: 14px; margin: 14px; }
+:root .capa .ilustracao::after { display: none; }
+:root .capa .botao.secundario { color: #f3ece0; border-color: var(--v-ouro); }
+
+:root .chapeu { color: var(--v-ouro-texto); letter-spacing: .32em; font-weight: 600; font-size: .7rem; }
+:root .centro .chapeu::before, :root .centro .chapeu::after { content: ""; display: inline-block; width: 36px; height: 1px; background: var(--v-ouro); vertical-align: middle; margin: 0 14px; }
+:root .secao { padding-top: clamp(64px, 9vw, 120px); padding-bottom: clamp(64px, 9vw, 120px); }
+
+:root .cartao { background: var(--nep-superficie); border: 1px solid var(--nep-linha); border-radius: 0; box-shadow: none; padding: 34px 30px; text-align: center; }
+:root a.cartao:hover { transform: none; box-shadow: none; border-color: var(--v-ouro); }
+:root .cartao > img:first-child, :root .cartao > .foto:first-child { width: calc(100% + 60px); margin: -34px -30px 22px; }
+:root .icone { background: none; border: 1px solid var(--v-ouro); border-radius: 50%; width: 56px; height: 56px; }
+:root .icone .nep-ic { color: var(--v-ouro); stroke-width: 1.3; }
+:root .preco, :root .servico .preco, :root .produto .preco, :root .preco-grande { color: var(--v-ouro-texto); }
+:root .depoimento p { font-family: var(--nep-fonte-titulo); font-style: italic; font-size: 1.35rem; color: var(--nep-texto); }
+:root .estrelas { color: var(--v-ouro); }
+
+:root .botao, :root button, :root input[type=submit] { border-radius: 0; box-shadow: none; background: var(--v-ouro); color: #15130f; text-transform: uppercase; letter-spacing: .2em; font-size: .72rem; font-weight: 700; padding: 17px 30px; }
+:root .botao.secundario { background: transparent; color: var(--nep-texto); border-color: var(--v-ouro); }
+:root .capa.cor { background: var(--nep-escuro); color: #f3ece0; }
+:root .capa.cor .botao { background: var(--v-ouro); color: #15130f; }
+:root .capa.cor .botao.secundario { background: transparent; color: #f3ece0; border-color: var(--v-ouro); }
+:root .capa.cor .chapeu { color: var(--v-ouro); }
+
+:root .numeros strong { font-weight: 500; color: var(--v-ouro-texto); }
+:root .numeros span { text-transform: uppercase; letter-spacing: .2em; font-size: .7rem; }
+:root .numeros > * + * { border-left-color: var(--nep-linha); }
+:root .foto-item, :root .foto-item img { border-radius: 0; }
+:root input:not([type=checkbox], [type=radio], [type=submit], [type=hidden], [type=range]), :root select, :root textarea { border-radius: 0; }
+:root main > form, :root .secao > form, :root details { border-radius: 0; box-shadow: none; }
+:root body > footer { background: var(--nep-escuro); color: #b8ae9c; }
+:root body > footer h3, :root body > footer h4 { color: var(--v-ouro); letter-spacing: .24em; }

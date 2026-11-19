@@ -1,0 +1,41 @@
+/* Visual "suave": acolhedor. Tons pastel da cor do site, tudo bem
+   arredondado, cabeçalho flutuante em pílula, imagem da capa em forma de
+   bolha, letras Nunito. */
+@font-face { font-family: "Nunito"; src: url("{{fontes}}/nunito.woff2") format("woff2"); font-weight: 200 1000; font-display: swap; }
+:root {
+  --nep-fonte: "Nunito", system-ui, sans-serif; --nep-fonte-titulo: "Nunito", system-ui, sans-serif;
+  --nep-raio: 26px; --nep-fundo: color-mix(in srgb, var(--nep-cor) 5%, #fffaf6); --nep-alt: color-mix(in srgb, var(--nep-cor) 11%, #fff);
+  --nep-superficie: #fff; --nep-linha: color-mix(in srgb, var(--nep-cor) 18%, #fff);
+  --nep-sombra: 0 10px 30px color-mix(in srgb, var(--nep-cor) 14%, transparent);
+}
+:root h1, :root h2 { font-weight: 900; letter-spacing: -.02em; }
+:root h3 { font-weight: 800; }
+
+:root .topo-faixa { background: transparent; color: var(--nep-suave); justify-content: center; }
+:root .topo-faixa a { color: var(--nep-cor); }
+:root body > header { top: 10px; margin: 8px max(12px, calc(var(--nep-margem) - 24px)) 0; padding: 10px 14px 10px 20px; border-radius: 999px; border: 1px solid var(--nep-linha); background: rgba(255,255,255,.88); box-shadow: var(--nep-sombra); }
+:root body > header nav a:hover, :root body > header nav a[aria-current] { background: var(--nep-alt); color: var(--nep-cor); }
+:root .marca span { border-radius: 50%; }
+@media (max-width: 640px) { :root body > header { border-radius: 24px; } }
+
+:root .capa:not(.cor) { background: radial-gradient(circle at 8% 18%, color-mix(in srgb, var(--nep-cor) 16%, transparent) 0 130px, transparent 131px), radial-gradient(circle at 96% 86%, color-mix(in srgb, var(--nep-cor) 12%, transparent) 0 190px, transparent 191px), var(--nep-fundo); }
+:root .capa .ilustracao { aspect-ratio: 1; border-radius: 44% 56% 62% 38% / 42% 44% 56% 58%; box-shadow: 0 30px 60px color-mix(in srgb, var(--nep-cor) 28%, transparent); }
+:root .capa .ilustracao::after { border-radius: 999px; height: 14%; }
+:root .chapeu { display: inline-block; background: var(--nep-alt); color: var(--nep-cor); padding: 6px 14px; border-radius: 999px; text-transform: none; letter-spacing: 0; font-size: .92rem; font-weight: 800; }
+:root .capa.cor .chapeu { background: rgba(255,255,255,.2); color: #fff; opacity: 1; }
+:root .secao.alt { border-radius: 48px; margin-left: min(12px, 2vw); margin-right: min(12px, 2vw); }
+
+:root .cartao { border-color: transparent; }
+:root a.cartao:hover { transform: translateY(-5px) rotate(-.6deg); }
+:root .icone { width: 58px; height: 58px; border-radius: 50%; background: var(--nep-alt); }
+:root .numeros > * { background: #fff; border-radius: 24px; box-shadow: var(--nep-sombra); padding: 18px 10px; }
+:root .numeros > * + * { border-left: 0; }
+:root .numeros { gap: 16px; }
+:root .botao, :root button, :root input[type=submit] { padding: 14px 26px; font-weight: 800; }
+:root .botao.secundario { background: #fff; border-color: var(--nep-linha); color: var(--nep-texto); }
+:root .capa.cor { border-radius: 48px; margin: 0 min(12px, 2vw) 40px; }
+:root .capa.cor .botao.secundario { background: transparent; color: inherit; border-color: currentColor; }
+:root .foto-item { border-radius: 26px; }
+:root input:not([type=checkbox], [type=radio], [type=submit], [type=hidden], [type=range]), :root select, :root textarea { border-radius: 16px; border-color: var(--nep-linha); }
+:root body > footer { background: color-mix(in srgb, var(--nep-cor) 85%, #000); color: rgba(255,255,255,.8); border-radius: 40px 40px 0 0; }
+:root body > footer nav a { color: rgba(255,255,255,.8); }

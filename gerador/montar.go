@@ -2,7 +2,9 @@ package gerador
 
 import (
 	"fmt"
+	"github.com/Nanofylium/probable-plant/icones"
 	"html"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +17,11 @@ func Montar(p *Plano) string {
 	var b strings.Builder
 	b.WriteString(g.cabecalho())
 	b.WriteString(g.guarda())
-	fmt.Fprintf(&b, "\n<nep-config tema=\"nepenthes\" cor=\"%s\" fonte=\"%s\" nome=\"%s\" movimento=\"suave\" lang=\"pt-BR\">\n", p.Cor, p.Fonte, esc(p.Nome))
+	visual := ""
+	if VisualValido(p.Visual) {
+		visual = ` visual="` + p.Visual + `"`
+	}
+	fmt.Fprintf(&b, "\n<nep-config tema=\"nepenthes\" cor=\"%s\" fonte=\"%s\"%s nome=\"%s\" movimento=\"suave\" lang=\"pt-BR\">\n", p.Cor, p.Fonte, visual, esc(p.Nome))
 	b.WriteString(g.conteudos())
 	b.WriteString(g.codigo())
 	b.WriteString(g.apis())
@@ -111,7 +117,7 @@ func (g *ger) rotas() {
 		cta2, cta2U = "Fale com a gente", "/contato"
 	}
 	g.vars = map[string]string{
-		"«nome»": esc(p.Nome), "«nomeLit»": lit(p.Nome), "«emoji»": s.Emoji, "«cidade»": esc(cidade),
+		"«nome»": esc(p.Nome), "«insta»": esc(p.Instagram), "«whats»": esc(whatsLink(p.WhatsApp)), "«nomeLit»": lit(p.Nome), "«emoji»": icones.HTML(s.Emoji), "«cidade»": esc(cidade),
 		"«servR»": esc(s.ServRotulo), "«servU»": servU, "«servI»": esc(s.ServIntro),
 		"«equipeR»": esc(s.EquipeRotulo), "«equipeU»": equipeU,
 		"«blogR»": esc(s.BlogRotulo), "«blogU»": blogU,
@@ -127,8 +133,14 @@ func (g *ger) troca(s string) string {
 	for k, v := range g.vars {
 		pares = append(pares, k, v)
 	}
-	return strings.NewReplacer(pares...).Replace(s)
+	s = strings.NewReplacer(pares...).Replace(s)
+	return reIcone.ReplaceAllStringFunc(s, func(m string) string {
+		return icones.HTML(reIcone.FindStringSubmatch(m)[1])
+	})
 }
+
+// «ic:🛒» no código das páginas vira o ícone de traço (pacote icones)
+var reIcone = regexp.MustCompile(`«ic:([^»]+)»`)
 
 // ---------------------------------------------------------------- cabeçalho
 
@@ -247,6 +259,7 @@ func (g *ger) conteudos() string {
   <label>Álbum <input name="categoria" maxlength="40"></label>
   <label>Foto <input type="file" name="foto" accept="image/*" data-max-mb="8" data-publico></label>
   <label>Legenda <textarea name="resumo" maxlength="300" rows="2"></textarea></label>
+  <label>Link (post no Instagram, por exemplo) <input name="link" type="url" maxlength="300"></label>
 </conteudo>
 `)
 	}
@@ -384,7 +397,22 @@ func (g *ger) codigo() string {
 				lit(pe.Nome), lit(slugify(pe.Nome)), lit(pe.Cargo), lit(pe.Texto))
 		}
 	}
-	if g.tem("galeria") {
+	if g.tem("galeria") && len(g.p.Fotos) > 0 {
+		for i, f := range g.p.Fotos {
+			if i >= 12 {
+				break
+			}
+			tit := f.Legenda
+			if r := []rune(tit); len(r) > 60 {
+				tit = strings.TrimSpace(string(r[:57])) + "…"
+			}
+			if tit == "" {
+				tit = fmt.Sprintf("Foto %d", i+1)
+			}
+			fmt.Fprintf(&b, "    db.insert(\"galeria\", {titulo: %s, slug: %s, publicado: true, categoria: \"Instagram\", resumo: %s, link: %s, foto: {nome: %s, tipo: %s, tamanho: %d, url: url(%s)}})\n",
+				lit(tit), lit(fmt.Sprintf("foto-%d", i+1)), lit(f.Legenda), lit(linkSeguro(f.Link)), lit(f.Nome), lit(f.Tipo), f.Tamanho, lit(f.URL))
+		}
+	} else if g.tem("galeria") {
 		for i, t := range s.Galeria {
 			alb := "Nosso espaço"
 			if i%2 == 1 {
@@ -848,4 +876,19 @@ func (g *ger) apis() string {
 `)
 	}
 	return b.String()
+}
+
+// linkSeguro só deixa passar endereços https (o link vai num href).
+func linkSeguro(u string) string {
+	if strings.HasPrefix(u, "https://") && !strings.ContainsAny(u, "\"'<> ") {
+		return u
+	}
+	return ""
+}
+
+func whatsLink(u string) string {
+	if u == "" {
+		return "https://wa.me/5500000000000"
+	}
+	return u
 }

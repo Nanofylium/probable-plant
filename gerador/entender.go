@@ -27,6 +27,27 @@ type Plano struct {
 	Notas     []string // frases curtas do que foi entendido (o comando mostra)
 	Pedidos   []string // módulos que a pessoa pediu com todas as letras
 	Tirados   []string // módulos que a pessoa pediu para tirar
+
+	RamoAchado bool // as regras reconheceram o ramo pelas palavras da descrição
+	CorPedida  bool // a pessoa disse a cor
+	NomeAchado bool // o nome veio da descrição (não é o padrão do ramo)
+
+	Visual       string // família de aparência (ver Visuais)
+	VisualPedido bool   // a pessoa pediu o visual com palavras
+
+	Fotos     []Foto // fotos de verdade (do Instagram): capa e galeria
+	Instagram string // @ do Instagram, sem o @
+	WhatsApp  string // link do WhatsApp (da bio do Instagram), se houver
+}
+
+// Foto é uma imagem já gravada nos arquivos do site (data/arquivos).
+type Foto struct {
+	URL     string // /_nep/arquivo/p-....jpg (sem a base)
+	Nome    string
+	Tipo    string
+	Tamanho int64
+	Legenda string
+	Link    string // o post no Instagram, se veio pela API
 }
 
 // ModulosTodos, na ordem em que aparecem no site.
@@ -39,7 +60,7 @@ var NomeModulo = map[string]string{
 	"eventos": "eventos com inscrição e vagas", "planos": "planos e preços", "equipe": "equipe", "galeria": "galeria / portfólio",
 	"depoimentos": "depoimentos", "blog": "blog (categorias, tags, arquivo, comentários)", "wiki": "wiki (links [[Página]], índice A–Z, sugestões de edição)",
 	"forum": "fórum moderado", "downloads": "área de downloads", "vagas": "trabalhe conosco (vagas + currículo)", "faq": "perguntas frequentes",
-	"newsletter": "newsletter", "idiomas": "tradução automática (com a IA ligada)", "atendente": "atendente virtual (lowii, com a IA ligada)",
+	"newsletter": "newsletter", "idiomas": "tradução automática (com a IA ligada)", "atendente": "atendente virtual (lowii; com IA quando houver, senão responde pelas páginas do site)",
 }
 
 // Palavras que pedem cada módulo (radicais sem acento; "x$" = palavra inteira).
@@ -145,7 +166,11 @@ var (
 )
 
 // Entender lê a descrição e devolve o plano do site.
-func Entender(desc string) *Plano {
+func Entender(desc string) *Plano { return EntenderComSemente(desc, 0) }
+
+// EntenderComSemente é o Entender com sorteio do visual: semente 0 dá sempre o
+// mesmo visual para a mesma descrição; outra semente pode dar outro.
+func EntenderComSemente(desc string, semente int64) *Plano {
 	desc = strings.TrimSpace(desc)
 	txt := semAcento(desc)
 	p := &Plano{Descricao: desc}
@@ -163,6 +188,7 @@ func Entender(desc string) *Plano {
 	}
 	p.Setor = completar(melhor)
 	if pontos > 0 {
+		p.RamoAchado = true
 		p.Notas = append(p.Notas, "ramo: "+p.Setor.Rotulo)
 	} else {
 		p.Notas = append(p.Notas, "ramo: não reconheci um ramo específico, usei o modelo de empresa")
@@ -192,6 +218,7 @@ func Entender(desc string) *Plano {
 		p.Nome = p.Setor.Nome
 		p.Notas = append(p.Notas, "nome: não achei, usei \""+p.Nome+"\" (troque no painel ou escreva \"chamada X\")")
 	} else {
+		p.NomeAchado = true
 		p.Notas = append(p.Notas, "nome: "+p.Nome)
 	}
 
@@ -210,12 +237,14 @@ func Entender(desc string) *Plano {
 	p.Cor = p.Setor.Cor
 	if m := reHex.FindString(desc); m != "" {
 		p.Cor = strings.ToLower(m)
+		p.CorPedida = true
 		p.Notas = append(p.Notas, "cor: "+p.Cor)
 	} else {
 		achou := false
 		for _, c := range cores {
 			if len(achar(txt, c.chave)) > 0 {
 				p.Cor = c.hex
+				p.CorPedida = true
 				p.Notas = append(p.Notas, "cor: "+c.nome)
 				achou = true
 				break
@@ -235,6 +264,7 @@ func Entender(desc string) *Plano {
 			break
 		}
 	}
+	escolherVisual(p, txt, semente)
 
 	// ---- módulos: com / só / sem
 	pedidos, tirados := map[string]bool{}, map[string]bool{}
@@ -244,6 +274,18 @@ func Entender(desc string) *Plano {
 			tirados[m] = true
 		} else if sim > 0 {
 			pedidos[m] = true
+		}
+	}
+	// "cardápio com preços" é preço de produto, não tabela de planos
+	if pedidos["planos"] && pedidos["catalogo"] {
+		var outras []string
+		for _, c := range chavesModulo["planos"] {
+			if c != "precos" {
+				outras = append(outras, c)
+			}
+		}
+		if sim, _ := mencao(txt, outras); sim == 0 {
+			delete(pedidos, "planos")
 		}
 	}
 	// palavras do próprio ramo ("loja", "comunidade") não contam como pedido de módulo

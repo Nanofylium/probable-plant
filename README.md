@@ -114,6 +114,8 @@ nep criar "escola de música chamada Sol Maior em Salvador, com blog, eventos e 
 
 O `nep criar` entende o ramo, o nome, a cidade, a cor e o estilo, e monta um `site.nep.html` com a complexidade de um Joomla, WordPress, Backdrop ou TikiWiki: loja com carrinho, agendamento e reservas, eventos com inscrição, blog completo, wiki com `[[links]]`, fórum moderado, downloads, vagas, newsletter, painel e SEO. `com X` acrescenta, `sem X` tira e `só X` deixa só o que você pediu. Sai junto o `site-previa.html`. Detalhes na seção 10.16 da SPEC.
 
+**Com IA:** escreva `<nepenthes></nepenthes>` num `index.html` e rode `nep serve index.html`. Ao abrir o site, uma tela pergunta como você quer o site, a IA escreve o conteúdo (a IA do Nepenthes, que roda no próprio computador sem GPU e sem chave, baixada uma vez com `nep ia baixar` ou pela tela; o Qwen do servidor, se configurado no painel; ou o Qwen no seu navegador) e o Nepenthes reescreve o arquivo inteiro com o site pronto. Cada pedido sai diferente. Dá para mandar prints do Instagram (da grade do perfil ou de posts): o Nepenthes acha as fotos dentro de cada print, recorta e põe na capa e na galeria. Também dá para enviar o arquivo de dados do Instagram ("Baixar suas informações"), em que a bio e as legendas guiam o texto. Todo site sai com um atendente que responde aos visitantes. Cada site sai com um de oito visuais (editorial, noturno, vitrine, brutal, suave, mínimo, luxo ou o clássico), com fontes e ícones de verdade; dá para escolher na tela ou deixar o Nepenthes sortear. Veja a seção 10.17 da SPEC.
+
 ## Colocar um site no ar
 
 **VPS (recomendado):** copie o `nep` e o `site.nep.html` para o servidor, rode `nep serve site.nep.html --porta 8000` como serviço (systemd) e coloque um proxy com HTTPS na frente (Caddy ou Nginx). As regiões `<live>` usam Server-Sent Events, em tempo real.
@@ -159,6 +161,8 @@ A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as t
 - `testdata/`: programas com a saída esperada, usados nos testes automáticos. Em `testdata/lua`, a saída esperada foi gerada pelo Lua 5.4 oficial.
 - `exemplos/lua/`: programas em Lua que rodam no `nep`.
 - `LICENCA-LUA.txt`: crédito e licença MIT do Lua.
+- `LICENCA-ECHARTS.txt`: gráficos com `grafico()` (Apache ECharts, Apache 2.0). `LICENCA-HILO.txt`: roleta, raspadinha e memória com `jogo()` (Hilo, da Alibaba, MIT).
+- `LICENCA-FONTES.txt`: fontes dos visuais (Fontsource, SIL OFL 1.1). `icones/LICENSE-lucide.txt`: ícones do Lucide (ISC).
 
 ## Desempenho
 

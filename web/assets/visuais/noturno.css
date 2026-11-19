@@ -1,0 +1,51 @@
+/* Visual "noturno": tema escuro. Fundo quase preto, brilho da cor do site
+   atrás da capa, título em degradê, cartões de vidro com fio fino, letras
+   Space Grotesk e Inter. */
+@font-face { font-family: "Space Grotesk"; src: url("{{fontes}}/space-grotesk.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("{{fontes}}/inter.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+:root {
+  color-scheme: dark;
+  --nep-fonte: "Inter", system-ui, sans-serif; --nep-fonte-titulo: "Space Grotesk", "Inter", sans-serif;
+  --nep-fundo: #0b0e13; --nep-superficie: #121720; --nep-alt: #0f131a; --nep-texto: #e8ecf2; --nep-suave: #9aa5b5; --nep-linha: #232b38; --nep-escuro: #06080b;
+  --nep-raio: 16px; --nep-sombra: 0 0 0 1px rgba(255,255,255,.04), 0 20px 40px rgba(0,0,0,.45);
+  --v-cor: color-mix(in srgb, var(--nep-cor) 55%, #fff);
+}
+:root body { background: var(--nep-fundo); }
+:root a { color: var(--v-cor); }
+:root h1, :root h2, :root h3 { font-weight: 600; letter-spacing: -.03em; }
+
+:root .topo-faixa { background: #000; color: var(--nep-suave); border-bottom: 1px solid var(--nep-linha); }
+:root body > header { background: color-mix(in srgb, var(--nep-fundo) 72%, transparent); border-bottom-color: var(--nep-linha); }
+:root body > header nav a { color: var(--nep-suave); }
+:root body > header nav a:hover { background: rgba(255,255,255,.06); color: var(--nep-texto); }
+:root body > header nav a[aria-current] { color: var(--nep-texto); background: rgba(255,255,255,.08); }
+:root .marca span { background: color-mix(in srgb, var(--nep-cor) 22%, transparent); border-color: color-mix(in srgb, var(--nep-cor) 55%, transparent); }
+:root .marca span .nep-ic { color: var(--v-cor); }
+:root .carrinho-topo { color: var(--nep-texto); }
+
+:root .capa:not(.cor) { background: radial-gradient(800px 520px at 82% 0%, color-mix(in srgb, var(--nep-cor) 42%, transparent), transparent 70%), radial-gradient(600px 420px at 0% 100%, color-mix(in srgb, var(--nep-cor) 20%, transparent), transparent 70%), var(--nep-fundo); }
+:root .capa:not(.cor) h1 { background: linear-gradient(180deg, #fff 30%, color-mix(in srgb, #fff 50%, var(--nep-cor))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+:root .capa .ilustracao { box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 40px 90px -20px color-mix(in srgb, var(--nep-cor) 60%, transparent); }
+:root .capa .ilustracao::after { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+:root .chapeu { color: var(--v-cor); }
+:root .capa .chapeu { padding: 5px 12px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--nep-cor) 55%, transparent); background: color-mix(in srgb, var(--nep-cor) 16%, transparent); }
+:root .secao.alt { background: var(--nep-alt); border-top: 1px solid var(--nep-linha); border-bottom: 1px solid var(--nep-linha); }
+
+:root .cartao { background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); border-color: var(--nep-linha); }
+:root a.cartao:hover { border-color: color-mix(in srgb, var(--nep-cor) 60%, var(--nep-linha)); box-shadow: 0 20px 50px -20px color-mix(in srgb, var(--nep-cor) 55%, transparent); }
+:root .icone { background: color-mix(in srgb, var(--nep-cor) 20%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nep-cor) 45%, transparent); }
+:root .icone .nep-ic { color: var(--v-cor); }
+:root .depoimento p { color: var(--nep-texto); }
+:root .preco, :root .preco-grande, :root .servico .preco, :root .produto .preco, :root .numeros strong { color: var(--v-cor); }
+:root .numeros > * + * { border-left-color: var(--nep-linha); }
+:root .foto-produto, :root .capa-post, :root .foto-item .sem-foto { background: linear-gradient(150deg, color-mix(in srgb, var(--nep-cor) 28%, var(--nep-superficie)), var(--nep-superficie)); }
+:root .foto-produto .nep-ic, :root .capa-post .nep-ic, :root .sem-foto .nep-ic { color: var(--v-cor); }
+:root .tags a, :root .selo { background: color-mix(in srgb, var(--nep-cor) 22%, transparent); color: var(--v-cor); }
+
+:root .botao.secundario { color: var(--nep-texto); border-color: var(--nep-linha); background: rgba(255,255,255,.03); }
+:root .capa.cor { background: linear-gradient(135deg, var(--nep-cor), color-mix(in srgb, var(--nep-cor) 50%, #000)); }
+:root input:not([type=checkbox], [type=radio], [type=submit], [type=hidden], [type=range]), :root select, :root textarea { background: var(--nep-superficie); border-color: var(--nep-linha); color: var(--nep-texto); }
+:root th { background: var(--nep-alt); }
+:root body > footer { background: #000; border-top: 1px solid var(--nep-linha); }
+:root a.botao:not(.secundario), :root .capa.cor a.botao { color: var(--nep-cor-texto); }
+:root .capa.cor a.botao:not(.secundario) { color: var(--nep-cor); }

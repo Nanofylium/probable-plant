@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"html"
 	"net/http"
@@ -48,6 +49,7 @@ var (
 	headRe   = regexp.MustCompile(`(?is)<head[^>]*>(.*?)</head>`)
 	bodyRe   = regexp.MustCompile(`(?is)<body([^>]*)>(.*)</body>`)
 	scriptRe = regexp.MustCompile(`(?is)<script\b[^>]*>.*?</script>`)
+	fonteURL = regexp.MustCompile(`url\("(/_nep/fontes/[a-z0-9-]+\.woff2)"\)`)
 	linkCSS  = regexp.MustCompile(`(?is)<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"[^>]*>`)
 	styleAt  = regexp.MustCompile(`(?is)\bstyle="([^"]*)"`)
 	classAt  = regexp.MustCompile(`(?is)\bclass="([^"]*)"`)
@@ -139,6 +141,13 @@ func gerarPrevia(file string) (string, int, error) {
 	head = linkCSS.ReplaceAllStringFunc(head, func(m string) string {
 		href := html.UnescapeString(linkCSS.FindStringSubmatch(m)[1])
 		if code, css := get(href); code == 200 && strings.HasPrefix(href, "/") {
+			// as fontes dos visuais entram no arquivo, para abrir sem o nep
+			css = fonteURL.ReplaceAllStringFunc(css, func(u string) string {
+				if code, b := get(fonteURL.FindStringSubmatch(u)[1]); code == 200 {
+					return `url("data:font/woff2;base64,` + base64.StdEncoding.EncodeToString([]byte(b)) + `")`
+				}
+				return u
+			})
 			return "<style>\n" + css + "\n</style>"
 		}
 		return m

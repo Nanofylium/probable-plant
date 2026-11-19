@@ -40,6 +40,9 @@ type Options struct {
 	CGI      bool   // rodando como CGI (hospedagem compartilhada)
 	Base     string // prefixo de URL quando o site fica numa subpasta
 	Log      io.Writer
+	// AposCriar roda depois que o assistente (<nepenthes>) grava o site;
+	// devolve os arquivos extras que criou (o nep usa para a prévia).
+	AposCriar func(site string) []string
 }
 
 type Server struct {
@@ -218,6 +221,18 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/_nep/tema.css":
 		serveTema(w, r)
 		return
+	case "/_nep/echarts.js":
+		serveAssetJS(w, r, echartsJS, false)
+		return
+	case "/_nep/grafico.js":
+		serveAssetJS(w, r, graficoJS, false)
+		return
+	case "/_nep/hilo.js":
+		serveAssetJS(w, r, hiloJS, false)
+		return
+	case "/_nep/jogos.js":
+		serveAssetJS(w, r, jogosJS, false)
+		return
 	case "/_nep/versao":
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
@@ -225,6 +240,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	case "/_nep/eventos":
 		s.events(w, r)
+		return
+	}
+	if strings.HasPrefix(rq.path, "/_nep/visual/") || strings.HasPrefix(rq.path, "/_nep/fontes/") {
+		s.serveVisual(w, r, rq.path)
 		return
 	}
 	if strings.HasPrefix(rq.path, "/_nep/construtor/") {
@@ -245,6 +264,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err := s.admin(rq); err != nil {
 			s.fail(rq, err)
 		}
+		return
+	}
+	if ok, ideia := s.pedeAssistente(); ok {
+		s.assistente(rq, ideia)
 		return
 	}
 
@@ -279,6 +302,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if rq.path == "/_nep/lowii" {
 		s.lowii(rq)
+		return
+	}
+	if rq.path == "/_nep/jogo" {
+		s.jogoAPI(rq)
 		return
 	}
 	if err := s.route(rq); err != nil {
@@ -540,6 +567,7 @@ func (s *Server) inject(rq *request, out string) string {
 	cfg := rq.site.Config
 	inicio, _ := s.temaTags(cfg, out)
 	out = noComecoDoHead(out, inicio)
+	out = noFimDoHead(out, s.visualTag(cfg))
 	tags := s.seoTags(rq, out)
 	mv := strings.ToLower(strings.TrimSpace(cfg["movimento"]))
 	if mv != "" && mv != "false" && mv != "0" && mv != "nao" && mv != "não" {

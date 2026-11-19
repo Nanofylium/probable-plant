@@ -470,6 +470,8 @@ Todo site sai com cara de site profissional, como um tema do WordPress, sem prec
 - Sem `<meta name="viewport">`, o `nep` coloca uma (o site funciona no celular). Um site com CSS próprio que não estilizou os avisos de formulário e os comentários recebe um estilo mínimo para eles.
 - **Ver o site sem servidor:** `nep previa site.nep.html` cria `site-previa.html`, um arquivo só (CSS embutido) com todas as páginas como ficam no ar, que abre com dois cliques ou em qualquer visualizador de HTML. É uma foto: formulários e regiões `<live>` funcionam só com o `nep`.
 - **Abrir o código direto não mostra bagunça:** um `<style nep-fonte>` e um `<aside nep-fonte>` no começo do arquivo escondem o código e mostram um aviso (o que é o arquivo, como ver a prévia e como rodar). O `nep` tira esses trechos antes de tudo, então o visitante nunca os vê. Os modelos do `nep novo` e os exemplos já vêm com eles.
+- **Visuais.** `<nep-config visual="...">` põe por cima do tema uma família de aparência que muda a estrutura do site, não só a cor: `nepenthes` (o clássico, com Outfit e Fraunces), `editorial` (marca grande no centro, menu em versalete entre fios, serifa itálica Playfair Display e Lora, capa centrada com a imagem larga embaixo, cartões sem caixa), `noturno` (escuro, brilho da cor do site atrás da capa, título em degradê, cartões de vidro; Space Grotesk e Inter), `vitrine` (capa de ponta a ponta com a imagem ao fundo e o texto em cima, títulos em Bebas Neue, faixa de números na cor do site), `brutal` (neobrutalismo: bordas pretas grossas, sombras duras, amarelo; Archivo Black), `suave` (pastel, tudo arredondado, cabeçalho flutuante em pílula, imagem em bolha; Nunito), `minimo` (suíço: preto e branco, Inter enorme, seções numeradas "01 —", fios no lugar de caixas) e `luxo` (capa escura com moldura dourada, Cormorant Garamond, caixa alta espaçada). O CSS do visual (`/_nep/visual/<nome>.css`) entra no fim do `<head>`, depois do CSS do site. As fontes vêm do Fontsource (SIL OFL 1.1, `LICENCA-FONTES.txt`) e são servidas pelo próprio `nep` em `/_nep/fontes/` (nada de Google Fonts, sem rastreio de visitante). A prévia (`nep previa`) embute as fontes. Visual desconhecido é ignorado.
+- **Ícones.** `icone("☕")` devolve o ícone de traço do Lucide (licença ISC, `icones/LICENSE-lucide.txt`) para o emoji, em SVG que pega a cor do texto; emoji sem ícone volta como está. São cerca de 200 emojis de negócios mapeados (`icones/gerar.py`). Os sites do `nep criar` e da tag `<nepenthes>` usam `icone()` nos serviços, produtos, marca e capa, e o painel continua pedindo "um emoji".
 - `nep novo pasta` cria um site completo de empresa (abertura, serviços, números, depoimentos, novidades, contato com aviso por e-mail, páginas do painel, rodapé com menus editáveis); `nep novo pasta --modelo blog` cria o tema de blog estilo WordPress de `exemplos/ascidia`.
 
 ### 10.16 `nep criar`: descreva o site e o Nepenthes monta
@@ -483,10 +485,65 @@ nep criar "associação de moradores do Jardim Europa sem blog" --pasta bairro
 nep criar "pousada em Paraty chamada Maré Mansa" --plano     # só mostra o que entendeu
 ```
 
-- **O que ele lê:** o ramo (clínica, veterinária, beleza, restaurante, hotel/pousada, escola, academia, escritório, tecnologia, loja, associação/ONG/igreja, comunidade/wiki; o resto vira "empresa"), o nome (`chamada X`, `"X"` entre aspas ou o começo da frase, como "associação de moradores do Jardim Europa"), a cidade (`em Salvador`), a cor (verde, azul, marinho, vinho, rosa, roxo, laranja, dourado... ou `#1d4ed8`) e o estilo (elegante, clássico, moderno, divertido, acolhedor), que escolhe a fonte do tema.
+- **O que ele lê:** o ramo (clínica, veterinária, beleza, restaurante, hotel/pousada, escola, academia, escritório, tecnologia, loja, associação/ONG/igreja, comunidade/wiki; o resto vira "empresa"), o nome (`chamada X`, `"X"` entre aspas ou o começo da frase, como "associação de moradores do Jardim Europa"), a cidade (`em Salvador`), a cor (verde, azul, marinho, vinho, rosa, roxo, laranja, dourado... ou `#1d4ed8`) o estilo (elegante, clássico, moderno, divertido, acolhedor), que escolhe a fonte do tema, e o visual (seção 10.15): palavras como "escuro", "luxo", "minimalista", "revista", "ousado", "alegre" ou "impactante" escolhem um; sem elas, sai um dos que combinam com o ramo (a mesma frase dá sempre o mesmo, e `--visual X` força um). Na tela da tag `<nepenthes>`, a pessoa escolhe o visual ou deixa em "Surpresa", que sorteia a cada pedido. As regras do visual não estão no `Entender.php` do Mirabilis, que usa os templates do Joomla.
 - **Quem pede manda:** cada ramo tem as seções que um site do tipo costuma ter; `com X` acrescenta, `sem X` (também "não quero X", "sem X e Y") tira, e `só X` (ou "apenas", "somente") deixa só o que foi pedido. Contato, páginas livres (Sobre e Política de privacidade/LGPD já escritas), busca, SEO, RSS, mapa do site, painel e atendente lowii (com a IA ligada) entram sempre.
 - **Seções (módulos):** serviços com página de cada um; loja ou cardápio com categorias, carrinho na sessão e pedido (o total vem do banco, nunca do navegador) e `/api/produtos`; agendamento com horários livres ao vivo, vagas por horário e recusa de horário ocupado ou passado (`/api/horarios`); reservas por diária para hotel, que recusam datas sobrepostas (`/api/disponibilidade`); eventos com inscrição, vagas que diminuem ao vivo e recusa de e-mail repetido (`/api/eventos`); planos e preços; equipe; galeria com álbuns; depoimentos; blog com categorias, tags, arquivo por mês, paginação, tempo de leitura, posts relacionados, comentários e widgets; wiki no estilo TikiWiki com `[[Página]]` e `[[Página|texto]]`, índice A–Z, busca, mudanças recentes, "páginas que apontam para cá", página que não existe convidando a criá-la e sugestões de edição revisadas pela equipe (o histórico fica nas versões do painel); fórum moderado (tópico novo entra como rascunho, respostas pelos comentários); downloads por categoria; trabalhe conosco com envio de currículo restrito ao painel; perguntas frequentes; newsletter; tradução com `?idioma=en` pela villosa (com a IA ligada).
 - Todo conteúdo de exemplo entra uma vez só (a marca fica na coleção `instalacao`); depois, tudo pelo painel. O arquivo gerado é Nepenthes comum, com comentários, para a pessoa mudar à vontade.
+
+### 10.17 A tag `<nepenthes>`: o site pergunta e se escreve
+
+Um arquivo de site (`index.html`, `site.nep.html`) com a tag `<nepenthes>` não é mostrado: o `nep` abre uma tela que pergunta como a pessoa quer o site, faz de 2 a 4 perguntas sobre o que faltar e então **reescreve o arquivo inteiro** com o site pronto. Também grava a prévia (`*-previa.html`) e guarda o arquivo anterior como `ARQUIVO.antes-AAAAMMDD-HHMMSS`.
+
+```html
+<nepenthes></nepenthes>                                    <!-- tela em branco -->
+<nepenthes>uma doceria em Salvador, com encomendas</nepenthes>  <!-- já começa com a ideia -->
+```
+
+Quem escreve o conteúdo é uma IA. A tela oferece quatro motores:
+
+| Motor | Onde roda | Precisa de |
+|---|---|---|
+| Qwen no servidor | na API configurada no painel (IA): DashScope, ou Ollama/vLLM no seu servidor | chave no painel ou `NEP_IA_*` |
+| IA do Nepenthes | no computador (ou VPS) que roda o `nep`: o motor [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) com o modelo IBM Granite 3.3 2B Instruct (Apache 2.0). Só processador, sem GPU; no Mac usa a GPU pelo Metal. Leva de 1 a 3 minutos por site | baixar uma vez, 1,5 GB: pela própria tela ou `nep ia baixar` |
+| Qwen no navegador | no navegador de quem cria, com WebLLM (WebGPU). O modelo (Qwen 2.5 de 0.5B, 1.5B ou 3B) é baixado uma vez e fica guardado no navegador | Chrome ou Edge recentes. Nada para instalar, sem chave |
+| Sem IA | regras do `nep criar` | nada |
+
+A IA não escreve código: devolve um JSON com nome, ramo, cor, estilo, frases da capa, serviços, preços, números, perguntas, depoimentos, equipe, posts e seções. O gerador confere cada campo (tamanho, cor `#RRGGBB`, preço numérico, ramo e seções que existem, o que a pessoa tirou continua fora) e monta o `.nep.html` com o tema profissional. Assim o mesmo pedido gera sites diferentes, mas o site sempre funciona e nada do texto da IA entra sem escapar.
+
+**A IA do Nepenthes** (pacote `ialocal`) não vai dentro do executável. O `nep` baixa o `llama-server` do seu sistema (Linux, macOS e Windows, x64 e arm64) e o modelo dos Releases do probable-plant (`ia-1`); se lá não estiver, das fontes originais (Releases do llama.cpp e Hugging Face da IBM). Cada arquivo tem o SHA-256 fixado no código e é conferido; download interrompido continua de onde parou. Fica em `<cache do usuário>/nepenthes/ia` (ou na pasta de `NEP_IA_LOCAL`) e depois roda sem internet. O `llama-server` escuta só em `127.0.0.1`, numa porta livre, e é desligado quando o `nep` sai. A resposta fica presa a um JSON Schema, então o modelo não erra o formato. `nep ia` mostra o estado.
+
+Como modelos pequenos erram mais, o gerador dá preferência ao que a pessoa escreveu: se as regras reconheceram o ramo ou a cor na descrição, a IA não troca; telefone não entra como "número de destaque"; ícone tem de ser emoji; e uma lista de seções que copia quase todas as opções é ignorada.
+
+**Instagram.** O jeito principal é o botão **Entrar com Instagram**, que usa a API oficial ("Instagram API with Instagram Login", escopo `instagram_business_basic`) e serve para contas comerciais e de criador. A pessoa entra uma vez, e o Nepenthes troca o código por um token. Com ele, lê o perfil e os 30 posts mais recentes: fotos (inclusive as dos carrosséis), legendas e links dos posts. O token não fica guardado. Isso exige um app Meta de quem instala o Nepenthes. O App ID e a App Secret vão na própria tela ou em `NEP_INSTA_APP_ID`/`NEP_INSTA_SEGREDO`, e a secret nunca volta ao navegador. O endereço de volta aparece na tela para ser cadastrado no app. O login é protegido por um `state` que vale 15 minutos. Antes da revisão da Meta, só entram as contas adicionadas ao app, e para elas também dá para colar um token gerado no painel do app. Os links dos posts aparecem na galeria ("ver no Instagram"), e um link de WhatsApp no site do perfil vai para o rodapé. Para conta pessoal, a tela aceita o @ do negócio e o arquivo que o próprio Instagram entrega em *Configurações > Central de Contas > Suas informações e permissões > Baixar suas informações* (formato JSON). O pacote `instagram` lê desse zip o nome, o @, a bio, as legendas e as fotos dos posts. Ele aceita rótulos em inglês ou português e conserta os acentos que o Instagram grava errado. Até 12 fotos dos posts mais recentes viram arquivos públicos do site e vão para a capa e para a galeria. A galeria entra sozinha quando há 3 fotos ou mais. A bio e as legendas vão para a IA, que escreve no jeito do perfil. Sem IA, a bio ajuda as regras a achar o ramo. O nome do perfil é usado quando a descrição não traz um, e o @ vai para o link do rodapé. **Prints.** O jeito mais simples, para qualquer conta, é mandar prints (capturas de tela, PNG ou JPG) do perfil ou de posts, tirados no celular ou no computador. O botão **Enviar prints do Instagram** aceita vários de uma vez (campo `print`, repetível, no mesmo `POST /_nep/assistente/instagram`). `instagram.Recortar` acha as fotos em cada print: a cor do fundo é a das bordas (tema claro ou escuro), e o print é cortado pelas linhas e colunas inteiras dessa cor, pedaço por pedaço, até sobrar foto por foto. Um pedaço vira foto se for grande, no formato das fotos do Instagram (1:1, 4:5, 3:4, ou paisagem na largura da tela), quase sem fundo dentro (a foto redonda do perfil e os destaques ficam de fora) e com detalhe (botões lisos ficam de fora). Uma foto cortada pela borda de cima ou de baixo do print é deixada de lado. Uma foto com uma faixa da cor do fundo na borda (um céu branco) é esticada até a altura das vizinhas da mesma linha. As bordas borradas pelo JPG são aparadas. Cada recorte vira um JPG público do site e soma às fotos que já estavam, até 12. Prints que se cobrem não repetem foto: cada recorte é comparado pela miniatura 8 x 8 do brilho (`instagram.Marcar`). A resposta conta os prints enviados e os em que não achou foto, e a tela avisa. Prints trazem só as fotos: o @ digitado vai para o rodapé, e a bio pode ser escrita na descrição. Cada print tem limite de 25 MB e 40 megapixels.
+
+O Nepenthes não pede senha nem entra no Instagram: raspar o site do Instagram é proibido pelos termos de uso e é bloqueado.
+
+**Atendente em todo site.** Todo site criado pelo gerador traz o atendente (`lowii()`), a não ser que a descrição diga "sem atendente". Quem responde depende do que estiver disponível:
+1. a IA do painel, se estiver configurada;
+2. senão, a IA do Nepenthes, se já estiver baixada no computador ou VPS (fora do CGI);
+3. senão, sem IA: mostra o trecho do site que a busca achou, com os links.
+
+Assim o atendente funciona até em hospedagem compartilhada.
+
+Só vê a tela e pode criar quem acessa do próprio computador (`localhost`, sem proxy) ou entrou no painel como administrador. Os outros visitantes veem "site em construção". Em CGI (hospedagem compartilhada) é sempre pelo painel.
+
+### 10.18 Gráficos (ECharts) e jogos de promoção (Hilo)
+
+`{{ grafico(tipo, dados, opções) }}` desenha um gráfico com o Apache ECharts (Baidu, Apache 2.0), na cor e na fonte do site.
+
+- Tipos: `barras`, `horizontal`, `linhas`, `area`, `pizza`, `rosca`.
+- Dados: uma tabela `{Jan: 10, Fev: 12}`, uma lista de números, ou uma lista de registros (`db.find(...)`). Nos registros, `x` é o campo do rótulo e `y` o campo (ou lista de campos) dos valores; sem eles, o Nepenthes adivinha.
+- Opções: `titulo`, `moeda` (R$), `altura` (160 a 900), `nome` da série.
+- Sem JavaScript, aparece uma tabela com os mesmos números. O ECharts só é baixado quando a página tem gráfico.
+- O painel mostra as visitas num gráfico de área.
+
+`{{ jogo(tipo, opções) }}` põe um jogo de promoção feito com o Hilo (Alibaba, MIT): `roleta`, `raspadinha` ou `memoria`.
+
+- Opções: `premios` (lista de textos ou `{nome, chance, cupom}`; até 12), ou um `premio` só; `titulo`, `texto`, `botao`; `contato` (pede nome e WhatsApp/e-mail com aceite, padrão `true`); `validade` em dias (padrão 7); `prefixo` do cupom (padrão `NEP`); `imagens` das cartas da memória.
+- Quem sorteia é o servidor (`POST /_nep/jogo`, com CSRF): uma jogada por dia por aparelho e por contato. A memória só paga depois de 6 segundos de jogo.
+- Cada prêmio vira um cupom `PREFIXO-XXXXXX` na coleção `cupons` (aparece no painel), com prazo de validade e campo `usado`.
+
+Créditos e licenças em `LICENCA-ECHARTS.txt` e `LICENCA-HILO.txt`.
 
 ## 11. Lua 5.4 na mesma máquina virtual
 
