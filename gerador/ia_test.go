@@ -126,20 +126,21 @@ func TestUsarInstagram(t *testing.T) {
 	p := Entender("padaria artesanal em Olinda sem blog")
 	fotos := []Foto{{URL: "/_nep/arquivo/p-0123456789abcdef0123456789abcdef.jpg", Nome: "a.jpg", Tipo: "image/jpeg", Tamanho: 10, Legenda: "Fornada <de> sábado"},
 		{URL: "/_nep/arquivo/p-1123456789abcdef0123456789abcdef.jpg", Legenda: "Bolo de rolo"}, {URL: "/_nep/arquivo/p-2123456789abcdef0123456789abcdef.jpg"}}
-	UsarInstagram(p, fotos, "@paodeolinda", "Pão de Olinda")
+	fotos[0].Link = "https://www.instagram.com/p/AAA/"
+	UsarInstagram(p, fotos, "@paodeolinda", "Pão de Olinda", "https://wa.me/5581999999999")
 	if p.Nome != "Pão de Olinda" || !p.Tem("galeria") || p.Tem("blog") {
 		t.Fatalf("plano: %s %v", p.Nome, p.Modulos)
 	}
 	site := Montar(p)
 	for _, want := range []string{`https://instagram.com/paodeolinda`, `class="ilustracao foto"`, `url("/_nep/arquivo/p-0123456789abcdef0123456789abcdef.jpg")`,
-		`categoria: "Instagram"`, `alt="Fornada &lt;de&gt; sábado"`} {
+		`categoria: "Instagram"`, `alt="Fornada &lt;de&gt; sábado"`, `link: "https://www.instagram.com/p/AAA/"`, `href="https://wa.me/5581999999999"`} {
 		if !strings.Contains(site, want) {
 			t.Errorf("faltou %s", want)
 		}
 	}
 	// nome da descrição vale mais que o do perfil
 	p = Entender("padaria chamada Trigo Bom em Olinda")
-	UsarInstagram(p, nil, "x", "Outro Nome")
+	UsarInstagram(p, nil, "x", "Outro Nome", "")
 	if p.Nome != "Trigo Bom" {
 		t.Errorf("nome: %s", p.Nome)
 	}

@@ -34,6 +34,7 @@ type Plano struct {
 
 	Fotos     []Foto // fotos de verdade (do Instagram): capa e galeria
 	Instagram string // @ do Instagram, sem o @
+	WhatsApp  string // link do WhatsApp (da bio do Instagram), se houver
 }
 
 // Foto é uma imagem já gravada nos arquivos do site (data/arquivos).
@@ -43,6 +44,7 @@ type Foto struct {
 	Tipo    string
 	Tamanho int64
 	Legenda string
+	Link    string // o post no Instagram, se veio pela API
 }
 
 // ModulosTodos, na ordem em que aparecem no site.

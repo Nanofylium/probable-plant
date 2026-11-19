@@ -93,11 +93,20 @@ func (s *Server) assistente(rq *request, ideia string) {
 			"servidor": modelo, "ideia": ideia, "arquivo": s.file,
 			"prompt_perguntas": gerador.PromptPerguntas(), "prompt_site": gerador.PromptSite(),
 			"local": ialocal.Ver(), "local_pasta": ialocal.Pasta(),
-			"instagram": s.instaResposta(s.instaGuardado()),
+			"instagram": s.instaResposta(s.instaGuardado()), "instagram_app": s.instaAppEstado(rq.r),
 		})
 		return
 	case "/_nep/assistente/instagram":
 		s.assistenteInstagram(rq)
+		return
+	case "/_nep/assistente/instagram/app":
+		s.assistenteInstagramApp(rq)
+		return
+	case "/_nep/assistente/instagram/entrar":
+		s.assistenteInstagramEntrar(rq)
+		return
+	case "/_nep/assistente/instagram/volta":
+		s.assistenteInstagramVolta(rq)
 		return
 	case "/_nep/assistente/local":
 		if rq.r.Method == http.MethodPost {
@@ -222,7 +231,7 @@ func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, con
 		}
 	}
 	if insta != nil {
-		gerador.UsarInstagram(p, insta.Fotos, insta.Usuario, insta.Nome)
+		gerador.UsarInstagram(p, insta.Fotos, insta.Usuario, insta.Nome, insta.Site)
 	}
 	src := gerador.Montar(p)
 

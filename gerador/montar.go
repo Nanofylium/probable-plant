@@ -111,7 +111,7 @@ func (g *ger) rotas() {
 		cta2, cta2U = "Fale com a gente", "/contato"
 	}
 	g.vars = map[string]string{
-		"«nome»": esc(p.Nome), "«insta»": esc(p.Instagram), "«nomeLit»": lit(p.Nome), "«emoji»": s.Emoji, "«cidade»": esc(cidade),
+		"«nome»": esc(p.Nome), "«insta»": esc(p.Instagram), "«whats»": esc(whatsLink(p.WhatsApp)), "«nomeLit»": lit(p.Nome), "«emoji»": s.Emoji, "«cidade»": esc(cidade),
 		"«servR»": esc(s.ServRotulo), "«servU»": servU, "«servI»": esc(s.ServIntro),
 		"«equipeR»": esc(s.EquipeRotulo), "«equipeU»": equipeU,
 		"«blogR»": esc(s.BlogRotulo), "«blogU»": blogU,
@@ -247,6 +247,7 @@ func (g *ger) conteudos() string {
   <label>Álbum <input name="categoria" maxlength="40"></label>
   <label>Foto <input type="file" name="foto" accept="image/*" data-max-mb="8" data-publico></label>
   <label>Legenda <textarea name="resumo" maxlength="300" rows="2"></textarea></label>
+  <label>Link (post no Instagram, por exemplo) <input name="link" type="url" maxlength="300"></label>
 </conteudo>
 `)
 	}
@@ -396,8 +397,8 @@ func (g *ger) codigo() string {
 			if tit == "" {
 				tit = fmt.Sprintf("Foto %d", i+1)
 			}
-			fmt.Fprintf(&b, "    db.insert(\"galeria\", {titulo: %s, slug: %s, publicado: true, categoria: \"Instagram\", resumo: %s, foto: {nome: %s, tipo: %s, tamanho: %d, url: url(%s)}})\n",
-				lit(tit), lit(fmt.Sprintf("foto-%d", i+1)), lit(f.Legenda), lit(f.Nome), lit(f.Tipo), f.Tamanho, lit(f.URL))
+			fmt.Fprintf(&b, "    db.insert(\"galeria\", {titulo: %s, slug: %s, publicado: true, categoria: \"Instagram\", resumo: %s, link: %s, foto: {nome: %s, tipo: %s, tamanho: %d, url: url(%s)}})\n",
+				lit(tit), lit(fmt.Sprintf("foto-%d", i+1)), lit(f.Legenda), lit(linkSeguro(f.Link)), lit(f.Nome), lit(f.Tipo), f.Tamanho, lit(f.URL))
 		}
 	} else if g.tem("galeria") {
 		for i, t := range s.Galeria {
@@ -863,4 +864,19 @@ func (g *ger) apis() string {
 `)
 	}
 	return b.String()
+}
+
+// linkSeguro só deixa passar endereços https (o link vai num href).
+func linkSeguro(u string) string {
+	if strings.HasPrefix(u, "https://") && !strings.ContainsAny(u, "\"'<> ") {
+		return u
+	}
+	return ""
+}
+
+func whatsLink(u string) string {
+	if u == "" {
+		return "https://wa.me/5500000000000"
+	}
+	return u
 }

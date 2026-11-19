@@ -852,7 +852,7 @@ func (g *ger) rodape() string {
         <h4>Siga</h4>
         <nav menu-editavel="redes">
           <a href="https://instagram.com/«insta»">Instagram</a>
-          <a href="https://wa.me/5500000000000">WhatsApp</a>
+          <a href="«whats»">WhatsApp</a>
         </nav>
       </div>`
 	if g.tem("newsletter") {

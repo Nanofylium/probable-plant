@@ -6,6 +6,7 @@ package web
 // instagram). Também dá para informar só o @, que vira o link do rodapé.
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Nanofylium/probable-plant/gerador"
 	"github.com/Nanofylium/probable-plant/instagram"
@@ -30,6 +32,7 @@ type instaDados struct {
 	Usuario string         `json:"usuario"`
 	Nome    string         `json:"nome"`
 	Bio     string         `json:"bio"`
+	Site    string         `json:"site,omitempty"`
 	Resumo  string         `json:"resumo"`
 	Posts   int            `json:"posts"`
 	Fotos   []gerador.Foto `json:"fotos"`
@@ -89,7 +92,7 @@ func (s *Server) assistenteInstagram(rq *request) {
 	if velho := s.instaGuardado(); velho != nil {
 		*d = *velho
 	}
-	var zipTmp string
+	var zipTmp, token string
 	defer func() {
 		if zipTmp != "" {
 			os.Remove(zipTmp)
@@ -110,6 +113,9 @@ func (s *Server) assistenteInstagram(rq *request) {
 			if u := limparUsuario(string(b)); u != "" {
 				d.Usuario = u
 			}
+		case "token": // token gerado no painel do app Meta, colado na tela
+			b, _ := io.ReadAll(io.LimitReader(part, 2048))
+			token = strings.TrimSpace(string(b))
 		case "zip":
 			f, err := os.CreateTemp("", "nep-instagram-*.zip")
 			if err != nil {
@@ -128,6 +134,11 @@ func (s *Server) assistenteInstagram(rq *request) {
 	}
 	if zipTmp != "" {
 		if err := s.instaLerZip(zipTmp, d); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	} else if token != "" {
+		if err := s.instaLerAPI(r.Context(), token, d); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -170,20 +181,50 @@ func (s *Server) instaLerZip(caminho string, d *instaDados) error {
 	if err != nil {
 		return err
 	}
-	for _, foto := range d.Fotos { // trocou o zip: as fotos antigas saem
+	return s.instaUsar(perfil, d, arq.Foto)
+}
+
+// instaLerAPI lê pela API oficial (token do login ou colado) e baixa as fotos.
+func (s *Server) instaLerAPI(ctx context.Context, token string, d *instaDados) error {
+	perfil, err := instagram.LerPelaAPI(ctx, token, 30)
+	if err != nil {
+		return err
+	}
+	return s.instaUsar(perfil, d, func(u string) (io.ReadCloser, int64, error) {
+		if !strings.HasPrefix(u, "https://") {
+			return nil, 0, fmt.Errorf("endereço de foto estranho")
+		}
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+		res, err := instaHTTP.Do(req)
+		if err != nil {
+			return nil, 0, err
+		}
+		if res.StatusCode != 200 {
+			res.Body.Close()
+			return nil, 0, fmt.Errorf("foto respondeu %d", res.StatusCode)
+		}
+		return res.Body, res.ContentLength, nil
+	})
+}
+
+var instaHTTP = &http.Client{Timeout: 30 * time.Second}
+
+// instaUsar guarda perfil, bio, legendas e até 12 fotos (primeiro a principal
+// de cada post, depois as outras dos carrosséis) nos arquivos públicos do site.
+func (s *Server) instaUsar(perfil *instagram.Perfil, d *instaDados, abrir func(string) (io.ReadCloser, int64, error)) error {
+	for _, foto := range d.Fotos { // trocou a fonte: as fotos antigas saem
 		s.Store.removeFiles([]string{filepath.Base(foto.URL)})
 	}
 	d.Fotos = nil
 	if perfil.Usuario != "" {
 		d.Usuario = strings.ToLower(perfil.Usuario)
 	}
-	d.Nome, d.Bio, d.Posts = perfil.Nome, perfil.Bio, len(perfil.Posts)
+	d.Nome, d.Bio, d.Site, d.Posts = perfil.Nome, perfil.Bio, perfil.Site, len(perfil.Posts)
 	d.Resumo = perfil.Resumo(2500)
 	dir := filepath.Join(s.opt.DataDir, "arquivos")
 	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return err
 	}
-	// primeiro a foto principal de cada post, depois as outras dos carrosséis
 	for rodada := 0; rodada < 2 && len(d.Fotos) < instaMaxFotos; rodada++ {
 		for _, po := range perfil.Posts {
 			if len(d.Fotos) >= instaMaxFotos {
@@ -202,8 +243,8 @@ func (s *Server) instaLerZip(caminho string, d *instaDados) error {
 				if len(d.Fotos) >= instaMaxFotos {
 					break
 				}
-				if foto, err := s.instaCopiar(arq, caminho, dir); err == nil {
-					foto.Legenda = po.Legenda
+				if foto, err := s.instaCopiar(abrir, caminho, dir); err == nil {
+					foto.Legenda, foto.Link = po.Legenda, po.Link
 					d.Fotos = append(d.Fotos, foto)
 				}
 			}
@@ -212,8 +253,8 @@ func (s *Server) instaLerZip(caminho string, d *instaDados) error {
 	return nil
 }
 
-func (s *Server) instaCopiar(arq *instagram.Arquivo, caminho, dir string) (gerador.Foto, error) {
-	r, tam, err := arq.Foto(caminho)
+func (s *Server) instaCopiar(abrir func(string) (io.ReadCloser, int64, error), caminho, dir string) (gerador.Foto, error) {
+	r, tam, err := abrir(caminho)
 	if err != nil {
 		return gerador.Foto{}, err
 	}
@@ -222,8 +263,8 @@ func (s *Server) instaCopiar(arq *instagram.Arquivo, caminho, dir string) (gerad
 		return gerador.Foto{}, fmt.Errorf("foto grande demais")
 	}
 	b, err := io.ReadAll(io.LimitReader(r, instaMaxFoto+1))
-	if err != nil {
-		return gerador.Foto{}, err
+	if err != nil || len(b) > instaMaxFoto {
+		return gerador.Foto{}, fmt.Errorf("foto grande demais ou incompleta")
 	}
 	tipo := http.DetectContentType(b)
 	ext, ok := fileKinds[tipo]
@@ -234,5 +275,147 @@ func (s *Server) instaCopiar(arq *instagram.Arquivo, caminho, dir string) (gerad
 	if err := os.WriteFile(filepath.Join(dir, nome), b, 0o640); err != nil {
 		return gerador.Foto{}, err
 	}
-	return gerador.Foto{URL: "/_nep/arquivo/" + nome, Nome: filepath.Base(caminho), Tipo: tipo, Tamanho: int64(len(b))}, nil
+	base := filepath.Base(caminho)
+	if i := strings.IndexAny(base, "?#"); i >= 0 {
+		base = base[:i]
+	}
+	return gerador.Foto{URL: "/_nep/arquivo/" + nome, Nome: base, Tipo: tipo, Tamanho: int64(len(b))}, nil
+}
+
+// ---------- Entrar com Instagram (API oficial) ----------
+
+const (
+	instaAppMeta    = "instagram:app"
+	instaEstadoMeta = "instagram:estado"
+)
+
+type instaApp struct {
+	ID      string `json:"id"`
+	Segredo string `json:"segredo"`
+}
+
+// instaAppConf: o app Meta do dono do Nepenthes (painel do app > Instagram >
+// API setup with Instagram login). Vem da tela ou de NEP_INSTA_APP_ID e
+// NEP_INSTA_SEGREDO. O segredo nunca volta para o navegador.
+func (s *Server) instaAppConf() instaApp {
+	var a instaApp
+	_ = json.Unmarshal([]byte(s.Store.Meta(instaAppMeta)), &a)
+	if v := os.Getenv("NEP_INSTA_APP_ID"); v != "" {
+		a.ID = v
+	}
+	if v := os.Getenv("NEP_INSTA_SEGREDO"); v != "" {
+		a.Segredo = v
+	}
+	return a
+}
+
+// instaVolta é o endereço que vai em "Valid OAuth Redirect URIs" no app Meta.
+func (s *Server) instaVolta(r *http.Request) string {
+	esquema := "http"
+	if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
+		esquema = "https"
+	}
+	return esquema + "://" + r.Host + s.url("/_nep/assistente/instagram/volta")
+}
+
+func (s *Server) instaAppEstado(r *http.Request) map[string]any {
+	a := s.instaAppConf()
+	return map[string]any{"ligado": a.ID != "" && a.Segredo != "", "app_id": a.ID, "volta": s.instaVolta(r)}
+}
+
+func (s *Server) assistenteInstagramApp(rq *request) {
+	w, r := rq.w, rq.r
+	if r.Method == http.MethodPost {
+		if o := r.Header.Get("Origin"); o != "" && !sameOrigin(o, r) {
+			http.Error(w, "use a própria tela", http.StatusBadRequest)
+			return
+		}
+		var in struct {
+			ID      string `json:"app_id"`
+			Segredo string `json:"segredo"`
+		}
+		if json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&in) != nil {
+			http.Error(w, "dados inválidos", http.StatusBadRequest)
+			return
+		}
+		a := s.instaAppConf()
+		if id := strings.TrimSpace(in.ID); id != "" {
+			a.ID = id
+		}
+		if seg := strings.TrimSpace(in.Segredo); seg != "" {
+			a.Segredo = seg
+		}
+		b, _ := json.Marshal(a)
+		if err := s.Store.SetMeta(instaAppMeta, string(b)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+	writeJSON(w, s.instaAppEstado(r))
+}
+
+// assistenteInstagramEntrar manda a pessoa para o login do Instagram.
+func (s *Server) assistenteInstagramEntrar(rq *request) {
+	a := s.instaAppConf()
+	if a.ID == "" || a.Segredo == "" {
+		http.Error(rq.w, "ligue o app do Instagram primeiro (App ID e chave secreta)", http.StatusBadRequest)
+		return
+	}
+	estado := randHex(16)
+	_ = s.Store.SetMeta(instaEstadoMeta, estado+" "+fmt.Sprint(time.Now().Unix()))
+	http.Redirect(rq.w, rq.r, instagram.LinkEntrar(a.ID, s.instaVolta(rq.r), estado), http.StatusFound)
+}
+
+// assistenteInstagramVolta recebe a volta do login, lê o perfil e os posts e
+// volta para a tela.
+func (s *Server) assistenteInstagramVolta(rq *request) {
+	r := rq.r
+	fim := func(msg string) {
+		dest := s.url("/") + "?instagram=ok"
+		if msg != "" {
+			dest = s.url("/") + "?instagram_erro=" + urlQ(msg)
+		}
+		http.Redirect(rq.w, r, dest, http.StatusFound)
+	}
+	partes := strings.Fields(s.Store.Meta(instaEstadoMeta))
+	_ = s.Store.SetMeta(instaEstadoMeta, "")
+	var quando int64
+	if len(partes) == 2 {
+		fmt.Sscan(partes[1], &quando)
+	}
+	if len(partes) != 2 || r.URL.Query().Get("state") != partes[0] || time.Now().Unix()-quando > 900 {
+		fim("o login do Instagram expirou ou não veio desta tela; tente de novo")
+		return
+	}
+	if e := r.URL.Query().Get("error_description"); e != "" {
+		fim("o Instagram não autorizou: " + e)
+		return
+	}
+	codigo := r.URL.Query().Get("code")
+	if codigo == "" {
+		fim("o Instagram não mandou o código de acesso")
+		return
+	}
+	a := s.instaAppConf()
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
+	defer cancel()
+	token, err := instagram.TrocarCodigo(ctx, a.ID, a.Segredo, s.instaVolta(r), codigo)
+	if err != nil {
+		fim(err.Error())
+		return
+	}
+	d := &instaDados{}
+	if velho := s.instaGuardado(); velho != nil {
+		*d = *velho
+	}
+	if err := s.instaLerAPI(ctx, token, d); err != nil {
+		fim(err.Error())
+		return
+	}
+	b, _ := json.Marshal(d)
+	if err := s.Store.SetMeta(instaMeta, string(b)); err != nil {
+		fim(err.Error())
+		return
+	}
+	fim("")
 }

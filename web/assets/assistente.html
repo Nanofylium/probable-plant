@@ -44,6 +44,8 @@ code{font-size:.88em;background:color-mix(in srgb,var(--cor) 10%,transparent);pa
 .insta-linha input[type=text]{flex:1;min-width:180px}
 .arquivo-btn{display:inline-block;font-weight:700;border:1px solid var(--linha);border-radius:999px;padding:11px 18px;cursor:pointer}
 .arquivo-btn input{display:none}
+a.arquivo-btn{text-decoration:none;color:inherit}
+#insta-entrar{background:linear-gradient(45deg,#f09433,#dc2743 55%,#bc1888);color:#fff;border:0}
 details.dica{margin-top:12px;color:var(--suave);font-size:.93rem}
 details.dica summary{cursor:pointer;color:var(--cor);font-weight:600}
 details.dica ol{padding-left:20px;margin:8px 0 0}
@@ -66,17 +68,28 @@ details.dica ol{padding-left:20px;margin:8px 0 0}
       <label class="campo" for="insta-usuario">Instagram do negócio <small style="font-weight:400;color:var(--suave)">(opcional, mas ajuda muito)</small></label>
       <div class="insta-linha">
         <input type="text" id="insta-usuario" placeholder="@seunegocio" autocomplete="off" maxlength="60">
-        <label class="arquivo-btn">Enviar os dados do Instagram<input type="file" id="insta-zip" accept=".zip,application/zip"></label>
+        <a class="arquivo-btn" id="insta-entrar" href="#" hidden>Entrar com Instagram</a>
       </div>
-      <details class="dica"><summary>Como pegar as fotos, a bio e as legendas do seu Instagram</summary>
+      <p id="insta-explica" style="font-size:.92rem;color:var(--suave);margin:10px 0 0">Entrando com o Instagram uma vez, o Nepenthes puxa sozinho as fotos, as legendas, os links e o perfil (contas comerciais e de criador). Ele não vê nem guarda sua senha.</p>
+      <details class="dica" id="insta-ligar"><summary>Ligar o app do Instagram (uma vez só, para quem instala o Nepenthes)</summary>
+        <ol>
+          <li>Em <b>developers.facebook.com</b>, crie um app do tipo empresa e acrescente o produto <b>Instagram</b> (API setup with Instagram login).</li>
+          <li>Em <b>Business login settings</b>, cole este endereço em <i>OAuth redirect URIs</i>: <code id="insta-volta"></code></li>
+          <li>Copie o <b>Instagram App ID</b> e a <b>Instagram App Secret</b> para cá:</li>
+        </ol>
+        <div class="insta-linha" style="margin-top:8px"><input type="text" id="insta-appid" placeholder="Instagram App ID" autocomplete="off"><input type="text" id="insta-segredo" placeholder="Instagram App Secret" autocomplete="off"><button type="button" class="sec" id="insta-salvar">Salvar</button></div>
+        <p style="margin:10px 0 0">Enquanto o app não passa pela revisão da Meta, só entram as contas adicionadas a ele no painel. Para essas, dá também para gerar o token no painel do app (<b>Generate token</b>) e colar aqui:</p>
+        <div class="insta-linha" style="margin-top:8px"><input type="text" id="insta-token" placeholder="Token de acesso do Instagram" autocomplete="off"><button type="button" class="sec" id="insta-usar-token">Usar token</button></div>
+      </details>
+      <details class="dica"><summary>Conta pessoal? Envie o arquivo de dados do Instagram</summary>
         <ol>
           <li>No Instagram, abra <b>Configurações</b> e entre em <b>Central de Contas</b>.</li>
           <li>Toque em <b>Suas informações e permissões</b> e depois em <b>Baixar suas informações</b>.</li>
           <li>Escolha a conta, <b>Algumas das suas informações</b>, marque <b>Conteúdo</b> e <b>Informações pessoais</b>.</li>
           <li>Em formato, escolha <b>JSON</b>; em qualidade da mídia, <b>Média</b>; em período, <b>Último ano</b>.</li>
-          <li>O Instagram avisa por e-mail quando o arquivo fica pronto (de minutos a algumas horas). Baixe o .zip e envie aqui.</li>
+          <li>O Instagram avisa por e-mail quando o arquivo fica pronto. Baixe o .zip e envie aqui.</li>
         </ol>
-        É o arquivo que o próprio Instagram entrega a você: o Nepenthes não pede sua senha e não entra na sua conta. Ele usa até 12 fotos dos posts mais recentes, a bio e as legendas.
+        <label class="arquivo-btn" style="margin-top:8px">Enviar o .zip do Instagram<input type="file" id="insta-zip" accept=".zip,application/zip"></label>
       </details>
       <div class="barra" id="insta-barra" hidden><i></i></div>
       <div id="insta-erro" class="erro" hidden></div>
@@ -239,6 +252,27 @@ $("#insta-tirar").onclick = async () => {
   await fetch(BASE + "/_nep/assistente/instagram", {method: "DELETE"});
   $("#insta-usuario").value = ""; mostraInsta(null);
 };
+function mostraApp(a) {
+  a = a || {};
+  $("#insta-volta").textContent = a.volta || "";
+  $("#insta-entrar").hidden = !a.ligado;
+  $("#insta-entrar").href = BASE + "/_nep/assistente/instagram/entrar";
+  if (a.app_id) $("#insta-appid").value = a.app_id;
+  $("#insta-explica").hidden = !a.ligado;
+}
+$("#insta-salvar").onclick = async () => {
+  $("#insta-erro").hidden = true;
+  try { mostraApp(await post("instagram/app", {app_id: $("#insta-appid").value, segredo: $("#insta-segredo").value})); $("#insta-segredo").value = ""; $("#insta-ligar").open = false; }
+  catch (e) { erro("#insta-erro", e); }
+};
+$("#insta-usar-token").onclick = async () => {
+  const t = $("#insta-token").value.trim(); if (!t) return;
+  $("#insta-erro").hidden = true;
+  const form = new FormData(); form.append("token", t);
+  $("#ir1").disabled = true;
+  try { mostraInsta(await enviaInsta(form, false)); $("#insta-token").value = ""; } catch (e) { erro("#insta-erro", e); }
+  $("#ir1").disabled = false;
+};
 async function guardaUsuario() {
   const u = $("#insta-usuario").value.trim();
   if (!u) return;
@@ -251,6 +285,10 @@ async function inicio() {
   estado = await (await fetch(BASE + "/_nep/assistente/estado")).json();
   if (estado.ideia) $("#desc").value = estado.ideia;
   mostraInsta(estado.instagram);
+  mostraApp(estado.instagram_app);
+  const q = new URLSearchParams(location.search);
+  if (q.get("instagram_erro")) erro("#insta-erro", new Error(q.get("instagram_erro")));
+  if (q.has("instagram") || q.has("instagram_erro")) history.replaceState(null, "", location.pathname);
   if (estado.servidor) { $("#m-servidor").hidden = false; $("#m-servidor-nome").textContent = "Modelo " + estado.servidor + ", configurado no painel. Escreve rápido e não pesa no seu computador."; }
   let temGPU = false;
   try { const a = navigator.gpu && await navigator.gpu.requestAdapter(); temGPU = !!a; f16 = !!a && a.features.has("shader-f16"); } catch {}

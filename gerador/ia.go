@@ -456,7 +456,10 @@ func Aplicar(p *Plano, c Conteudo) {
 
 // UsarInstagram põe no plano o que veio do Instagram: as fotos (capa e
 // galeria), o @ no rodapé e o nome do perfil quando a descrição não trouxe um.
-func UsarInstagram(p *Plano, fotos []Foto, usuario, nome string) {
+func UsarInstagram(p *Plano, fotos []Foto, usuario, nome, site string) {
+	if strings.Contains(site, "wa.me/") || strings.Contains(site, "api.whatsapp.com") {
+		p.WhatsApp = linkSeguro(site)
+	}
 	p.Instagram = strings.TrimPrefix(strings.TrimSpace(usuario), "@")
 	if nome = curto(nome, 60); nome != "" && !p.NomeAchado {
 		p.Nome = nome

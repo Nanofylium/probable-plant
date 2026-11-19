@@ -340,7 +340,7 @@ const pessoaCartao = `
 const fotoCartao = `
             <figure class="foto-item">
               <if test="f.foto"><a href="{{ f.foto.url }}"><img src="{{ f.foto.url }}" alt="{{ f.titulo }}" loading="lazy"></a><else><div class="sem-foto">«emoji»</div></if>
-              <figcaption>{{ f.titulo }}</figcaption>
+              <figcaption>{{ f.titulo }}<if test="f.link"> · <a href="{{ f.link }}" rel="noopener" target="_blank">ver no Instagram</a></if></figcaption>
             </figure>`
 
 const postCartao = `

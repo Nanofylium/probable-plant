@@ -38,7 +38,8 @@ type Perfil struct {
 type Post struct {
 	Legenda string    `json:"legenda"`
 	Data    time.Time `json:"data"`
-	Fotos   []string  `json:"fotos"`
+	Fotos   []string  `json:"fotos"` // caminhos no zip ou endereços https (API)
+	Link    string    `json:"link,omitempty"`
 }
 
 // Arquivo é o zip aberto, para copiar as fotos depois de ler o perfil.
