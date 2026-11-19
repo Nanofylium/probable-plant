@@ -188,22 +188,16 @@ func (a *adminPage) statsPage() error {
 		`<div><div class="muted">Visitantes (soma diária)</div><strong style="font-size:1.6rem">%d</strong></div>`+
 		`<div><div class="muted">No celular</div><strong style="font-size:1.6rem">%d%%</strong></div></div>`, st.Total, st.Total2, mob)
 
-	max := 1
+	// gráfico do ECharts (ver grafico.go); sem JavaScript fica a tabela
+	g := &Grafico{Tipo: "area", Altura: 260, Cores: []string{"#2b6b45", "#9cc7ab"},
+		Series: []SerieDados{{Nome: "Visualizações"}, {Nome: "Visitantes"}}}
 	for _, d := range st.Days {
-		if st.Views[d] > max {
-			max = st.Views[d]
-		}
-	}
-	b.WriteString(`<div style="display:flex;align-items:flex-end;gap:2px;height:140px;border-bottom:1px solid #dfe3dc;margin-bottom:4px" role="img" aria-label="Visualizações por dia">`)
-	for _, d := range st.Days {
-		h := st.Views[d] * 130 / max
-		u := st.Uniq[d] * 130 / max
 		t, _ := time.Parse("2006-01-02", d)
-		fmt.Fprintf(&b, `<div title="%s: %d visualizações, %d visitantes" style="flex:1;position:relative;height:%dpx;background:#cfe3d6;border-radius:3px 3px 0 0">`+
-			`<div style="position:absolute;bottom:0;left:0;right:0;height:%dpx;background:#2b6b45;border-radius:3px 3px 0 0"></div></div>`,
-			t.Format("02/01"), st.Views[d], st.Uniq[d], max1(h), u)
+		g.Rotulos = append(g.Rotulos, t.Format("02/01"))
+		g.Series[0].Valores = append(g.Series[0].Valores, float64(st.Views[d]))
+		g.Series[1].Valores = append(g.Series[1].Valores, float64(st.Uniq[d]))
 	}
-	b.WriteString(`</div><p class="muted">Barra clara: visualizações. Barra escura: visitantes. Passe o mouse para ver o dia.</p>`)
+	b.WriteString(g.HTML(a.s.opt.Base))
 
 	table := func(title string, m map[string]int, empty string) {
 		fmt.Fprintf(&b, `<h2 style="font-size:1.1rem;margin:20px 0 8px">%s</h2>`, title)

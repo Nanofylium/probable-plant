@@ -221,6 +221,18 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/_nep/tema.css":
 		serveTema(w, r)
 		return
+	case "/_nep/echarts.js":
+		serveAssetJS(w, r, echartsJS, false)
+		return
+	case "/_nep/grafico.js":
+		serveAssetJS(w, r, graficoJS, false)
+		return
+	case "/_nep/hilo.js":
+		serveAssetJS(w, r, hiloJS, false)
+		return
+	case "/_nep/jogos.js":
+		serveAssetJS(w, r, jogosJS, false)
+		return
 	case "/_nep/versao":
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
@@ -290,6 +302,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if rq.path == "/_nep/lowii" {
 		s.lowii(rq)
+		return
+	}
+	if rq.path == "/_nep/jogo" {
+		s.jogoAPI(rq)
 		return
 	}
 	if err := s.route(rq); err != nil {

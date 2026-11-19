@@ -245,6 +245,8 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	s.iaModules(rq, def) // ia(), rajah, lowii, ampullaria, villosa, truncata (Qwen)
 	def("enviar_email", s.emailBuiltin(rq))
 	def("send_email", s.emailBuiltin(rq))
+	def("grafico", s.graficoBuiltin)
+	def("jogo", s.jogoBuiltin(rq)) // roleta, raspadinha e memória com cupom (ver jogos.go) // gráficos com o Apache ECharts (ver grafico.go)
 	def("visual", func(a []lang.Value) (lang.Value, error) { return Visual(strOrEmpty(argv(a, 0))), nil })
 	// textos editáveis (editavel="chave")
 	def("__edhas", func(a []lang.Value) (lang.Value, error) {

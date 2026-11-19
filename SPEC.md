@@ -527,6 +527,24 @@ Assim o atendente funciona até em hospedagem compartilhada.
 
 Só vê a tela e pode criar quem acessa do próprio computador (`localhost`, sem proxy) ou entrou no painel como administrador. Os outros visitantes veem "site em construção". Em CGI (hospedagem compartilhada) é sempre pelo painel.
 
+### 10.18 Gráficos (ECharts) e jogos de promoção (Hilo)
+
+`{{ grafico(tipo, dados, opções) }}` desenha um gráfico com o Apache ECharts (Baidu, Apache 2.0), na cor e na fonte do site.
+
+- Tipos: `barras`, `horizontal`, `linhas`, `area`, `pizza`, `rosca`.
+- Dados: uma tabela `{Jan: 10, Fev: 12}`, uma lista de números, ou uma lista de registros (`db.find(...)`). Nos registros, `x` é o campo do rótulo e `y` o campo (ou lista de campos) dos valores; sem eles, o Nepenthes adivinha.
+- Opções: `titulo`, `moeda` (R$), `altura` (160 a 900), `nome` da série.
+- Sem JavaScript, aparece uma tabela com os mesmos números. O ECharts só é baixado quando a página tem gráfico.
+- O painel mostra as visitas num gráfico de área.
+
+`{{ jogo(tipo, opções) }}` põe um jogo de promoção feito com o Hilo (Alibaba, MIT): `roleta`, `raspadinha` ou `memoria`.
+
+- Opções: `premios` (lista de textos ou `{nome, chance, cupom}`; até 12), ou um `premio` só; `titulo`, `texto`, `botao`; `contato` (pede nome e WhatsApp/e-mail com aceite, padrão `true`); `validade` em dias (padrão 7); `prefixo` do cupom (padrão `NEP`); `imagens` das cartas da memória.
+- Quem sorteia é o servidor (`POST /_nep/jogo`, com CSRF): uma jogada por dia por aparelho e por contato. A memória só paga depois de 6 segundos de jogo.
+- Cada prêmio vira um cupom `PREFIXO-XXXXXX` na coleção `cupons` (aparece no painel), com prazo de validade e campo `usado`.
+
+Créditos e licenças em `LICENCA-ECHARTS.txt` e `LICENCA-HILO.txt`.
+
 ## 11. Lua 5.4 na mesma máquina virtual
 
 O `nep` roda programas Lua 5.4: `nep jogo.lua [args]`. O código Lua é lido por um leitor próprio e compilado para o mesmo bytecode do Nepenthes, então os dois se misturam:
