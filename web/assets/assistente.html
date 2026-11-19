@@ -49,6 +49,9 @@ a.arquivo-btn{text-decoration:none;color:inherit}
 details.dica{margin-top:12px;color:var(--suave);font-size:.93rem}
 details.dica summary{cursor:pointer;color:var(--cor);font-weight:600}
 details.dica ol{padding-left:20px;margin:8px 0 0}
+.insta-prints{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:.92rem;color:var(--suave)}
+.insta-prints span{flex:1;min-width:220px}
+#insta-avisa{font-size:.92rem;color:var(--suave);margin:8px 0 0}
 .insta-ok{display:grid;gap:10px;margin-top:14px}
 .insta-ok p{margin:0}
 .insta-fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
@@ -69,6 +72,10 @@ details.dica ol{padding-left:20px;margin:8px 0 0}
       <div class="insta-linha">
         <input type="text" id="insta-usuario" placeholder="@seunegocio" autocomplete="off" maxlength="60">
         <a class="arquivo-btn" id="insta-entrar" href="#" hidden>Entrar com Instagram</a>
+      </div>
+      <div class="insta-prints">
+        <label class="arquivo-btn" id="insta-prints-btn">Enviar prints do Instagram<input type="file" id="insta-prints" accept="image/png,image/jpeg" multiple></label>
+        <span>Tire prints do seu perfil (a grade de fotos) ou dos seus posts, no celular ou no computador. O Nepenthes acha as fotos dentro de cada print, recorta e usa no site.</span>
       </div>
       <p id="insta-explica" style="font-size:.92rem;color:var(--suave);margin:10px 0 0">Entrando com o Instagram uma vez, o Nepenthes puxa sozinho as fotos, as legendas, os links e o perfil (contas comerciais e de criador). Ele não vê nem guarda sua senha.</p>
       <details class="dica" id="insta-ligar"><summary>Ligar o app do Instagram (uma vez só, para quem instala o Nepenthes)</summary>
@@ -93,6 +100,7 @@ details.dica ol{padding-left:20px;margin:8px 0 0}
       </details>
       <div class="barra" id="insta-barra" hidden><i></i></div>
       <div id="insta-erro" class="erro" hidden></div>
+      <p id="insta-avisa" hidden></p>
       <div class="insta-ok" id="insta-ok" hidden>
         <p id="insta-resumo"></p>
         <div class="insta-fotos" id="insta-fotos"></div>
@@ -235,11 +243,28 @@ function enviaInsta(form, comBarra) {
     const x = new XMLHttpRequest();
     x.open("POST", BASE + "/_nep/assistente/instagram");
     if (comBarra) { $("#insta-barra").hidden = false; x.upload.onprogress = e => { if (e.lengthComputable) $("#insta-barra i").style.width = Math.round(e.loaded / e.total * 100) + "%"; }; }
-    x.onload = () => { $("#insta-barra").hidden = true; if (x.status === 200) ok(JSON.parse(x.responseText).instagram); else falha(new Error(x.responseText.trim() || "erro " + x.status)); };
+    x.onload = () => { $("#insta-barra").hidden = true; if (x.status === 200) { const r = JSON.parse(x.responseText); avisaPrints(r.prints); ok(r.instagram); } else falha(new Error(x.responseText.trim() || "erro " + x.status)); };
     x.onerror = () => { $("#insta-barra").hidden = true; falha(new Error("O envio foi interrompido.")); };
     x.send(form);
   });
 }
+function avisaPrints(p) {
+  const el = $("#insta-avisa"); el.hidden = !p; if (!p) return;
+  const um = p.enviados === 1;
+  if (p.sem_foto === p.enviados) el.textContent = um ? "Não achei fotos nesse print. Tente um print da grade do perfil ou de um post com a foto inteira na tela." : "Não achei fotos nesses prints. Tente prints da grade do perfil ou de posts com a foto inteira na tela.";
+  else if (p.sem_foto) el.textContent = "Em " + p.sem_foto + " dos " + p.enviados + " prints não achei fotos inteiras; os outros foram aproveitados.";
+  else el.textContent = "";
+  el.hidden = !el.textContent;
+}
+$("#insta-prints").onchange = async e => {
+  const fs = [...e.target.files]; if (!fs.length) return;
+  $("#insta-erro").hidden = true;
+  const form = new FormData(); form.append("usuario", $("#insta-usuario").value);
+  fs.forEach(f => form.append("print", f));
+  $("#ir1").disabled = true;
+  try { mostraInsta(await enviaInsta(form, true)); } catch (err) { erro("#insta-erro", err); }
+  $("#ir1").disabled = false; e.target.value = "";
+};
 $("#insta-zip").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   $("#insta-erro").hidden = true;
@@ -250,7 +275,7 @@ $("#insta-zip").onchange = async e => {
 };
 $("#insta-tirar").onclick = async () => {
   await fetch(BASE + "/_nep/assistente/instagram", {method: "DELETE"});
-  $("#insta-usuario").value = ""; mostraInsta(null);
+  $("#insta-usuario").value = ""; $("#insta-avisa").hidden = true; mostraInsta(null);
 };
 function mostraApp(a) {
   a = a || {};

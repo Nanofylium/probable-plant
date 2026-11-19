@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/color"
 	"image/jpeg"
+	"image/png"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -240,5 +241,107 @@ func TestAssistenteEntrarComInstagram(t *testing.T) {
 	}
 	if !strings.Contains(d.Resumo, "Carrossel do sábado") {
 		t.Errorf("resumo: %s", d.Resumo)
+	}
+}
+
+// printDePerfil desenha um print simples: fundo branco, uma faixa de texto e
+// duas fotos 3:4 lado a lado.
+func printDePerfil() []byte {
+	img := image.NewRGBA(image.Rect(0, 0, 600, 900))
+	for i := range img.Pix {
+		img.Pix[i] = 255
+	}
+	n := uint32(7)
+	for y := 300; y < 560; y++ {
+		for x := 0; x < 600; x++ {
+			if x >= 200 && x < 204 || x >= 404 {
+				continue
+			}
+			n = n*1103515245 + 12345
+			d := uint8(n >> 24 % 30)
+			g := uint8((y - 300) * 150 / 260) // foto 1 clareia para baixo
+			if x > 200 {
+				g = uint8((x - 204) * 150 / 200) // foto 2 clareia para a direita
+			}
+			img.Set(x, y, color.RGBA{60 + d + g/2, 40 + g, 40 + d, 255})
+		}
+	}
+	for y := 100; y < 130; y++ { // um título
+		for x := 20; x < 300; x++ {
+			img.Set(x, y, color.RGBA{20, 20, 20, 255})
+		}
+	}
+	var b bytes.Buffer
+	png.Encode(&b, img)
+	return b.Bytes()
+}
+
+func TestAssistenteInstagramPrints(t *testing.T) {
+	t.Setenv("NEP_IA_LOCAL", t.TempDir())
+	s, _ := assistenteSrv(t, "<!doctype html>\n<nepenthes></nepenthes>\n")
+	srv := httptest.NewServer(s)
+	defer srv.Close()
+	envia := func(arqs ...[]byte) (*http.Response, []byte) {
+		var corpo bytes.Buffer
+		mw := multipart.NewWriter(&corpo)
+		mw.WriteField("usuario", "@padaria.do.carmo")
+		for i, a := range arqs {
+			fw, _ := mw.CreateFormFile("print", "print"+string(rune('0'+i))+".png")
+			fw.Write(a)
+		}
+		mw.Close()
+		req, _ := http.NewRequest("POST", srv.URL+"/_nep/assistente/instagram", &corpo)
+		req.Header.Set("Content-Type", mw.FormDataContentType())
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		return res, b
+	}
+	branco := image.NewRGBA(image.Rect(0, 0, 400, 700))
+	for i := range branco.Pix {
+		branco.Pix[i] = 255
+	}
+	var vazio bytes.Buffer
+	png.Encode(&vazio, branco)
+
+	res, b := envia(printDePerfil(), vazio.Bytes())
+	if res.StatusCode != 200 {
+		t.Fatalf("%d %s", res.StatusCode, b)
+	}
+	var r struct {
+		Instagram struct {
+			Usuario string   `json:"usuario"`
+			Fotos   []string `json:"fotos"`
+		} `json:"instagram"`
+		Prints map[string]int `json:"prints"`
+	}
+	if err := json.Unmarshal(b, &r); err != nil {
+		t.Fatal(err)
+	}
+	if r.Instagram.Usuario != "padaria.do.carmo" || len(r.Instagram.Fotos) != 2 || r.Prints["enviados"] != 2 || r.Prints["sem_foto"] != 1 {
+		t.Fatalf("resposta: %s", b)
+	}
+	foto, err := http.Get(srv.URL + r.Instagram.Fotos[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, err := jpeg.Decode(foto.Body)
+	foto.Body.Close()
+	if err != nil || img.Bounds().Dx() != 200 || img.Bounds().Dy() != 260 {
+		t.Fatalf("recorte: %v %v", err, img)
+	}
+	// o mesmo print de novo não repete as fotos
+	if res, b = envia(printDePerfil()); res.StatusCode != 200 || !strings.Contains(string(b), `"sem_foto":0`) {
+		t.Fatalf("%d %s", res.StatusCode, b)
+	}
+	json.Unmarshal(b, &r)
+	if len(r.Instagram.Fotos) != 2 {
+		t.Fatalf("fotos depois do print repetido: %d", len(r.Instagram.Fotos))
+	}
+	if res, b = envia([]byte("não é imagem")); res.StatusCode != 400 || !strings.Contains(string(b), "PNG ou JPG") {
+		t.Fatalf("arquivo ruim: %d %s", res.StatusCode, b)
 	}
 }

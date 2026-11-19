@@ -3,12 +3,18 @@ package web
 // Instagram na tela da tag <nepenthes>: a pessoa manda o zip que o próprio
 // Instagram entrega ("Baixar suas informações", formato JSON) e o Nepenthes
 // usa o perfil, a bio, as legendas e as fotos para montar o site (pacote
-// instagram). Também dá para informar só o @, que vira o link do rodapé.
+// instagram). Também dá para informar só o @, que vira o link do rodapé, ou
+// mandar prints (capturas de tela) do perfil ou de posts: o Nepenthes acha as
+// fotos dentro de cada print e recorta (instagram.Recortar).
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/jpeg"
+	_ "image/png"
 	"io"
 	"net/http"
 	"os"
@@ -25,6 +31,8 @@ const (
 	instaMaxZip   = 4 << 30 // o arquivo do Instagram com fotos pode ser grande
 	instaMaxFotos = 12
 	instaMaxFoto  = 8 << 20
+	instaMaxPrint = 25 << 20
+	instaMaxPixel = 40_000_000 // 40 megapixels por print
 )
 
 // instaDados é o que fica guardado entre o envio e a criação do site.
@@ -93,6 +101,7 @@ func (s *Server) assistenteInstagram(rq *request) {
 		*d = *velho
 	}
 	var zipTmp, token string
+	prints, semFoto := 0, 0
 	defer func() {
 		if zipTmp != "" {
 			os.Remove(zipTmp)
@@ -116,6 +125,16 @@ func (s *Server) assistenteInstagram(rq *request) {
 		case "token": // token gerado no painel do app Meta, colado na tela
 			b, _ := io.ReadAll(io.LimitReader(part, 2048))
 			token = strings.TrimSpace(string(b))
+		case "print": // print do perfil ou de um post: recorta as fotos
+			prints++
+			fotos, err := s.instaPrint(part, d)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			if fotos == 0 {
+				semFoto++
+			}
 		case "zip":
 			f, err := os.CreateTemp("", "nep-instagram-*.zip")
 			if err != nil {
@@ -148,7 +167,77 @@ func (s *Server) assistenteInstagram(rq *request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, map[string]any{"instagram": s.instaResposta(d)})
+	res := map[string]any{"instagram": s.instaResposta(d)}
+	if prints > 0 {
+		res["prints"] = map[string]int{"enviados": prints, "sem_foto": semFoto}
+	}
+	writeJSON(w, res)
+}
+
+// instaPrint lê um print (png ou jpg), acha as fotos dentro dele e guarda cada
+// recorte como foto do site (até 12 no total). Devolve quantas aproveitou.
+func (s *Server) instaPrint(part io.Reader, d *instaDados) (int, error) {
+	b, err := io.ReadAll(io.LimitReader(part, instaMaxPrint+1))
+	if err != nil {
+		return 0, fmt.Errorf("o envio do print foi interrompido: %v", err)
+	}
+	if len(b) > instaMaxPrint {
+		return 0, fmt.Errorf("print grande demais (até %d MB)", instaMaxPrint>>20)
+	}
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(b))
+	if err != nil {
+		return 0, fmt.Errorf("o print precisa ser PNG ou JPG")
+	}
+	if cfg.Width*cfg.Height > instaMaxPixel {
+		return 0, fmt.Errorf("print grande demais (%dx%d)", cfg.Width, cfg.Height)
+	}
+	img, _, err := image.Decode(bytes.NewReader(b))
+	if err != nil {
+		return 0, fmt.Errorf("não consegui ler o print: %v", err)
+	}
+	dir := filepath.Join(s.opt.DataDir, "arquivos")
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		return 0, err
+	}
+	var marcas []instagram.Marca // das fotos que já vieram de prints: não repetir
+	for _, f := range d.Fotos {
+		if strings.HasPrefix(f.Nome, "print-") {
+			if fi, err := os.Open(filepath.Join(dir, filepath.Base(f.URL))); err == nil {
+				if im, err := jpeg.Decode(fi); err == nil {
+					marcas = append(marcas, instagram.Marcar(im))
+				}
+				fi.Close()
+			}
+		}
+	}
+	n := 0
+recortes:
+	for _, r := range instagram.Recortar(img) {
+		if len(d.Fotos) >= instaMaxFotos {
+			break
+		}
+		foto := instagram.Sub(img, r)
+		m := instagram.Marcar(foto)
+		for _, o := range marcas {
+			if m.Parecida(o) {
+				n++ // já está no site: conta como aproveitada
+				continue recortes
+			}
+		}
+		marcas = append(marcas, m)
+		var out bytes.Buffer
+		if err := jpeg.Encode(&out, foto, &jpeg.Options{Quality: 90}); err != nil {
+			continue
+		}
+		nome := "p-" + randHex(16) + ".jpg"
+		if err := os.WriteFile(filepath.Join(dir, nome), out.Bytes(), 0o640); err != nil {
+			return n, err
+		}
+		d.Fotos = append(d.Fotos, gerador.Foto{URL: "/_nep/arquivo/" + nome, Nome: fmt.Sprintf("print-%d.jpg", len(d.Fotos)+1),
+			Tipo: "image/jpeg", Tamanho: int64(out.Len())})
+		n++
+	}
+	return n, nil
 }
 
 func limparUsuario(u string) string {
