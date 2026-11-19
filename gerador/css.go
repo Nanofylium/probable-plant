@@ -16,6 +16,8 @@ func (g *ger) css() string {
       background: radial-gradient(circle at 72% 28%, color-mix(in srgb, var(--nep-cor) 45%, #fff) 0 16%, transparent 17%),
                   linear-gradient(155deg, color-mix(in srgb, var(--nep-cor) 22%, #fff), color-mix(in srgb, var(--nep-cor) 80%, #000));
       box-shadow: 0 30px 70px rgba(0,0,0,.18); }
+    .ilustracao.foto::after { display: none; }
+    .ilustracao.foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .ilustracao span { font-size: clamp(5rem, 13vw, 9rem); filter: drop-shadow(0 18px 30px rgba(0,0,0,.25)); }
     .ilustracao::after { content: ""; position: absolute; left: 8%; bottom: 9%; width: 46%; height: 16%; border-radius: 14px; background: rgba(255,255,255,.85); box-shadow: 0 12px 30px rgba(0,0,0,.15); }
     .servico .preco, .produto .preco { font-weight: 700; color: var(--nep-cor); }

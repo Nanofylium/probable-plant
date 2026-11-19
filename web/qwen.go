@@ -30,6 +30,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Nanofylium/probable-plant/ialocal"
 	"github.com/Nanofylium/probable-plant/lang"
 )
 
@@ -504,12 +505,51 @@ func (s *Server) lowii(rq *request) {
 		msgs = append(msgs, iaMsg{"user", clip(h.P, 500)}, iaMsg{"assistant", clip(h.R, 1500)})
 	}
 	msgs = append(msgs, iaMsg{"user", q})
-	ans, err := s.chat("lowii", msgs, 500, 0.3)
+	// quem responde: a IA do painel; senão a IA do Nepenthes (llama.cpp +
+	// Granite) se estiver baixada neste computador/VPS; senão, sem IA, o que a
+	// busca do site achou. Assim todo site tem atendente, até em CGI.
+	var ans string
+	var err error
+	switch {
+	case s.iaConf().ready():
+		ans, err = s.chat("lowii", msgs, 500, 0.3)
+	case !s.opt.CGI && localPronta():
+		msgs[0].Content = clip(sys, 7000) // o modelo pequeno lê devagar: menos contexto
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Minute)
+		var u string
+		if u, err = ialocal.URL(ctx); err == nil {
+			ans, err = s.chatCom(iaConf{URL: u, Modelo: "granite"}, 3*time.Minute, nil, "lowii (IA do Nepenthes)", msgs, 400, 0.3)
+		}
+		cancel()
+	default:
+		err = errNoIA
+	}
 	if err != nil {
-		reply(200, map[string]any{"erro": "O atendente está indisponível agora. Fale com a gente pelos contatos do site."})
+		reply(200, map[string]any{"resposta": respostaSemIA(found), "links": links, "sem_ia": true})
 		return
 	}
 	reply(200, map[string]any{"resposta": ans, "links": links})
+}
+
+func localPronta() bool {
+	f := ialocal.Ver().Fase
+	return f == "pronto" || f == "ligado"
+}
+
+// respostaSemIA: o atendente sem IA mostra o trecho do site que mais combina.
+func respostaSemIA(found *lang.List) string {
+	for _, it := range found.Items {
+		t := it.(*lang.Table)
+		tit, res := getS(t, "titulo"), strings.TrimSpace(getS(t, "resumo"))
+		if tit == "" {
+			continue
+		}
+		if res != "" {
+			return "Achei isto no site sobre " + tit + ": " + clip(res, 300) + "\nVeja mais no link abaixo."
+		}
+		return "Achei isto no site: " + tit + ". Veja no link abaixo."
+	}
+	return "Não achei isso aqui no site. Fale com a gente pelos contatos (no fim da página) que respondemos rapidinho."
 }
 
 // ---------- painel: /_admin/ia ----------

@@ -414,8 +414,13 @@ func Aplicar(p *Plano, c Conteudo) {
 		for _, m := range p.Modulos {
 			quer[m] = true
 		}
+		tinhaPlanos := quer["planos"]
 		for _, m := range c.Secoes {
 			quer[strings.TrimSpace(strings.ToLower(m))] = true
+		}
+		// loja/cardápio já mostra os preços: planos só se a pessoa pediu
+		if quer["catalogo"] && !tinhaPlanos {
+			delete(quer, "planos")
 		}
 		tirado := map[string]bool{}
 		for _, m := range p.Tirados {
@@ -447,4 +452,35 @@ func Aplicar(p *Plano, c Conteudo) {
 		}
 	}
 	p.Notas = append(p.Notas, "textos, cor e seções escritos pela IA")
+}
+
+// UsarInstagram põe no plano o que veio do Instagram: as fotos (capa e
+// galeria), o @ no rodapé e o nome do perfil quando a descrição não trouxe um.
+func UsarInstagram(p *Plano, fotos []Foto, usuario, nome string) {
+	p.Instagram = strings.TrimPrefix(strings.TrimSpace(usuario), "@")
+	if nome = curto(nome, 60); nome != "" && !p.NomeAchado {
+		p.Nome = nome
+		p.Notas = append(p.Notas, "nome: "+nome+" (do Instagram)")
+	}
+	if len(fotos) == 0 {
+		return
+	}
+	p.Fotos = fotos
+	tirado := false
+	for _, m := range p.Tirados {
+		tirado = tirado || m == "galeria"
+	}
+	if len(fotos) >= 3 && !tirado && !p.Tem("galeria") {
+		quer := map[string]bool{"galeria": true}
+		for _, m := range p.Modulos {
+			quer[m] = true
+		}
+		p.Modulos = nil
+		for _, m := range ModulosTodos {
+			if quer[m] {
+				p.Modulos = append(p.Modulos, m)
+			}
+		}
+	}
+	p.Notas = append(p.Notas, fmt.Sprintf("fotos: %d do Instagram (capa e galeria)", len(fotos)))
 }

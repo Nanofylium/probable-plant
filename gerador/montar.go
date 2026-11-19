@@ -111,7 +111,7 @@ func (g *ger) rotas() {
 		cta2, cta2U = "Fale com a gente", "/contato"
 	}
 	g.vars = map[string]string{
-		"«nome»": esc(p.Nome), "«nomeLit»": lit(p.Nome), "«emoji»": s.Emoji, "«cidade»": esc(cidade),
+		"«nome»": esc(p.Nome), "«insta»": esc(p.Instagram), "«nomeLit»": lit(p.Nome), "«emoji»": s.Emoji, "«cidade»": esc(cidade),
 		"«servR»": esc(s.ServRotulo), "«servU»": servU, "«servI»": esc(s.ServIntro),
 		"«equipeR»": esc(s.EquipeRotulo), "«equipeU»": equipeU,
 		"«blogR»": esc(s.BlogRotulo), "«blogU»": blogU,
@@ -384,7 +384,22 @@ func (g *ger) codigo() string {
 				lit(pe.Nome), lit(slugify(pe.Nome)), lit(pe.Cargo), lit(pe.Texto))
 		}
 	}
-	if g.tem("galeria") {
+	if g.tem("galeria") && len(g.p.Fotos) > 0 {
+		for i, f := range g.p.Fotos {
+			if i >= 12 {
+				break
+			}
+			tit := f.Legenda
+			if r := []rune(tit); len(r) > 60 {
+				tit = strings.TrimSpace(string(r[:57])) + "…"
+			}
+			if tit == "" {
+				tit = fmt.Sprintf("Foto %d", i+1)
+			}
+			fmt.Fprintf(&b, "    db.insert(\"galeria\", {titulo: %s, slug: %s, publicado: true, categoria: \"Instagram\", resumo: %s, foto: {nome: %s, tipo: %s, tamanho: %d, url: url(%s)}})\n",
+				lit(tit), lit(fmt.Sprintf("foto-%d", i+1)), lit(f.Legenda), lit(f.Nome), lit(f.Tipo), f.Tamanho, lit(f.URL))
+		}
+	} else if g.tem("galeria") {
 		for i, t := range s.Galeria {
 			alb := "Nosso espaço"
 			if i%2 == 1 {

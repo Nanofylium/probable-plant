@@ -30,6 +30,19 @@ type Plano struct {
 
 	RamoAchado bool // as regras reconheceram o ramo pelas palavras da descrição
 	CorPedida  bool // a pessoa disse a cor
+	NomeAchado bool // o nome veio da descrição (não é o padrão do ramo)
+
+	Fotos     []Foto // fotos de verdade (do Instagram): capa e galeria
+	Instagram string // @ do Instagram, sem o @
+}
+
+// Foto é uma imagem já gravada nos arquivos do site (data/arquivos).
+type Foto struct {
+	URL     string // /_nep/arquivo/p-....jpg (sem a base)
+	Nome    string
+	Tipo    string
+	Tamanho int64
+	Legenda string
 }
 
 // ModulosTodos, na ordem em que aparecem no site.
@@ -42,7 +55,7 @@ var NomeModulo = map[string]string{
 	"eventos": "eventos com inscrição e vagas", "planos": "planos e preços", "equipe": "equipe", "galeria": "galeria / portfólio",
 	"depoimentos": "depoimentos", "blog": "blog (categorias, tags, arquivo, comentários)", "wiki": "wiki (links [[Página]], índice A–Z, sugestões de edição)",
 	"forum": "fórum moderado", "downloads": "área de downloads", "vagas": "trabalhe conosco (vagas + currículo)", "faq": "perguntas frequentes",
-	"newsletter": "newsletter", "idiomas": "tradução automática (com a IA ligada)", "atendente": "atendente virtual (lowii, com a IA ligada)",
+	"newsletter": "newsletter", "idiomas": "tradução automática (com a IA ligada)", "atendente": "atendente virtual (lowii; com IA quando houver, senão responde pelas páginas do site)",
 }
 
 // Palavras que pedem cada módulo (radicais sem acento; "x$" = palavra inteira).
@@ -196,6 +209,7 @@ func Entender(desc string) *Plano {
 		p.Nome = p.Setor.Nome
 		p.Notas = append(p.Notas, "nome: não achei, usei \""+p.Nome+"\" (troque no painel ou escreva \"chamada X\")")
 	} else {
+		p.NomeAchado = true
 		p.Notas = append(p.Notas, "nome: "+p.Nome)
 	}
 

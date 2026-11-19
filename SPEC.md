@@ -512,6 +512,15 @@ A IA não escreve código: devolve um JSON com nome, ramo, cor, estilo, frases d
 
 Como modelos pequenos erram mais, o gerador dá preferência ao que a pessoa escreveu: se as regras reconheceram o ramo ou a cor na descrição, a IA não troca; telefone não entra como "número de destaque"; ícone tem de ser emoji; e uma lista de seções que copia quase todas as opções é ignorada.
 
+**Instagram.** A tela aceita o @ do negócio e o arquivo que o próprio Instagram entrega em *Configurações > Central de Contas > Suas informações e permissões > Baixar suas informações* (formato JSON). O pacote `instagram` lê desse zip o nome, o @, a bio, as legendas e as fotos dos posts. Ele aceita rótulos em inglês ou português e conserta os acentos que o Instagram grava errado. Até 12 fotos dos posts mais recentes viram arquivos públicos do site e vão para a capa e para a galeria. A galeria entra sozinha quando há 3 fotos ou mais. A bio e as legendas vão para a IA, que escreve no jeito do perfil. Sem IA, a bio ajuda as regras a achar o ramo. O nome do perfil é usado quando a descrição não traz um, e o @ vai para o link do rodapé. O Nepenthes não pede senha nem entra no Instagram: raspar o site do Instagram é proibido pelos termos de uso e é bloqueado.
+
+**Atendente em todo site.** Todo site criado pelo gerador traz o atendente (`lowii()`), a não ser que a descrição diga "sem atendente". Quem responde depende do que estiver disponível:
+1. a IA do painel, se estiver configurada;
+2. senão, a IA do Nepenthes, se já estiver baixada no computador ou VPS (fora do CGI);
+3. senão, sem IA: mostra o trecho do site que a busca achou, com os links.
+
+Assim o atendente funciona até em hospedagem compartilhada.
+
 Só vê a tela e pode criar quem acessa do próprio computador (`localhost`, sem proxy) ou entrou no painel como administrador. Os outros visitantes veem "site em construção". Em CGI (hospedagem compartilhada) é sempre pelo painel.
 
 ## 11. Lua 5.4 na mesma máquina virtual

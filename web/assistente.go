@@ -93,7 +93,11 @@ func (s *Server) assistente(rq *request, ideia string) {
 			"servidor": modelo, "ideia": ideia, "arquivo": s.file,
 			"prompt_perguntas": gerador.PromptPerguntas(), "prompt_site": gerador.PromptSite(),
 			"local": ialocal.Ver(), "local_pasta": ialocal.Pasta(),
+			"instagram": s.instaResposta(s.instaGuardado()),
 		})
+		return
+	case "/_nep/assistente/instagram":
+		s.assistenteInstagram(rq)
 		return
 	case "/_nep/assistente/local":
 		if rq.r.Method == http.MethodPost {
@@ -168,9 +172,9 @@ func (s *Server) assistentePerguntas(rq *request, desc, motor string) {
 	var err error
 	switch {
 	case motor == "servidor" && s.iaConf().ready():
-		txt, err = s.ask("assistente", gerador.PromptPerguntas(), desc, 400, 0.7)
+		txt, err = s.ask("assistente", gerador.PromptPerguntas(), s.comInstagram(desc), 400, 0.7)
 	case motor == "local":
-		txt, err = s.askLocal(rq, schemaPerguntas, gerador.PromptPerguntas(), desc, 400, 0.7)
+		txt, err = s.askLocal(rq, schemaPerguntas, gerador.PromptPerguntas(), s.comInstagram(desc), 400, 0.7)
 	default:
 		err = errNoIA
 	}
@@ -184,15 +188,21 @@ func (s *Server) assistentePerguntas(rq *request, desc, motor string) {
 func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, conteudo, motor string) {
 	completa := gerador.DescricaoComRespostas(desc, resp)
 	p := gerador.Entender(completa)
+	insta := s.instaGuardado()
+	if insta != nil && !p.RamoAchado && insta.Bio != "" { // a bio ajuda a achar o ramo
+		if p2 := gerador.Entender(completa + ". " + insta.Bio); p2.RamoAchado {
+			p = p2
+		}
+	}
 	usado := "regras"
 	var aviso string
 	if conteudo == "" && (motor == "servidor" && s.iaConf().ready() || motor == "local") {
 		var txt string
 		var err error
 		if motor == "local" {
-			txt, err = s.askLocal(rq, gerador.SchemaSite(), gerador.PromptSite(), gerador.MensagemSite(desc, resp), 2500, 0.9)
+			txt, err = s.askLocal(rq, gerador.SchemaSite(), gerador.PromptSite(), s.comInstagram(gerador.MensagemSite(desc, resp)), 2500, 0.9)
 		} else {
-			txt, err = s.ask("assistente", gerador.PromptSite(), gerador.MensagemSite(desc, resp), 2500, 0.9)
+			txt, err = s.ask("assistente", gerador.PromptSite(), s.comInstagram(gerador.MensagemSite(desc, resp)), 2500, 0.9)
 		}
 		if err != nil {
 			aviso = "A IA não respondeu (" + err.Error() + "); montei pelas regras."
@@ -210,6 +220,9 @@ func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, con
 		} else {
 			gerador.Aplicar(p, c)
 		}
+	}
+	if insta != nil {
+		gerador.UsarInstagram(p, insta.Fotos, insta.Usuario, insta.Nome)
 	}
 	src := gerador.Montar(p)
 
@@ -239,4 +252,12 @@ func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, con
 		"ok": true, "motor": usado, "aviso": aviso, "nome": p.Nome, "notas": p.Notas,
 		"arquivos": arquivos, "copia": copia, "ir": s.url("/"),
 	})
+}
+
+// comInstagram junta à mensagem para a IA o que veio do Instagram.
+func (s *Server) comInstagram(msg string) string {
+	if d := s.instaGuardado(); d != nil && d.Resumo != "" {
+		return msg + "\nDo Instagram do negócio (use o jeito de falar e os produtos daqui):\n" + d.Resumo
+	}
+	return msg
 }

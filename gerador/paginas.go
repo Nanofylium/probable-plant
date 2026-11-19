@@ -85,8 +85,11 @@ func (g *ger) html() string {
 	w(g.paginasFixas())
 	w("  </main>\n")
 	w(g.rodape())
+	if !g.tirou("atendente") {
+		// o atendente vai em todo site: responde com a IA que houver, ou sem IA
+		w("\n  {{ lowii() }}")
+	}
 	w(`
-  <if test="ia_ligada()">{{ lowii() }}</if>
 </body>
 </html>
 `)
@@ -119,7 +122,7 @@ func (g *ger) inicio() string {
               <a class="botao secundario" href="{{ url('«cta2U»') }}">«cta2»</a>
             </div>
           </div>
-          <div class="ilustracao" nep-inclinar="8" aria-hidden="true"><span>«emoji»</span></div>
+          ` + g.capaImagem() + `
         </div>
       </section>
 `)
@@ -386,4 +389,21 @@ func quatro(n int) string {
 		return " quatro"
 	}
 	return ""
+}
+
+// capaImagem: a primeira foto de verdade (Instagram) ou a ilustração do ramo.
+func (g *ger) capaImagem() string {
+	if len(g.p.Fotos) > 0 {
+		return `<div class="ilustracao foto" nep-inclinar="8"><img src="{{ url(` + lit(g.p.Fotos[0].URL) + `) }}" alt="` + esc(g.p.Fotos[0].Legenda) + `"></div>`
+	}
+	return `<div class="ilustracao" nep-inclinar="8" aria-hidden="true"><span>«emoji»</span></div>`
+}
+
+func (g *ger) tirou(m string) bool {
+	for _, t := range g.p.Tirados {
+		if t == m {
+			return true
+		}
+	}
+	return false
 }
