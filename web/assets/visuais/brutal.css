@@ -1,0 +1,51 @@
+/* Visual "brutal": neobrutalismo. Bordas pretas grossas, sombras duras
+   deslocadas, cantos retos, amarelo de destaque, títulos em Archivo Black. */
+@font-face { font-family: "Archivo Black"; src: url("{{fontes}}/archivo-black.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Space Grotesk"; src: url("{{fontes}}/space-grotesk.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+:root {
+  --nep-fonte: "Space Grotesk", system-ui, sans-serif; --nep-fonte-titulo: "Archivo Black", Impact, sans-serif;
+  --nep-fundo: #fffdf5; --nep-superficie: #fff; --nep-alt: color-mix(in srgb, var(--nep-cor) 14%, #fffdf5); --nep-texto: #0a0a0a; --nep-suave: #2e2e2e; --nep-linha: #0a0a0a;
+  --nep-raio: 0px; --nep-sombra: 6px 6px 0 #0a0a0a; --v-amarelo: #ffd23f;
+}
+:root h1, :root h2, :root h3 { font-weight: 400; letter-spacing: -.01em; }
+:root h3 { font-size: 1.15rem; }
+
+:root .topo-faixa { background: #0a0a0a; color: var(--v-amarelo); text-transform: uppercase; font-weight: 700; letter-spacing: .06em; }
+:root body > header { background: #fff; border-bottom: 3px solid #0a0a0a; backdrop-filter: none; -webkit-backdrop-filter: none; }
+:root .marca span { background: var(--v-amarelo); border: 3px solid #0a0a0a; border-radius: 0; box-shadow: 3px 3px 0 #0a0a0a; }
+:root .marca span .nep-ic { color: #0a0a0a; }
+:root body > header nav a { border-radius: 0; border: 2px solid transparent; font-weight: 700; }
+:root body > header nav a:hover, :root body > header nav a[aria-current] { background: var(--v-amarelo); color: #0a0a0a; border-color: #0a0a0a; }
+
+:root .capa:not(.cor) { background: radial-gradient(rgba(10,10,10,.14) 1.4px, transparent 1.5px) 0 0 / 22px 22px, var(--nep-fundo); border-bottom: 3px solid #0a0a0a; }
+:root .capa h1 { text-transform: uppercase; line-height: 1; }
+:root .capa .ilustracao { border: 3px solid #0a0a0a; border-radius: 0; box-shadow: 12px 12px 0 #0a0a0a; }
+:root .capa .ilustracao::after { background: var(--v-amarelo); border: 3px solid #0a0a0a; border-radius: 0; box-shadow: 4px 4px 0 #0a0a0a; }
+:root .chapeu { background: #0a0a0a; color: #fff; padding: 5px 10px; letter-spacing: .1em; }
+:root .capa.cor .chapeu { background: #fff; color: #0a0a0a; opacity: 1; }
+:root .secao.alt { background: var(--nep-alt); border-top: 3px solid #0a0a0a; border-bottom: 3px solid #0a0a0a; }
+
+:root .cartao { border: 3px solid #0a0a0a; border-radius: 0; box-shadow: 6px 6px 0 #0a0a0a; }
+:root a.cartao:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 #0a0a0a; }
+:root .cartao > img:first-child, :root .cartao > .foto:first-child { border-bottom: 3px solid #0a0a0a; }
+:root .icone { background: var(--v-amarelo); border: 2px solid #0a0a0a; border-radius: 0; }
+:root .icone .nep-ic { color: #0a0a0a; stroke-width: 2.2; }
+:root .depoimento p { color: var(--nep-texto); font-weight: 500; }
+
+:root .botao, :root button, :root input[type=submit] { border-radius: 0; border: 3px solid #0a0a0a; box-shadow: 4px 4px 0 #0a0a0a; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+:root .botao:hover, :root button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #0a0a0a; filter: none; }
+:root .botao.secundario, :root .capa.cor .botao.secundario { background: #fff; color: #0a0a0a; border-color: #0a0a0a; box-shadow: 4px 4px 0 #0a0a0a; }
+:root .capa.cor .botao { background: var(--v-amarelo); color: #0a0a0a; }
+:root .capa.cor { border-top: 3px solid #0a0a0a; border-bottom: 3px solid #0a0a0a; }
+
+:root .numeros { gap: 18px; }
+:root .numeros > * { background: #fff; border: 3px solid #0a0a0a; box-shadow: 5px 5px 0 #0a0a0a; padding: 18px 12px; }
+:root .numeros > * + * { border-left: 3px solid #0a0a0a; }
+:root .numeros strong { color: #0a0a0a; }
+:root .foto-item { border: 3px solid #0a0a0a; border-radius: 0; box-shadow: 6px 6px 0 #0a0a0a; }
+:root .foto-produto { border: 2px solid #0a0a0a; border-radius: 0; }
+:root input:not([type=checkbox], [type=radio], [type=submit], [type=hidden], [type=range]), :root select, :root textarea { border: 2px solid #0a0a0a; border-radius: 0; }
+:root main > form, :root .secao > form, :root details, :root .widget, :root table { border: 3px solid #0a0a0a; border-radius: 0; box-shadow: 6px 6px 0 #0a0a0a; }
+:root .tags a, :root .selo, :root .chips a { border: 2px solid #0a0a0a; border-radius: 0; background: var(--v-amarelo); color: #0a0a0a; }
+:root body > footer { background: #0a0a0a; border-top: 3px solid #0a0a0a; }
+:root body > footer h3, :root body > footer h4 { color: var(--v-amarelo); }

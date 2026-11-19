@@ -32,6 +32,9 @@ type Plano struct {
 	CorPedida  bool // a pessoa disse a cor
 	NomeAchado bool // o nome veio da descrição (não é o padrão do ramo)
 
+	Visual       string // família de aparência (ver Visuais)
+	VisualPedido bool   // a pessoa pediu o visual com palavras
+
 	Fotos     []Foto // fotos de verdade (do Instagram): capa e galeria
 	Instagram string // @ do Instagram, sem o @
 	WhatsApp  string // link do WhatsApp (da bio do Instagram), se houver
@@ -163,7 +166,11 @@ var (
 )
 
 // Entender lê a descrição e devolve o plano do site.
-func Entender(desc string) *Plano {
+func Entender(desc string) *Plano { return EntenderComSemente(desc, 0) }
+
+// EntenderComSemente é o Entender com sorteio do visual: semente 0 dá sempre o
+// mesmo visual para a mesma descrição; outra semente pode dar outro.
+func EntenderComSemente(desc string, semente int64) *Plano {
 	desc = strings.TrimSpace(desc)
 	txt := semAcento(desc)
 	p := &Plano{Descricao: desc}
@@ -257,6 +264,7 @@ func Entender(desc string) *Plano {
 			break
 		}
 	}
+	escolherVisual(p, txt, semente)
 
 	// ---- módulos: com / só / sem
 	pedidos, tirados := map[string]bool{}, map[string]bool{}

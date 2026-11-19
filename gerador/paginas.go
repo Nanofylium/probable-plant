@@ -137,7 +137,7 @@ func (g *ger) inicio() string {
         <div class="grade` + quatro(len(s.Servicos)) + `">
           <each s in="servicos |> take(6)">
             <a class="cartao servico" href="{{ url('«servU»/' + s.slug) }}">
-              <div class="icone">{{ default(s.icone, "✦") }}</div>
+              <div class="icone">{{ icone(default(s.icone, "✦")) }}</div>
               <h3>{{ tr(s.titulo) }}</h3>
               <p>{{ tr(default(s.resumo, "")) }}</p>
               <if test="s.preco"><span class="preco">a partir de {{ money(s.preco) }}</span></if>
@@ -254,7 +254,7 @@ func (g *ger) inicio() string {
 `)
 		if g.tem("wiki") {
 			w(`          <div class="cartao">
-            <div class="icone">📖</div>
+            <div class="icone">«ic:📖»</div>
             <h3>Wiki</h3>
             <p>Atualizadas há pouco:</p>
             <ul class="lista-simples">
@@ -266,7 +266,7 @@ func (g *ger) inicio() string {
 		}
 		if g.tem("forum") {
 			w(`          <div class="cartao">
-            <div class="icone">💬</div>
+            <div class="icone">«ic:💬»</div>
             <h3>Fórum</h3>
             <p>Conversas recentes:</p>
             <ul class="lista-simples">
@@ -306,7 +306,7 @@ func (g *ger) inicio() string {
 const produtoCartao = `
             <div class="cartao produto">
               <a class="foto-produto" href="{{ url('«lojaU»/' + p.slug) }}">
-                <if test="p.foto"><img src="{{ p.foto.url }}" alt="{{ p.titulo }}" loading="lazy"><else><span>{{ default(p.icone, "🛍️") }}</span></if>
+                <if test="p.foto"><img src="{{ p.foto.url }}" alt="{{ p.titulo }}" loading="lazy"><else><span>{{ icone(default(p.icone, "🛍️")) }}</span></if>
               </a>
               <span class="meta">{{ p.categoria }}</span>
               <h3><a href="{{ url('«lojaU»/' + p.slug) }}">{{ tr(p.titulo) }}</a></h3>

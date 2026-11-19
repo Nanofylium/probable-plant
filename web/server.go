@@ -230,6 +230,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.events(w, r)
 		return
 	}
+	if strings.HasPrefix(rq.path, "/_nep/visual/") || strings.HasPrefix(rq.path, "/_nep/fontes/") {
+		s.serveVisual(w, r, rq.path)
+		return
+	}
 	if strings.HasPrefix(rq.path, "/_nep/construtor/") {
 		serveConstrutor(w, r, strings.TrimPrefix(rq.path, "/_nep/construtor/"))
 		return
@@ -547,6 +551,7 @@ func (s *Server) inject(rq *request, out string) string {
 	cfg := rq.site.Config
 	inicio, _ := s.temaTags(cfg, out)
 	out = noComecoDoHead(out, inicio)
+	out = noFimDoHead(out, s.visualTag(cfg))
 	tags := s.seoTags(rq, out)
 	mv := strings.ToLower(strings.TrimSpace(cfg["movimento"]))
 	if mv != "" && mv != "false" && mv != "0" && mv != "nao" && mv != "não" {

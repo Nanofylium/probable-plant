@@ -92,7 +92,7 @@ func (s *Server) assistente(rq *request, ideia string) {
 		writeJSON(w, map[string]any{
 			"servidor": modelo, "ideia": ideia, "arquivo": s.file,
 			"prompt_perguntas": gerador.PromptPerguntas(), "prompt_site": gerador.PromptSite(),
-			"local": ialocal.Ver(), "local_pasta": ialocal.Pasta(),
+			"local": ialocal.Ver(), "local_pasta": ialocal.Pasta(), "visuais": gerador.Visuais,
 			"instagram": s.instaResposta(s.instaGuardado()), "instagram_app": s.instaAppEstado(rq.r),
 		})
 		return
@@ -128,6 +128,7 @@ func (s *Server) assistente(rq *request, ideia string) {
 			Respostas [][2]string `json:"respostas"`
 			Conteudo  string      `json:"conteudo"` // resposta da IA do navegador
 			Motor     string      `json:"motor"`    // servidor | navegador | regras
+			Visual    string      `json:"visual"`   // um de gerador.Visuais; vazio = sorteia
 		}
 		if err := json.NewDecoder(http.MaxBytesReader(w, rq.r.Body, 256<<10)).Decode(&in); err != nil || strings.TrimSpace(in.Descricao) == "" {
 			http.Error(w, "conte como quer o site", http.StatusBadRequest)
@@ -137,7 +138,7 @@ func (s *Server) assistente(rq *request, ideia string) {
 			s.assistentePerguntas(rq, in.Descricao, in.Motor)
 			return
 		}
-		s.assistenteCriar(rq, in.Descricao, in.Respostas, in.Conteudo, in.Motor)
+		s.assistenteCriar(rq, in.Descricao, in.Respostas, in.Conteudo, in.Motor, in.Visual)
 		return
 	}
 	if strings.HasPrefix(rq.path, "/_nep/") || strings.Contains(rq.path, ".") {
@@ -194,14 +195,20 @@ func (s *Server) assistentePerguntas(rq *request, desc, motor string) {
 	writeJSON(rq.w, map[string]any{"perguntas": gerador.PerguntasPorRegras(desc), "motor": "regras"})
 }
 
-func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, conteudo, motor string) {
+func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, conteudo, motor, visual string) {
 	completa := gerador.DescricaoComRespostas(desc, resp)
-	p := gerador.Entender(completa)
+	semente := time.Now().UnixNano() // cada pedido pode sair com outro visual
+	p := gerador.EntenderComSemente(completa, semente)
 	insta := s.instaGuardado()
 	if insta != nil && !p.RamoAchado && insta.Bio != "" { // a bio ajuda a achar o ramo
-		if p2 := gerador.Entender(completa + ". " + insta.Bio); p2.RamoAchado {
+		if p2 := gerador.EntenderComSemente(completa+". "+insta.Bio, semente); p2.RamoAchado {
 			p = p2
 		}
+	}
+	if !gerador.TrocarVisual(p, visual) && !p.VisualPedido {
+		// sem escolha na tela: sorteia de novo entre os que combinam com o ramo
+		// (o ramo pode ter mudado com a bio do Instagram)
+		gerador.TrocarVisual(p, gerador.SortearVisual(p.Setor.ID, completa, semente))
 	}
 	usado := "regras"
 	var aviso string

@@ -29,7 +29,9 @@ Uso:
   nep criar "descrição"    monta um site completo a partir do que você escrever, ex.:
                            nep criar "escola de música chamada Sol Maior em Salvador,
                            com blog, eventos e wiki, azul e elegante"
-                           (--pasta X escolhe a pasta; --plano só mostra o que entendeu)
+                           (--pasta X escolhe a pasta; --plano só mostra o que entendeu;
+                           --visual X: nepenthes, editorial, noturno, vitrine, brutal,
+                           suave, minimo ou luxo)
   nep ia baixar            baixa a IA do Nepenthes (llama.cpp + Granite 3.3 2B, 1,5 GB, uma vez
                            só); com ela, a tag <nepenthes> cria sites sem GPU e sem chave
   nep ia                   mostra se a IA do Nepenthes já está baixada e onde

@@ -24,7 +24,7 @@ func (g *ger) paginasModulos() string {
         <div class="grade` + quatro(len(g.s.Servicos)) + `">
           <each s in="servicos">
             <a class="cartao servico" href="{{ url('«servU»/' + s.slug) }}">
-              <div class="icone">{{ default(s.icone, "✦") }}</div>
+              <div class="icone">{{ icone(default(s.icone, "✦")) }}</div>
               <h3>{{ tr(s.titulo) }}</h3>
               <p>{{ tr(default(s.resumo, "")) }}</p>
               <span class="preco">{{ preco_txt(s.preco) }}</span>
@@ -38,7 +38,7 @@ func (g *ger) paginasModulos() string {
       <div class="colunas">
         <article class="texto" style="padding:0">
           <a class="chapeu" href="{{ url('«servU»') }}">← «servR»</a>
-          <h1>{{ default(item.icone, "") }} {{ tr(item.titulo) }}</h1>
+          <h1>{{ icone(default(item.icone, "")) }} {{ tr(item.titulo) }}</h1>
           <p class="intro">{{ tr(default(item.resumo, "")) }}</p>
           <if test="item.capa"><img src="{{ item.capa.url }}" alt=""></if>
           {{ markdown(tr(default(item.corpo, ""))) }}
@@ -47,7 +47,7 @@ func (g *ger) paginasModulos() string {
         <aside class="barra">
           <div class="widget"><h3>Valor</h3><p class="preco-grande">{{ preco_txt(item.preco) }}</p></div>
           <div class="widget"><h3>Veja também</h3>
-            <ul><each s in="servicos |> filter(fn(x) do x.id != item.id end)"><li><a href="{{ url('«servU»/' + s.slug) }}">{{ default(s.icone, "") }} {{ s.titulo }}</a></li></each></ul>
+            <ul><each s in="servicos |> filter(fn(x) do x.id != item.id end)"><li><a href="{{ url('«servU»/' + s.slug) }}">{{ icone(default(s.icone, "")) }} {{ s.titulo }}</a></li></each></ul>
           </div>
         </aside>
       </div>
@@ -104,7 +104,7 @@ func (g *ger) paginasModulos() string {
       <section class="secao">
         <a class="chapeu" href="{{ url('«lojaU»') }}">← «lojaR»</a>
         <div class="produto-detalhe">
-          <div class="foto-produto grande"><if test="item.foto"><img src="{{ item.foto.url }}" alt="{{ item.titulo }}"><else><span>{{ default(item.icone, "🛍️") }}</span></if></div>
+          <div class="foto-produto grande"><if test="item.foto"><img src="{{ item.foto.url }}" alt="{{ item.titulo }}"><else><span>{{ icone(default(item.icone, "🛍️")) }}</span></if></div>
           <div>
             <span class="meta">{{ item.categoria }}</span>
             <h1>{{ tr(item.titulo) }}</h1>
@@ -164,7 +164,7 @@ func (g *ger) paginasModulos() string {
           </div>
         <else>
           <div class="cartao centro" style="max-width:520px">
-            <div class="icone">🛒</div>
+            <div class="icone">«ic:🛒»</div>
             <h3>Seu carrinho está vazio</h3>
             <p><a class="botao" href="{{ url('«lojaU»') }}">Ver «lojaR»</a></p>
           </div>
@@ -175,7 +175,7 @@ func (g *ger) paginasModulos() string {
     <page route="/pedido/ok" title="Pedido enviado" noindex>
       <section class="secao">
         <div class="ok-grande">
-          <div class="icone">✓</div>
+          <div class="icone">«ic:✓»</div>
           <h1>Pedido enviado!</h1>
           <p class="intro" style="margin:0 auto 1.4em">Total de <b>{{ default(request.query.total, "") }}</b>. A confirmação foi para o seu e-mail e vamos chamar você no WhatsApp.</p>
           <a class="botao" href="{{ url('/') }}">Voltar ao início</a>
@@ -290,7 +290,7 @@ func (g *ger) paginasModulos() string {
           <div class="arquivos">
             <each d in="c.itens">
               <div class="cartao arquivo">
-                <div class="icone">📄</div>
+                <div class="icone">«ic:📄»</div>
                 <div>
                   <h3>{{ d.titulo }}</h3>
                   <p>{{ default(d.resumo, "") }}</p>
@@ -447,7 +447,7 @@ func (g *ger) agendaHorarios() string {
     <page route="«agU»/ok" title="Confirmado" noindex>
       <section class="secao">
         <div class="ok-grande">
-          <div class="icone">✓</div>
+          <div class="icone">«ic:✓»</div>
           <h1>Tudo certo!</h1>
           <if test="request.query.data">
             <p class="intro" style="margin:0 auto 1.4em">Esperamos você em <b>{{ date(request.query.data, 'd/m/Y') }}</b> às <b>{{ default(request.query.h, '') }}</b>. A confirmação foi para o seu e-mail.</p>
@@ -511,7 +511,7 @@ func (g *ger) reservasDiarias() string {
     <page route="«agU»/ok" title="Pré-reserva recebida" noindex>
       <section class="secao">
         <div class="ok-grande">
-          <div class="icone">✓</div>
+          <div class="icone">«ic:✓»</div>
           <h1>Pré-reserva recebida!</h1>
           <if test="request.query.entrada">
             <p class="intro" style="margin:0 auto 1.4em"><b>{{ default(request.query.q, '') }}</b>, de <b>{{ date(request.query.entrada, 'd/m') }}</b> a <b>{{ date(request.query.saida, 'd/m/Y') }}</b>. As instruções de pagamento vão para o seu e-mail.</p>

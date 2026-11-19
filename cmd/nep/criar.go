@@ -14,11 +14,12 @@ import (
 //
 //	nep criar "pousada em Paraty chamada Maré Mansa, com blog e galeria, azul"
 //	nep criar "só loja e contato, chamada Ateliê Ipê" --pasta ateliê
+//	nep criar "escritório de advocacia em Recife" --visual luxo
 //
 // Escreve pasta/site.nep.html e pasta/site-previa.html e conta o que entendeu.
 func criar(args []string) int {
 	var partes []string
-	dir, verPlano, forcar := "", false, false
+	dir, visual, verPlano, forcar := "", "", false, false
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		switch {
@@ -29,6 +30,11 @@ func criar(args []string) int {
 			}
 		case strings.HasPrefix(a, "--pasta="):
 			dir = strings.TrimPrefix(a, "--pasta=")
+		case a == "--visual" && i+1 < len(args):
+			visual = args[i+1]
+			i++
+		case strings.HasPrefix(a, "--visual="):
+			visual = strings.TrimPrefix(a, "--visual=")
 		case a == "--plano" || a == "--so-plano":
 			verPlano = true
 		case a == "--regras":
@@ -51,6 +57,14 @@ func criar(args []string) int {
 		return 2
 	}
 	p := gerador.Entender(desc)
+	if visual != "" && !gerador.TrocarVisual(p, visual) {
+		var nomes []string
+		for _, v := range gerador.Visuais {
+			nomes = append(nomes, v.ID)
+		}
+		fmt.Fprintln(os.Stderr, "visual desconhecido; use um destes: "+strings.Join(nomes, ", "))
+		return 2
+	}
 	fmt.Println("Entendi assim:")
 	for _, n := range p.Notas {
 		fmt.Println("  ·", n)

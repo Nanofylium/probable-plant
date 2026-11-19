@@ -121,6 +121,8 @@
 :where(.cartao p) { color: var(--nep-suave); margin-bottom: .6em; }
 :where(.cartao p:last-child) { margin-bottom: 0; }
 :where(.icone) { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; font-size: 1.5rem; background: color-mix(in srgb, var(--nep-cor) 12%, transparent); margin-bottom: 12px; }
+:where(.nep-ic) { display: inline-block; width: 1.1em; height: 1.1em; vertical-align: -.16em; flex: none; }
+:where(.icone .nep-ic) { width: 24px; height: 24px; color: var(--nep-cor); }
 :where(.selo) { display: inline-block; font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px;
   background: color-mix(in srgb, var(--nep-cor) 12%, transparent); color: var(--nep-cor); }
 :where(.meta) { font-size: .87rem; color: var(--nep-suave); }
