@@ -54,6 +54,9 @@ func main() {
 		if b, err := os.ReadFile("index.html"); err == nil && reTagNepenthes.Match(b) {
 			os.Exit(abrirAssistente("index.html"))
 		}
+		if cliqueDuplo() || os.Getenv("NEP_CLIQUE") == "1" {
+			os.Exit(modoClique())
+		}
 		os.Exit(repl())
 	}
 	switch args[0] {
