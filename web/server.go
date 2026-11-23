@@ -233,6 +233,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/_nep/jogos.js":
 		serveAssetJS(w, r, jogosJS, false)
 		return
+	case "/_nep/mundo.js":
+		serveAssetJS(w, r, mundoJS, false)
+		return
 	case "/_nep/versao":
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")

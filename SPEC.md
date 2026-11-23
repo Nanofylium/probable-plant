@@ -545,6 +545,19 @@ Só vê a tela e pode criar quem acessa do próprio computador (`localhost`, sem
 
 Créditos e licenças em `LICENCA-ECHARTS.txt` e `LICENCA-HILO.txt`.
 
+### 10.19 Passeio vivo (LingBot-World)
+
+`nep mundo foto.jpg "descrição do lugar" --nome loja` gera o passeio de quem anda pelo lugar da foto e grava em `mundos/loja/` (um `mundo.json` e uma pasta de quadros por caminho).
+
+- Com `--servidor host:porta` (ou `NEP_MUNDO_SERVIDOR`), os quadros vêm do LingBot-World (Robbyant, Apache 2.0) num servidor SGLang com GPU: `sglang serve --model-path robbyant/lingbot-world-fast-diffusers --pipeline-class-name LingBotWorldCausalDMDPipeline`. O `nep` fala o protocolo `/v1/realtime_video/generate` (WebSocket + MessagePack) e manda as ações da câmera de cada quadro.
+- Sem servidor (ou com `--simular`), o passeio é simulado: a câmera se aproxima e vira sobre a própria foto. Funciona em qualquer computador.
+- Caminhos (`--caminhos`): `frente` (Entrar), `esquerda`, `direita` (vira e anda), `redor` (olha em volta). Padrão: frente, esquerda e direita. `--quadros N` (padrão 81 com GPU, 48 simulado).
+- `nep mundo --ajuda-gpu` explica como subir o servidor.
+
+No site, `{{ mundo("loja", opções) }}` mostra o passeio. O visitante segura ↑, a tela ou o botão "Andar" para andar, ↓ para voltar e ← → para escolher o caminho. Opções: `titulo`, `texto`, `rolar` (rolar a página anda). Sem JavaScript, e na prévia, aparece a foto inicial. O passeio é gerado uma vez: quem visita só baixa imagens, sem GPU.
+
+Créditos e licença em `LICENCA-LINGBOT.txt`. O LingBot-World 2.0 não é usado, porque a licença dele (CC BY-NC-SA) proíbe uso comercial.
+
 ## 11. Lua 5.4 na mesma máquina virtual
 
 O `nep` roda programas Lua 5.4: `nep jogo.lua [args]`. O código Lua é lido por um leitor próprio e compilado para o mesmo bytecode do Nepenthes, então os dois se misturam:

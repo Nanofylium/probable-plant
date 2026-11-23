@@ -55,6 +55,8 @@ var (
 	classAt  = regexp.MustCompile(`(?is)\bclass="([^"]*)"`)
 )
 
+var srcLocal = regexp.MustCompile(`src="/([^"/][^"]*)"`)
+
 func gerarPrevia(file string) (string, int, error) {
 	dados, err := os.MkdirTemp("", "nep-previa-")
 	if err != nil {
@@ -121,8 +123,25 @@ func gerarPrevia(file string) (string, int, error) {
 		return "", 0, fmt.Errorf("a página inicial não abriu: rode nep dev %s e veja o erro", file)
 	}
 
+	// arquivos da pasta do site (fotos, quadros do passeio) viram caminhos
+	// relativos, para a prévia achá-los ao lado dela
+	pastaSite := filepath.Dir(file)
+	relativos := func(s string) string {
+		return srcLocal.ReplaceAllStringFunc(s, func(m string) string {
+			sm := srcLocal.FindStringSubmatch(m)
+			p := html.UnescapeString(sm[1])
+			if strings.HasPrefix(p, "_") || strings.Contains(p, "..") {
+				return m
+			}
+			if st, err := os.Stat(filepath.Join(pastaSite, filepath.FromSlash(p))); err == nil && !st.IsDir() {
+				return `src="` + sm[1] + `"`
+			}
+			return m
+		})
+	}
 	// links internos viram #/rota; o resto fica como está
 	trocaLinks := func(s string) string {
+		s = relativos(s)
 		return hrefRe.ReplaceAllStringFunc(s, func(m string) string {
 			sm := hrefRe.FindStringSubmatch(m)
 			if r, ok := rota(sm[2]); ok && feitas[r] {
