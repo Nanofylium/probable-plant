@@ -221,3 +221,44 @@ func TestSalvarEAbrir(t *testing.T) {
 		t.Fatal(enderecoWS("gpu.exemplo:30000"))
 	}
 }
+
+func TestPasseio3DSemModelo(t *testing.T) {
+	foto := fotoTeste(t)
+	mapa, err := EstimarProfundidade(foto)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mapa.Disp[0] >= mapa.Disp[len(mapa.Disp)-1] {
+		t.Fatal("embaixo devia estar mais perto que em cima")
+	}
+	p, err := mapa.PNG()
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, _, err := image.Decode(bytes.NewReader(p))
+	if err != nil || img.Bounds().Dx() != mapa.Largura {
+		t.Fatalf("png: %v", err)
+	}
+	// 16 bits em vermelho (alto) e verde (baixo)
+	r, g, _, _ := img.At(mapa.Largura/2, mapa.Altura-1).RGBA()
+	v := float32((r>>8)*256+(g>>8)) / 65535
+	if d := v - mapa.Disp[len(mapa.Disp)-mapa.Largura/2-1+0]; d > .01 || d < -.01 {
+		t.Fatalf("profundidade no PNG %v, no mapa %v", v, mapa.Disp[len(mapa.Disp)-mapa.Largura/2-1])
+	}
+	dir := t.TempDir()
+	m := &Mundo{Nome: "sala", Fonte: "estimado"}
+	if err := Salvar3D(dir, m, foto, mapa); err != nil {
+		t.Fatal(err)
+	}
+	m2, err := Abrir(dir, "sala")
+	if err != nil || m2.Tipo != "3d" || m2.Foto != "foto.jpg" || m2.Largura != 400 || m2.Altura != 300 {
+		t.Fatalf("%v %+v", err, m2)
+	}
+}
+
+func TestNormalizar(t *testing.T) {
+	m := normalizar(&Mapa{Largura: 4, Altura: 1, Disp: []float32{2, 4, 6, 8}})
+	if m.Disp[0] != 0 || m.Disp[3] != 1 || m.Disp[1] <= 0 || m.Disp[1] >= m.Disp[2] {
+		t.Fatalf("%v", m.Disp)
+	}
+}

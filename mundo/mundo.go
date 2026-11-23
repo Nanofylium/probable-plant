@@ -34,8 +34,12 @@ type Mundo struct {
 	Largura  int       `json:"largura"`
 	Altura   int       `json:"altura"`
 	FPS      int       `json:"fps"`
-	Fonte    string    `json:"fonte"` // "lingbot-world" ou "simulado"
-	Caminhos []Caminho `json:"caminhos"`
+	Fonte    string    `json:"fonte"` // lingbot-world, depth-anything, estimado ou simulado
+	Caminhos []Caminho `json:"caminhos,omitempty"`
+	// passeio 3D (sem GPU): a foto e a profundidade; o navegador monta a cena
+	Tipo         string `json:"tipo,omitempty"` // "3d" ou vazio (quadros)
+	Foto         string `json:"foto,omitempty"`
+	Profundidade string `json:"profundidade,omitempty"`
 }
 
 // Os caminhos que o Nepenthes sabe pedir. Ações do LingBot-World:
@@ -128,6 +132,10 @@ func Salvar(pasta string, m *Mundo, quadros map[string][][]byte) error {
 		}
 		c.Quadros = len(qs)
 	}
+	return salvarJSON(dir, m)
+}
+
+func salvarJSON(dir string, m *Mundo) error {
 	j, _ := json.MarshalIndent(m, "", "  ")
 	return os.WriteFile(filepath.Join(dir, "mundo.json"), j, 0o644)
 }

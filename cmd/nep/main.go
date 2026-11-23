@@ -35,10 +35,10 @@ Uso:
   nep ia baixar            baixa a IA do Nepenthes (llama.cpp + Granite 3.3 2B, 1,5 GB, uma vez
                            só); com ela, a tag <nepenthes> cria sites sem GPU e sem chave
   nep ia                   mostra se a IA do Nepenthes já está baixada e onde
-  nep mundo foto.jpg "descrição"  gera o passeio vivo do site a partir de uma foto, com o
-                           LingBot-World (--servidor host:porta, um servidor SGLang com GPU)
-                           ou simulado sem GPU; no site: {{ mundo("nome") }}
-                           (--nome X; --caminhos frente,esquerda,direita,redor; --ajuda-gpu)
+  nep mundo foto.jpg "descrição"  transforma a foto num passeio 3D (sem GPU: profundidade
+                           calculada no processador, cena montada no navegador); no site:
+                           {{ mundo("nome") }}  (--nome X; --sem-modelo; --servidor host:porta
+                           usa o LingBot-World num servidor com GPU; --ajuda-gpu)
   nep dev site.nep.html    roda o site no computador, com erros detalhados
   nep previa site.nep.html cria site-previa.html: o site pronto num arquivo que abre
                            com dois cliques, sem servidor (para mostrar a alguém)

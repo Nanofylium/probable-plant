@@ -34,7 +34,7 @@ func (s *Server) mundoBuiltin(a []lang.Value) (lang.Value, error) {
 	if err != nil {
 		return nil, fmt.Errorf("mundo(%q): não achei mundos/%s/mundo.json; gere com: nep mundo foto.jpg \"descrição\" --nome %s", nome, nome, nome)
 	}
-	if len(m.Caminhos) == 0 {
+	if m.Tipo != "3d" && len(m.Caminhos) == 0 {
 		return nil, fmt.Errorf("mundo(%q): o passeio não tem caminhos", nome)
 	}
 	titulo := strOrEmpty(opc("titulo"))
@@ -47,12 +47,19 @@ func (s *Server) mundoBuiltin(a []lang.Value) (lang.Value, error) {
 	}
 	base := s.opt.Base + "/mundos/" + m.Nome + "/"
 	dados := map[string]any{"base": base, "fps": m.FPS, "largura": m.Largura, "altura": m.Altura, "fonte": m.Fonte, "caminhos": m.Caminhos, "rolar": rolar}
+	primeira := ""
+	if m.Tipo == "3d" {
+		dados["tipo"], dados["foto"], dados["profundidade"] = "3d", m.Foto, m.Profundidade
+		primeira = base + m.Foto
+	} else {
+		c0 := m.Caminhos[0]
+		primeira = fmt.Sprintf("%s%s/001.%s", base, c0.ID, c0.Ext)
+	}
 	j, _ := json.Marshal(dados)
-	c0 := m.Caminhos[0]
 	var b strings.Builder
 	b.WriteString(`<figure class="nep-mundo" data-mundo="` + html.EscapeString(string(j)) + `">`)
-	b.WriteString(fmt.Sprintf(`<img src="%s%s/001.%s" width="%d" height="%d" alt="%s" loading="lazy">`,
-		html.EscapeString(base), c0.ID, c0.Ext, m.Largura, m.Altura, html.EscapeString(titulo)))
+	b.WriteString(fmt.Sprintf(`<img src="%s" width="%d" height="%d" alt="%s" loading="lazy">`,
+		html.EscapeString(primeira), m.Largura, m.Altura, html.EscapeString(titulo)))
 	if titulo != "" || opc("texto") != nil {
 		b.WriteString(`<figcaption>`)
 		if titulo != "" {

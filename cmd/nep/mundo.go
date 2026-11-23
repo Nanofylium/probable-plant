@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Nanofylium/probable-plant/mundo"
+	"github.com/Nanofylium/probable-plant/rede"
 )
 
 // mundo gera o passeio vivo de um site a partir de uma foto:
@@ -17,13 +19,15 @@ import (
 //	nep mundo fachada.jpg "padaria artesanal com balcão de madeira" --nome padaria
 //	nep mundo sala.jpg "apartamento claro" --servidor gpu.exemplo:30000
 //
-// Com --servidor (ou NEP_MUNDO_SERVIDOR), usa o LingBot-World servido pelo
-// SGLang; sem servidor, faz o passeio simulado. Grava em mundos/NOME/.
+// Sem GPU (padrão), faz o passeio 3D: profundidade da foto calculada no
+// processador e cena montada no navegador. Com --servidor (ou
+// NEP_MUNDO_SERVIDOR), usa o LingBot-World servido pelo SGLang. --simular faz
+// quadros 2D. Grava em mundos/NOME/.
 func mundoCmd(args []string) int {
 	var pos []string
 	nome, servidor, titulo, pasta := "", os.Getenv("NEP_MUNDO_SERVIDOR"), "", "mundos"
 	caminhos := []string{"frente", "esquerda", "direita"}
-	quadros, semente, simular := 0, int64(0), false
+	quadros, semente, simular, semModelo, lado := 0, int64(0), false, false, 518
 	valor := func(i *int, a string) string {
 		if k := strings.IndexByte(a, '='); k > 0 {
 			return a[k+1:]
@@ -58,8 +62,12 @@ func mundoCmd(args []string) int {
 		case "--ajuda-gpu":
 			fmt.Print(ajudaGPU)
 			return 0
-		case "--simular", "--sem-gpu":
+		case "--simular", "--quadros-2d":
 			simular = true
+		case "--sem-modelo":
+			semModelo = true
+		case "--lado":
+			lado, _ = strconv.Atoi(valor(&i, a))
 		default:
 			if strings.HasPrefix(a, "--") {
 				fmt.Fprintln(os.Stderr, "opção desconhecida:", a)
@@ -69,7 +77,7 @@ func mundoCmd(args []string) int {
 		}
 	}
 	if len(pos) == 0 {
-		fmt.Fprintln(os.Stderr, `uso: nep mundo foto.jpg "descrição do lugar" [--nome loja] [--servidor host:porta] [--simular]
+		fmt.Fprintln(os.Stderr, `uso: nep mundo foto.jpg "descrição do lugar" [--nome loja] [--servidor host:porta] [--sem-modelo] [--simular]
           [--caminhos frente,esquerda,direita,redor] [--quadros N] [--titulo "Conheça a loja"]`)
 		return 2
 	}
@@ -95,6 +103,9 @@ func mundoCmd(args []string) int {
 	if simular {
 		servidor = ""
 	}
+	if servidor == "" && !simular {
+		return mundo3D(foto, nome, titulo, descricao, pasta, semModelo, lado)
+	}
 	ctx, parar := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer parar()
 	m := &mundo.Mundo{Nome: nome, Titulo: titulo, Prompt: mundo.Prompt(descricao), Largura: 832, Altura: 480, FPS: 16, Fonte: "lingbot-world"}
@@ -104,8 +115,7 @@ func mundoCmd(args []string) int {
 		if quadros <= 0 {
 			quadros = 48
 		}
-		fmt.Println("Sem servidor do LingBot-World: fazendo o passeio simulado a partir da foto.")
-		fmt.Println("Para o passeio de verdade, rode com --servidor (veja: nep mundo --ajuda-gpu).")
+		fmt.Println("Passeio em quadros simulados a partir da foto.")
 	} else if quadros <= 0 {
 		quadros = 81
 	}
@@ -135,6 +145,59 @@ func mundoCmd(args []string) int {
 		return 1
 	}
 	fmt.Printf("Pronto: %s\n", filepath.Join(pasta, nome))
+	fmt.Printf("No site (o .nep.html na pasta acima de %s), escreva:\n  {{ mundo(%q) }}\n", pasta, nome)
+	fmt.Printf("ou, para andar rolando a página:\n  {{ mundo(%q, {rolar: true, titulo: \"Entre e conheça\"}) }}\n", nome)
+	return 0
+}
+
+// mundo3D: passeio 3D sem GPU. A profundidade sai do Depth Anything V2 Small
+// rodando no processador; sem o modelo, usa uma estimativa simples.
+func mundo3D(foto []byte, nome, titulo, descricao, pasta string, semModelo bool, lado int) int {
+	m := &mundo.Mundo{Nome: nome, Titulo: titulo, Prompt: descricao, Fonte: "depth-anything"}
+	var mapa *mundo.Mapa
+	var err error
+	if !semModelo && !mundo.ModeloProfBaixado() {
+		fmt.Printf("Baixando o %s (%d MB, só desta vez) para %s…\n", mundo.ModeloProfNome, mundo.ModeloProfMB, filepath.Dir(mundo.CaminhoModeloProf()))
+		ultimo := -1
+		err = mundo.BaixarModeloProf(func(f, t int64) {
+			if p := int(f * 100 / t); p != ultimo {
+				ultimo = p
+				fmt.Printf("\r  %3d%%", p)
+			}
+		})
+		fmt.Println()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "aviso:", err)
+			fmt.Fprintln(os.Stderr, "Sigo com a profundidade estimada (sem o modelo). Rode de novo com internet para a versão completa.")
+			semModelo = true
+		}
+	}
+	if !semModelo {
+		fmt.Printf("Calculando a profundidade da foto com o %s, no processador…\n", mundo.ModeloProfNome)
+		inicio := time.Now()
+		rd, e := rede.Abrir(mundo.CaminhoModeloProf())
+		if e == nil {
+			mapa, e = mundo.CalcularProfundidade(rd, foto, lado)
+		}
+		if e != nil {
+			fmt.Fprintln(os.Stderr, "aviso:", e, "(sigo com a profundidade estimada)")
+			semModelo = true
+		} else {
+			fmt.Printf("  pronto em %.1f s\n", time.Since(inicio).Seconds())
+		}
+	}
+	if semModelo {
+		m.Fonte = "estimado"
+		if mapa, err = mundo.EstimarProfundidade(foto); err != nil {
+			fmt.Fprintln(os.Stderr, "erro:", err)
+			return 1
+		}
+	}
+	if err := mundo.Salvar3D(pasta, m, foto, mapa); err != nil {
+		fmt.Fprintln(os.Stderr, "erro:", err)
+		return 1
+	}
+	fmt.Printf("Pronto: passeio 3D em %s (foto + profundidade; o navegador de quem visita monta a cena)\n", filepath.Join(pasta, nome))
 	fmt.Printf("No site (o .nep.html na pasta acima de %s), escreva:\n  {{ mundo(%q) }}\n", pasta, nome)
 	fmt.Printf("ou, para andar rolando a página:\n  {{ mundo(%q, {rolar: true, titulo: \"Entre e conheça\"}) }}\n", nome)
 	return 0

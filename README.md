@@ -161,6 +161,7 @@ A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as t
 - `testdata/`: programas com a saída esperada, usados nos testes automáticos. Em `testdata/lua`, a saída esperada foi gerada pelo Lua 5.4 oficial.
 - `exemplos/lua/`: programas em Lua que rodam no `nep`.
 - `LICENCA-LUA.txt`: crédito e licença MIT do Lua.
+- `LICENCA-DEPTH-ANYTHING.txt`: passeio 3D sem GPU (Depth Anything V2 Small, Apache 2.0), rodado no processador pelo pacote `rede` (executor de ONNX em Go).
 - `LICENCA-LINGBOT.txt`: passeio vivo com `nep mundo` e `mundo()` (LingBot-World, da Robbyant, Apache 2.0, servido pelo SGLang).
 - `LICENCA-ECHARTS.txt`: gráficos com `grafico()` (Apache ECharts, Apache 2.0). `LICENCA-HILO.txt`: roleta, raspadinha e memória com `jogo()` (Hilo, da Alibaba, MIT).
 - `LICENCA-FONTES.txt`: fontes dos visuais (Fontsource, SIL OFL 1.1). `icones/LICENSE-lucide.txt`: ícones do Lucide (ISC).

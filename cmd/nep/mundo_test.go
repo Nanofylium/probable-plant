@@ -31,6 +31,12 @@ func TestNepMundoSimulado(t *testing.T) {
 	if c := mundoCmd([]string{foto, "--caminhos", "voar", "--simular"}); c != 2 {
 		t.Fatal("caminho desconhecido devia recusar")
 	}
+	if c := mundoCmd([]string{foto, "--sem-modelo", "--nome", "sala", "--pasta", pasta}); c != 0 {
+		t.Fatalf("3D sem modelo: saída %d", c)
+	}
+	if m, err := mundo.Abrir(pasta, "sala"); err != nil || m.Tipo != "3d" || m.Fonte != "estimado" {
+		t.Fatalf("%v %+v", err, m)
+	}
 	if slugMundo("Café São João!") != "cafe-sao-joao" {
 		t.Fatal(slugMundo("Café São João!"))
 	}

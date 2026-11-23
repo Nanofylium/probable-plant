@@ -545,18 +545,30 @@ Só vê a tela e pode criar quem acessa do próprio computador (`localhost`, sem
 
 Créditos e licenças em `LICENCA-ECHARTS.txt` e `LICENCA-HILO.txt`.
 
-### 10.19 Passeio vivo (LingBot-World)
+### 10.19 Passeio vivo (3D sem GPU, ou LingBot-World)
 
-`nep mundo foto.jpg "descrição do lugar" --nome loja` gera o passeio de quem anda pelo lugar da foto e grava em `mundos/loja/` (um `mundo.json` e uma pasta de quadros por caminho).
+`nep mundo foto.jpg "descrição do lugar" --nome loja` transforma a foto num lugar por onde o visitante anda, e grava em `mundos/loja/`. Há três modos.
 
-- Com `--servidor host:porta` (ou `NEP_MUNDO_SERVIDOR`), os quadros vêm do LingBot-World (Robbyant, Apache 2.0) num servidor SGLang com GPU: `sglang serve --model-path robbyant/lingbot-world-fast-diffusers --pipeline-class-name LingBotWorldCausalDMDPipeline`. O `nep` fala o protocolo `/v1/realtime_video/generate` (WebSocket + MessagePack) e manda as ações da câmera de cada quadro.
-- Sem servidor (ou com `--simular`), o passeio é simulado: a câmera se aproxima e vira sobre a própria foto. Funciona em qualquer computador.
-- Caminhos (`--caminhos`): `frente` (Entrar), `esquerda`, `direita` (vira e anda), `redor` (olha em volta). Padrão: frente, esquerda e direita. `--quadros N` (padrão 81 com GPU, 48 simulado).
-- `nep mundo --ajuda-gpu` explica como subir o servidor.
+**Passeio 3D, sem GPU (padrão).**
+- O `nep` calcula a distância de cada ponto da foto com o Depth Anything V2 Small (Apache 2.0). O modelo é baixado uma vez (95 MB, SHA-256 conferido) e roda no processador, em uns 7 s numa máquina de 4 núcleos.
+- Quem roda o modelo é o pacote `rede`, um executor de redes neurais no formato ONNX escrito em Go, sem Python e sem GPU. A saída é conferida com o onnxruntime oficial nos testes.
+- Grava `foto.jpg` e `profundidade.png` (16 bits, no vermelho e no verde). O navegador de quem visita monta a cena com WebGL, em duas camadas: na de trás, os objetos próximos são empurrados para o fundo; na da frente, as bordas esticadas são cortadas. A câmera anda, vira e mostra a paralaxe ao vivo, e o site baixa só a foto e a profundidade (algumas centenas de KB).
+- `--sem-modelo` (ou sem internet na primeira vez) usa uma profundidade estimada: embaixo perto, em cima longe. `--lado N` muda o tamanho da entrada do modelo (padrão 518).
 
-No site, `{{ mundo("loja", opções) }}` mostra o passeio. O visitante segura ↑, a tela ou o botão "Andar" para andar, ↓ para voltar e ← → para escolher o caminho. Opções: `titulo`, `texto`, `rolar` (rolar a página anda). Sem JavaScript, e na prévia, aparece a foto inicial. O passeio é gerado uma vez: quem visita só baixa imagens, sem GPU.
+**LingBot-World, com GPU.** `--servidor host:porta` (ou `NEP_MUNDO_SERVIDOR`) gera quadros com o LingBot-World (Robbyant, Apache 2.0) num servidor SGLang. Para subir o servidor:
+```
+sglang serve --model-path robbyant/lingbot-world-fast-diffusers --pipeline-class-name LingBotWorldCausalDMDPipeline
+```
+O `nep` fala o protocolo `/v1/realtime_video/generate` (WebSocket + MessagePack). Caminhos (`--caminhos`): `frente`, `esquerda`, `direita` e `redor`. `nep mundo --ajuda-gpu` explica como subir o servidor.
 
-Créditos e licença em `LICENCA-LINGBOT.txt`. O LingBot-World 2.0 não é usado, porque a licença dele (CC BY-NC-SA) proíbe uso comercial.
+**Quadros 2D.** `--simular` faz quadros 2D: aproxima e vira a câmera sobre a foto.
+
+**No site.** `{{ mundo("loja", opções) }}` mostra o passeio.
+- Controles: segurar ↑, a tela ou "Andar" anda; ↓ volta; ← → (ou arrastar) olha em volta.
+- Opções: `titulo`, `texto` e `rolar` (rolar a página anda).
+- Sem JavaScript ou WebGL, e na prévia, aparece a foto.
+
+Créditos e licenças em `LICENCA-DEPTH-ANYTHING.txt` e `LICENCA-LINGBOT.txt`. Ficam de fora o LingBot-World 2.0 e os modelos Base, Large e Giant do Depth Anything V2, porque as licenças deles proíbem uso comercial.
 
 ## 11. Lua 5.4 na mesma máquina virtual
 

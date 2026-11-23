@@ -491,3 +491,25 @@ func Parar() {
 		est.Fase = "pronto"
 	}
 }
+
+// Buscar baixa um arquivo (de cada endereço, até um dar certo), retomando um
+// download interrompido e conferindo o SHA-256. Usado também pelo modelo de
+// profundidade do passeio 3D.
+func Buscar(enderecos []string, sha, destino string, conta func(int64)) error {
+	if err := os.MkdirAll(filepath.Dir(destino), 0o755); err != nil {
+		return err
+	}
+	parte := destino + ".parte"
+	var erros []string
+	for _, u := range enderecos {
+		err := baixarDe(u, parte, conta)
+		if err == nil {
+			if err = conferir(parte, sha); err == nil {
+				return os.Rename(parte, destino)
+			}
+			os.Remove(parte)
+		}
+		erros = append(erros, err.Error())
+	}
+	return fmt.Errorf("não consegui baixar %s (%s)", filepath.Base(destino), strings.Join(erros, "; "))
+}

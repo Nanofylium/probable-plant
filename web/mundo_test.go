@@ -1,6 +1,9 @@
 package web
 
 import (
+	"bytes"
+	"image"
+	"image/jpeg"
 	"io"
 	"net/http/httptest"
 	"os"
@@ -44,7 +47,21 @@ func TestMundoNoSite(t *testing.T) {
 	if js := get("/_nep/mundo.js"); js.Code != 200 || !strings.Contains(js.Body.String(), "nepMundos") {
 		t.Fatal("mundo.js")
 	}
+	m3 := &mundo.Mundo{Nome: "sala", Fonte: "estimado"}
+	var fb bytes.Buffer
+	jpeg.Encode(&fb, image.NewRGBA(image.Rect(0, 0, 200, 100)), nil)
+	mapa, _ := mundo.EstimarProfundidade(fb.Bytes())
+	if err := mundo.Salvar3D(filepath.Join(dir, "mundos"), m3, fb.Bytes(), mapa); err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(file, []byte(strings.Replace(string(must2(os.ReadFile(file))), `<page route="/falta"`, `<page route="/sala" title="Sala">{{ mundo("sala") }}</page><page route="/falta"`, 1)), 0o644)
+	s2, _ := New(Options{SiteFile: file, Log: io.Discard, Dev: true})
+	rec := httptest.NewRecorder()
+	s2.ServeHTTP(rec, httptest.NewRequest("GET", "http://localhost/sala", nil))
+	must(t, rec.Body.String(), `<img src="/mundos/sala/foto.jpg"`, `&#34;tipo&#34;:&#34;3d&#34;`, `&#34;profundidade&#34;:&#34;profundidade.png&#34;`)
 	if f := get("/falta"); f.Code != 500 || !strings.Contains(f.Body.String(), "nep mundo foto.jpg") {
 		t.Fatalf("mundo ausente devia explicar como gerar: %d", f.Code)
 	}
 }
+
+func must2(b []byte, _ error) []byte { return b }
