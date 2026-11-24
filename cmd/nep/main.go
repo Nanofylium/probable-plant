@@ -56,12 +56,13 @@ func main() {
 		os.Exit(cgiMode(""))
 	}
 	if len(args) == 0 {
-		// dois cliques no nep ao lado de um index.html com <nepenthes>: abre o assistente
+		// dois cliques no nep ao lado de um index.html com <nepenthes>: abre o
+		// assistente; senão, a Central do Nepenthes (meus sites, criar, passeio 3D…)
 		if b, err := os.ReadFile("index.html"); err == nil && reTagNepenthes.Match(b) {
 			os.Exit(abrirAssistente("index.html"))
 		}
 		if cliqueDuplo() || os.Getenv("NEP_CLIQUE") == "1" {
-			os.Exit(modoClique())
+			os.Exit(modoCentral())
 		}
 		os.Exit(repl())
 	}

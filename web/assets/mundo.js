@@ -70,58 +70,162 @@
     // shaders
     function sh(tipo, src) { var s = gl.createShader(tipo); gl.shaderSource(s, src); gl.compileShader(s); return s; }
     var prog = gl.createProgram();
-    gl.attachShader(prog, sh(gl.VERTEX_SHADER, "attribute vec3 p;attribute vec2 uv;uniform mat4 m;varying vec2 v;void main(){v=uv;gl_Position=m*vec4(p,1.0);}"));
-    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, "precision mediump float;uniform sampler2D t;varying vec2 v;void main(){gl_FragColor=texture2D(t,v);}"));
+    // v: ponto da foto; w: ponto "por trás" (o fundo puxado das beiradas para
+    // dentro do recorte); mk: máscara dos objetos da frente. A camada da frente
+    // some fora da máscara; a de trás mostra o fundo só onde há recorte.
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, "attribute vec3 p;attribute vec2 uv;attribute vec2 uv2;uniform mat4 m;varying vec2 v;varying vec2 w;void main(){v=uv;w=uv2;gl_Position=m*vec4(p,1.0);}"));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, "precision mediump float;uniform sampler2D t;uniform sampler2D mk;uniform float frente;varying vec2 v;varying vec2 w;void main(){float a=texture2D(mk,v).r;if(frente>0.5){float al=smoothstep(0.25,0.75,a);if(al<0.02)discard;gl_FragColor=vec4(texture2D(t,v).rgb,al);}else{gl_FragColor=mix(texture2D(t,v),texture2D(t,w),smoothstep(0.2,0.6,a));}}"));
     gl.linkProgram(prog);
     gl.useProgram(prog);
     var locP = gl.getAttribLocation(prog, "p"), locUV = gl.getAttribLocation(prog, "uv"), locM = gl.getUniformLocation(prog, "m");
+    var locUV2 = gl.getAttribLocation(prog, "uv2"), locFrente = gl.getUniformLocation(prog, "frente");
+    gl.uniform1i(gl.getUniformLocation(prog, "t"), 0); gl.uniform1i(gl.getUniformLocation(prog, "mk"), 1);
 
     // câmera: a foto foi tirada com ~60° na horizontal
     var hfov = 60 * Math.PI / 180, tanX = Math.tan(hfov / 2), tanY = tanX / asp;
     var PERTO = 1, LONGE = 9, ANDAR_MAX = .42, GIRO_MAX = .2, INCL_MAX = .08;
     var fundo = [0.1, 0.1, 0.1];
 
-    // duas camadas (como num cenário de teatro): a de trás tem os objetos
-    // próximos "empurrados" para o fundo, e a da frente perde os triângulos
-    // esticados nas bordas dos objetos; assim, ao andar, aparece o fundo atrás
-    // da árvore em vez de um borrão
+    // duas camadas (como num cenário de teatro). Os objetos que se destacam
+    // do fundo (uma árvore, uma pessoa, um poste) viram um recorte inteiro, com
+    // contorno fino; o fundo fica atrás, e no lugar do recorte ele é completado
+    // com o que está em volta. Assim, ao andar, o objeto se move por inteiro,
+    // sem rasgar em pedaços.
     var camadas = [];
+    function caixa(src, w, h, rx, ry, modo) { // modo 0: média, 1: mínimo, 2: máximo (separável)
+      var tmp = new Float32Array(w * h), out = new Float32Array(w * h), x, y, q, acc, c, v;
+      for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        acc = modo === 1 ? 9 : modo === 2 ? -9 : 0; c = 0;
+        for (q = Math.max(0, x - rx); q <= Math.min(w - 1, x + rx); q++) { v = src[y * w + q]; acc = modo === 1 ? Math.min(acc, v) : modo === 2 ? Math.max(acc, v) : acc + v; c++; }
+        tmp[y * w + x] = modo ? acc : acc / c;
+      }
+      for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        acc = modo === 1 ? 9 : modo === 2 ? -9 : 0; c = 0;
+        for (q = Math.max(0, y - ry); q <= Math.min(h - 1, y + ry); q++) { v = tmp[q * w + x]; acc = modo === 1 ? Math.min(acc, v) : modo === 2 ? Math.max(acc, v) : acc + v; c++; }
+        out[y * w + x] = modo ? acc : acc / c;
+      }
+      return out;
+    }
+    // recorte dos objetos da frente, na resolução da profundidade
+    function recorte(Dp, dw, dh) {
+      var M = dw * dh, i;
+      // fundo: o mais longe num trecho largo da mesma linha (objetos em pé se
+      // destacam dos lados; o chão, que muda de cima para baixo, não)
+      var B = caixa(caixa(Dp, dw, dh, Math.round(dw * .15), 0, 1), dw, dh, Math.round(dw * .03), Math.max(1, Math.round(dh * .01)), 0);
+      var mk = new Float32Array(M);
+      for (i = 0; i < M; i++) mk[i] = Dp[i] - B[i] > .1 ? 1 : 0;
+      // fecha os buraquinhos (galhos finos continuam presos ao objeto)
+      var r2 = Math.max(1, Math.round(dw * .006));
+      mk = caixa(caixa(mk, dw, dh, r2, r2, 2), dw, dh, r2, r2, 1);
+      // pedaços pequenos demais não valem um recorte
+      var visto = new Uint8Array(M), pilha = [], comp = [], minimo = M * .004;
+      for (i = 0; i < M; i++) {
+        if (mk[i] < .5 || visto[i]) continue;
+        pilha.length = 0; comp.length = 0; pilha.push(i); visto[i] = 1;
+        while (pilha.length) {
+          var k = pilha.pop(), x = k % dw, y = (k - x) / dw;
+          comp.push(k);
+          if (x > 0 && mk[k - 1] > .5 && !visto[k - 1]) { visto[k - 1] = 1; pilha.push(k - 1); }
+          if (x < dw - 1 && mk[k + 1] > .5 && !visto[k + 1]) { visto[k + 1] = 1; pilha.push(k + 1); }
+          if (y > 0 && mk[k - dw] > .5 && !visto[k - dw]) { visto[k - dw] = 1; pilha.push(k - dw); }
+          if (y < dh - 1 && mk[k + dw] > .5 && !visto[k + dw]) { visto[k + dw] = 1; pilha.push(k + dw); }
+        }
+        if (comp.length < minimo) comp.forEach(function (k2) { mk[k2] = 0; });
+      }
+      // vãos fechados por dentro do objeto (céu entre os galhos) andam junto com ele
+      var fora = new Uint8Array(M);
+      pilha.length = 0;
+      for (i = 0; i < M; i++) {
+        var bx = i % dw, by = (i - bx) / dw;
+        if ((bx === 0 || by === 0 || bx === dw - 1 || by === dh - 1) && mk[i] < .5) { fora[i] = 1; pilha.push(i); }
+      }
+      while (pilha.length) {
+        var k4 = pilha.pop(), x4 = k4 % dw, y4 = (k4 - x4) / dw;
+        [x4 > 0 ? k4 - 1 : -1, x4 < dw - 1 ? k4 + 1 : -1, y4 > 0 ? k4 - dw : -1, y4 < dh - 1 ? k4 + dw : -1].forEach(function (q) {
+          if (q >= 0 && !fora[q] && mk[q] < .5) { fora[q] = 1; pilha.push(q); }
+        });
+      }
+      for (i = 0; i < M; i++) if (!fora[i]) mk[i] = 1;
+      return {mk: mk, B: B};
+    }
     function malha(dados, dw, dh) {
       var GX = toque ? 150 : 220, GY = Math.max(8, Math.round(GX / asp)), EXTRA = .5;
       var NX = GX + 1, NY = GY + 1, N = NX * NY;
       if (N > 65535 && !gl.getExtension("OES_element_index_uint")) return false;
       function espelha(u) { return u < 0 ? -u : u > 1 ? 2 - u : u; }
-      function prof(u, v) { // disparidade 0..1 (bilinear), 16 bits em R e G
+      var Dp = new Float32Array(dw * dh), i, j, k;
+      for (i = 0; i < dw * dh; i++) Dp[i] = (dados[i * 4] * 256 + dados[i * 4 + 1]) / 65535; // 16 bits em R e G
+      var rc = recorte(Dp, dw, dh), mk = rc.mk;
+      // a máscara vai para a placa de vídeo (contorno fino, sem degraus da malha)
+      // contorno levemente esfumado, para a emenda com o fundo não aparecer
+      var r3 = Math.max(1, Math.round(dw * .003)), suave = caixa(mk, dw, dh, r3, r3, 0), mb = new Uint8Array(dw * dh);
+      for (i = 0; i < dw * dh; i++) mb[i] = Math.round(suave[i] * 255);
+      gl.activeTexture(gl.TEXTURE1);
+      var tm = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tm);
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, dw, dh, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, mb);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.activeTexture(gl.TEXTURE0);
+      function bil(A, u, v) {
         u = Math.min(1, Math.max(0, u)) * (dw - 1); v = Math.min(1, Math.max(0, v)) * (dh - 1);
         var x0 = Math.floor(u), y0 = Math.floor(v), x1 = Math.min(x0 + 1, dw - 1), y1 = Math.min(y0 + 1, dh - 1), fx = u - x0, fy = v - y0;
-        function d(x, y) { var o = (y * dw + x) * 4; return (dados[o] * 256 + dados[o + 1]) / 65535; }
-        return (d(x0, y0) * (1 - fx) + d(x1, y0) * fx) * (1 - fy) + (d(x0, y1) * (1 - fx) + d(x1, y1) * fx) * fy;
+        return (A[y0 * dw + x0] * (1 - fx) + A[y0 * dw + x1] * fx) * (1 - fy) + (A[y1 * dw + x0] * (1 - fx) + A[y1 * dw + x1] * fx) * fy;
       }
-      var U = new Float32Array(N), V = new Float32Array(N), D = new Float32Array(N), k;
-      for (var j = 0; j < NY; j++) for (var i = 0; i < NX; i++) {
+      // em cada vértice: profundidade do fundo e, perto de um recorte, a média
+      // da profundidade só dos pontos do recorte (assim o objeto fica inteiriço)
+      var U = new Float32Array(N), V = new Float32Array(N), Df = new Float32Array(N), Dr = new Float32Array(N), tem = new Uint8Array(N);
+      var rg = Math.max(1, Math.ceil(dw * (1 + 2 * EXTRA) / GX));
+      // dentro do recorte, os vãos entre as folhas pegam a profundidade das
+      // folhas em volta, e a média é larga: o objeto fica liso, sem ondular
+      var Dc = caixa(Dp, dw, dh, Math.max(2, Math.round(dw * .012)), Math.max(2, Math.round(dw * .012)), 2), ra = rg * 3;
+      for (j = 0; j < NY; j++) for (i = 0; i < NX; i++) {
         k = j * NX + i;
         // a malha passa da borda da foto, espelhando a imagem, para não aparecer o vazio ao virar
-        var u = -EXTRA + (1 + 2 * EXTRA) * i / GX, v = -EXTRA + (1 + 2 * EXTRA) * j / GY;
-        U[k] = u; V[k] = v; D[k] = prof(espelha(u), espelha(v));
-      }
-      // fundo: erosão (mínimo) e depois média, num raio de ~3% da largura
-      function filtro(src, r, f) {
-        var tmp = new Float32Array(N), out = new Float32Array(N), x, y, q, acc, c;
-        for (y = 0; y < NY; y++) for (x = 0; x < NX; x++) {
-          acc = f ? 9 : 0; c = 0;
-          for (q = Math.max(0, x - r); q <= Math.min(NX - 1, x + r); q++) { var w = src[y * NX + q]; acc = f ? Math.min(acc, w) : acc + w; c++; }
-          tmp[y * NX + x] = f ? acc : acc / c;
+        var u = -EXTRA + (1 + 2 * EXTRA) * i / GX, v = -EXTRA + (1 + 2 * EXTRA) * j / GY, eu = espelha(u), ev = espelha(v);
+        U[k] = u; V[k] = v; Df[k] = bil(rc.B, eu, ev);
+        var px = Math.round(eu * (dw - 1)), py = Math.round(ev * (dh - 1)), s = 0, c = 0;
+        for (var y = Math.max(0, py - ra); y <= Math.min(dh - 1, py + ra); y += 2) for (var x = Math.max(0, px - ra); x <= Math.min(dw - 1, px + ra); x += 2) {
+          var q = y * dw + x; if (mk[q] > .5) { s += Dc[q]; c++; }
         }
-        for (y = 0; y < NY; y++) for (x = 0; x < NX; x++) {
-          acc = f ? 9 : 0; c = 0;
-          for (q = Math.max(0, y - r); q <= Math.min(NY - 1, y + r); q++) { var w2 = tmp[q * NX + x]; acc = f ? Math.min(acc, w2) : acc + w2; c++; }
-          out[y * NX + x] = f ? acc : acc / c;
-        }
-        return out;
+        Dr[k] = c ? s / c : Dc[py * dw + px];
+        for (y = Math.max(0, py - rg); y <= Math.min(dh - 1, py + rg) && !tem[k]; y++) for (x = Math.max(0, px - rg); x <= Math.min(dw - 1, px + rg); x++) if (mk[y * dw + x] > .5) { tem[k] = 1; break; }
       }
-      var r = Math.max(2, Math.round(GX * .03));
-      var Dfundo = filtro(filtro(D, r, true), r, false);
-      function camada(disp, cortar) {
+      // o fundo atrás do recorte: cada vértice coberto mostra o que está do
+      // outro lado da beirada mais próxima, como num espelho (a mata continua
+      // mata, o céu continua céu), em vez de esticar a beirada em listras
+      var W2 = new Float32Array(N * 2), fonte = new Int32Array(N).fill(-1), fila = [], cab = 0;
+      for (k = 0; k < N; k++) {
+        W2[k * 2] = espelha(U[k]); W2[k * 2 + 1] = espelha(V[k]);
+        if (!tem[k]) { fonte[k] = k; fila.push(k); }
+      }
+      while (cab < fila.length) {
+        var k5 = fila[cab++], x5 = k5 % NX, y5 = (k5 - x5) / NX;
+        for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+          var xx = x5 + dx, yy = y5 + dy, q5 = yy * NX + xx;
+          if ((dx || dy) && xx >= 0 && yy >= 0 && xx < NX && yy < NY && fonte[q5] < 0) { fonte[q5] = fonte[k5]; fila.push(q5); }
+        }
+      }
+      for (k = 0; k < N; k++) if (tem[k] && fonte[k] >= 0) {
+        var f5 = fonte[k];
+        W2[k * 2] = espelha(espelha(U[f5]) * 2 - espelha(U[k])); W2[k * 2 + 1] = espelha(espelha(V[f5]) * 2 - espelha(V[k]));
+      }
+      // alisa o espelho (a beirada da malha é em degraus)
+      for (var passada = 0; passada < 4; passada++) {
+        var W3 = W2.slice();
+        for (k = 0; k < N; k++) if (tem[k]) {
+          var x6 = k % NX, y6 = (k - x6) / NX, su = 0, sv = 0, n6 = 0;
+          for (var ey = -1; ey <= 1; ey++) for (var ex = -1; ex <= 1; ex++) {
+            var x7 = x6 + ex, y7 = y6 + ey;
+            if (x7 >= 0 && y7 >= 0 && x7 < NX && y7 < NY) { su += W3[(y7 * NX + x7) * 2]; sv += W3[(y7 * NX + x7) * 2 + 1]; n6++; }
+          }
+          W2[k * 2] = su / n6; W2[k * 2 + 1] = sv / n6;
+        }
+      }
+      function camada(disp, frente) {
         var pos = new Float32Array(N * 3), uvs = new Float32Array(N * 2), Z = new Float32Array(N);
         for (var k2 = 0; k2 < N; k2++) {
           var z = 1 / (disp[k2] * (1 / PERTO - 1 / LONGE) + 1 / LONGE);
@@ -131,7 +235,8 @@
         }
         var idx = new (N > 65535 ? Uint32Array : Uint16Array)(GX * GY * 6), n = 0;
         function tri(a, b, c) {
-          if (cortar) { var mx = Math.max(Z[a], Z[b], Z[c]), mn = Math.min(Z[a], Z[b], Z[c]); if (mx / mn > 1.1) return; }
+          // o recorte vai inteiro: sem cortes por dentro, que viravam pedaços soltos
+          if (frente && (!tem[a] || !tem[b] || !tem[c])) return;
           idx[n++] = a; idx[n++] = b; idx[n++] = c;
         }
         for (var y = 0; y < GY; y++) for (var x = 0; x < GX; x++) {
@@ -139,9 +244,11 @@
           tri(a, c, b); tri(b, c, d2);
         }
         function buf(alvoB, arr) { var bf = gl.createBuffer(); gl.bindBuffer(alvoB, bf); gl.bufferData(alvoB, arr, gl.STATIC_DRAW); return bf; }
-        return {p: buf(gl.ARRAY_BUFFER, pos), uv: buf(gl.ARRAY_BUFFER, uvs), i: buf(gl.ELEMENT_ARRAY_BUFFER, idx.subarray(0, n)), n: n};
+        return {p: buf(gl.ARRAY_BUFFER, pos), uv: buf(gl.ARRAY_BUFFER, uvs), uv2: buf(gl.ARRAY_BUFFER, frente ? uvs : W2), i: buf(gl.ELEMENT_ARRAY_BUFFER, idx.subarray(0, n)), n: n, frente: frente};
       }
-      camadas = [camada(Dfundo, false), camada(D, true)];
+      camadas = [camada(Df, false)];
+      var cf = camada(Dr, true);
+      if (cf.n) camadas.push(cf);
       return N > 65535 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
     }
 
@@ -172,6 +279,9 @@
       camadas.forEach(function (c) {
         gl.bindBuffer(gl.ARRAY_BUFFER, c.p); gl.enableVertexAttribArray(locP); gl.vertexAttribPointer(locP, 3, gl.FLOAT, false, 0, 0);
         gl.bindBuffer(gl.ARRAY_BUFFER, c.uv); gl.enableVertexAttribArray(locUV); gl.vertexAttribPointer(locUV, 2, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, c.uv2); gl.enableVertexAttribArray(locUV2); gl.vertexAttribPointer(locUV2, 2, gl.FLOAT, false, 0, 0);
+        gl.uniform1f(locFrente, c.frente ? 1 : 0);
+        if (c.frente) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); } else gl.disable(gl.BLEND);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, c.i);
         gl.drawElements(gl.TRIANGLES, c.n, tipoIdx, 0);
       });

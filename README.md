@@ -88,6 +88,8 @@ go build -o nep ./cmd/nep
 | Mac (Apple Silicon) | `nep-macos-arm64` |
 | Mac (Intel) | `nep-macos-amd64` |
 
+**Dois cliques** no executável do Windows abrem a **Central do Nepenthes** no navegador: meus sites (com painel e banco de dados), criar site descrevendo o negócio, assistente com IA, modelos prontos, passeio 3D a partir de uma foto e a IA local, tudo num arquivo só.
+
 No Linux/Mac: `chmod +x nep-*` e, no Mac, na primeira vez, clique com o botão direito > Abrir (o executável ainda não é assinado).
 
 ## Usar

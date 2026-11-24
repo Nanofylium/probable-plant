@@ -7,10 +7,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"runtime"
-	"strings"
 	"time"
 )
 
@@ -54,56 +52,6 @@ func abrirNavegador(url string) {
 
 //go:embed inicio.html
 var inicioHTML []byte
-
-// modoClique: dois cliques no nep (Windows), sem index.html por perto. Cria a
-// pasta do site com um index.html que tem <nepenthes>, liga o servidor e abre
-// o navegador. Se o nep já estiver rodando, só abre o navegador.
-func modoClique() int {
-	if r, err := http.Get("http://127.0.0.1:8000/"); err == nil {
-		r.Body.Close()
-		fmt.Println("O Nepenthes já está rodando: abrindo o navegador.")
-		abrirNavegador("http://localhost:8000/")
-		time.Sleep(2 * time.Second)
-		return 0
-	}
-	pasta := pastaDoSite()
-	if err := os.MkdirAll(pasta, 0o755); err != nil {
-		return esperaErro(err)
-	}
-	site := filepath.Join(pasta, "index.html")
-	if _, err := os.Stat(site); err != nil {
-		if err := os.WriteFile(site, inicioHTML, 0o644); err != nil {
-			return esperaErro(err)
-		}
-	}
-	if err := os.Chdir(pasta); err != nil {
-		return esperaErro(err)
-	}
-	fmt.Println("Seu site fica nesta pasta:", pasta)
-	fmt.Println("Deixe esta janela aberta enquanto usa. Para parar, feche-a.")
-	fmt.Println()
-	if c := abrirAssistente("index.html"); c != 0 {
-		return esperaErro(fmt.Errorf("o Nepenthes parou (código %d)", c))
-	}
-	return 0
-}
-
-// pastaDoSite: ao lado do executável; se ele rodou de dentro de um zip (pasta
-// temporária) ou de uma pasta sem permissão, em Documentos\Nepenthes.
-func pastaDoSite() string {
-	if exe, err := os.Executable(); err == nil {
-		d := filepath.Dir(exe)
-		tmp := strings.ToLower(os.TempDir())
-		if !strings.HasPrefix(strings.ToLower(d), tmp) && !strings.Contains(strings.ToLower(d), `\temp\`) && podeEscrever(d) {
-			return filepath.Join(d, "Meu site")
-		}
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		home = "."
-	}
-	return filepath.Join(home, "Documents", "Nepenthes")
-}
 
 func podeEscrever(d string) bool {
 	f, err := os.CreateTemp(d, ".nep-teste-*")

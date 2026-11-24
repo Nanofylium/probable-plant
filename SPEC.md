@@ -552,7 +552,7 @@ Créditos e licenças em `LICENCA-ECHARTS.txt` e `LICENCA-HILO.txt`.
 **Passeio 3D, sem GPU (padrão).**
 - O `nep` calcula a distância de cada ponto da foto com o Depth Anything V2 Small (Apache 2.0). O modelo é baixado uma vez (95 MB, SHA-256 conferido) e roda no processador, em uns 7 s numa máquina de 4 núcleos.
 - Quem roda o modelo é o pacote `rede`, um executor de redes neurais no formato ONNX escrito em Go, sem Python e sem GPU. A saída é conferida com o onnxruntime oficial nos testes.
-- Grava `foto.jpg` e `profundidade.png` (16 bits, no vermelho e no verde). O navegador de quem visita monta a cena com WebGL, em duas camadas: na de trás, os objetos próximos são empurrados para o fundo; na da frente, as bordas esticadas são cortadas. A câmera anda, vira e mostra a paralaxe ao vivo, e o site baixa só a foto e a profundidade (algumas centenas de KB).
+- Grava `foto.jpg` e `profundidade.png` (16 bits, no vermelho e no verde). O navegador de quem visita monta a cena com WebGL, em duas camadas. Os objetos que se destacam do fundo (uma árvore, um muro, uma pessoa) viram um recorte inteiro, com contorno fino tirado da profundidade, e se movem juntos, sem rasgar. Atrás do recorte, o fundo é completado espelhando o que está em volta da beirada. A câmera anda, vira e mostra a paralaxe ao vivo, e o site baixa só a foto e a profundidade (algumas centenas de KB).
 - `--sem-modelo` (ou sem internet na primeira vez) usa uma profundidade estimada: embaixo perto, em cima longe. `--lado N` muda o tamanho da entrada do modelo (padrão 518).
 
 **LingBot-World, com GPU.** `--servidor host:porta` (ou `NEP_MUNDO_SERVIDOR`) gera quadros com o LingBot-World (Robbyant, Apache 2.0) num servidor SGLang. Para subir o servidor:
@@ -569,6 +569,16 @@ O `nep` fala o protocolo `/v1/realtime_video/generate` (WebSocket + MessagePack)
 - Sem JavaScript ou WebGL, e na prévia, aparece a foto.
 
 Créditos e licenças em `LICENCA-DEPTH-ANYTHING.txt` e `LICENCA-LINGBOT.txt`. Ficam de fora o LingBot-World 2.0 e os modelos Base, Large e Giant do Depth Anything V2, porque as licenças deles proíbem uso comercial.
+
+### 10.20 Central do Nepenthes (dois cliques)
+
+Dois cliques no `Nepenthes.exe` (ou `NEP_CLIQUE=1 nep`) abrem a Central em `http://localhost:8000/`, só para quem está no computador. Tudo vem no mesmo arquivo:
+- **Meus sites:** cada pasta em "Sites do Nepenthes" (ao lado do programa; ou Documentos\Nepenthes). Abrir, painel e banco de dados (`/_admin`), pasta, parar e os passeios 3D de cada site. Cada site roda numa porta própria (8001, 8002…).
+- **Criar site:** descrever o negócio (como `nep criar`), conversar com o assistente (tag `<nepenthes>`) ou começar de um modelo.
+- **Passeio 3D:** escolher um site e uma foto; a Central faz o passeio e mostra o código `{{ mundo("nome") }}`.
+- **IA local:** baixar e ver o estado da IA que escreve sites e responde o atendimento.
+
+Ações da Central exigem a chave da página (cabeçalho `X-Central`) e o endereço `localhost`. O Nepenthes DB e o Analytics em servidor (PostgreSQL e Lightdash) ficam fora, porque precisam do Docker.
 
 ## 11. Lua 5.4 na mesma máquina virtual
 

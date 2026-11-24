@@ -45,7 +45,15 @@ func (s *Server) mundoBuiltin(a []lang.Value) (lang.Value, error) {
 	if b, ok := opc("rolar").(bool); ok {
 		rolar = b
 	}
-	base := s.opt.Base + "/mundos/" + m.Nome + "/"
+	return lang.HTML(FiguraMundo(s.opt.Base+"/mundos/"+m.Nome+"/", s.opt.Base, m, titulo, strOrEmpty(opc("texto")), rolar)), nil
+}
+
+// MundoJS é o script do passeio (a Central do Nepenthes também usa).
+func MundoJS() []byte { return mundoJS }
+
+// FiguraMundo monta o HTML do passeio: base é o endereço da pasta do mundo e
+// scriptBase o prefixo de /_nep/mundo.js.
+func FiguraMundo(base, scriptBase string, m *mundo.Mundo, titulo, texto string, rolar bool) string {
 	dados := map[string]any{"base": base, "fps": m.FPS, "largura": m.Largura, "altura": m.Altura, "fonte": m.Fonte, "caminhos": m.Caminhos, "rolar": rolar}
 	primeira := ""
 	if m.Tipo == "3d" {
@@ -60,16 +68,16 @@ func (s *Server) mundoBuiltin(a []lang.Value) (lang.Value, error) {
 	b.WriteString(`<figure class="nep-mundo" data-mundo="` + html.EscapeString(string(j)) + `">`)
 	b.WriteString(fmt.Sprintf(`<img src="%s" width="%d" height="%d" alt="%s" loading="lazy">`,
 		html.EscapeString(primeira), m.Largura, m.Altura, html.EscapeString(titulo)))
-	if titulo != "" || opc("texto") != nil {
+	if titulo != "" || texto != "" {
 		b.WriteString(`<figcaption>`)
 		if titulo != "" {
 			b.WriteString(`<strong>` + html.EscapeString(titulo) + `</strong>`)
 		}
-		if t := strOrEmpty(opc("texto")); t != "" {
+		if t := texto; t != "" {
 			b.WriteString(` <span>` + html.EscapeString(t) + `</span>`)
 		}
 		b.WriteString(`</figcaption>`)
 	}
-	b.WriteString(`</figure><script src="` + html.EscapeString(s.opt.Base) + `/_nep/mundo.js" defer></script>`)
-	return lang.HTML(b.String()), nil
+	b.WriteString(`</figure><script src="` + html.EscapeString(scriptBase) + `/_nep/mundo.js" defer></script>`)
+	return b.String()
 }
