@@ -92,7 +92,7 @@ func (s *Server) assistente(rq *request, ideia string) {
 		writeJSON(w, map[string]any{
 			"servidor": modelo, "ideia": ideia, "arquivo": s.file,
 			"prompt_perguntas": gerador.PromptPerguntas(), "prompt_site": gerador.PromptSite(),
-			"local": ialocal.Ver(), "local_pasta": ialocal.Pasta(), "visuais": gerador.Visuais,
+			"local": ialocal.Ver(), "local_pasta": ialocal.Pasta(), "visuais": gerador.Visuais, "tipos": gerador.Tipos(),
 			"instagram": s.instaResposta(s.instaGuardado()), "instagram_app": s.instaAppEstado(rq.r),
 		})
 		return
@@ -124,21 +124,27 @@ func (s *Server) assistente(rq *request, ideia string) {
 			return
 		}
 		var in struct {
-			Descricao string      `json:"descricao"`
-			Respostas [][2]string `json:"respostas"`
-			Conteudo  string      `json:"conteudo"` // resposta da IA do navegador
-			Motor     string      `json:"motor"`    // servidor | navegador | regras
-			Visual    string      `json:"visual"`   // um de gerador.Visuais; vazio = sorteia
+			Descricao string        `json:"descricao"`
+			Respostas [][2]string   `json:"respostas"`
+			Conteudo  string        `json:"conteudo"` // resposta da IA do navegador
+			Motor     string        `json:"motor"`    // servidor | navegador | regras
+			Visual    string        `json:"visual"`   // um de gerador.Visuais; vazio = sorteia
+			Dados     gerador.Dados `json:"dados"`    // nome, tipo, contato… digitados na tela
 		}
-		if err := json.NewDecoder(http.MaxBytesReader(w, rq.r.Body, 256<<10)).Decode(&in); err != nil || strings.TrimSpace(in.Descricao) == "" {
+		err := json.NewDecoder(http.MaxBytesReader(w, rq.r.Body, 256<<10)).Decode(&in)
+		if in.Dados.Tipo != "" && !gerador.TemTipo(in.Dados.Tipo) {
+			in.Dados.Tipo = ""
+		}
+		in.Descricao = gerador.DescricaoComDados(in.Descricao, in.Dados)
+		if err != nil || strings.TrimSpace(in.Descricao) == "" {
 			http.Error(w, "conte como quer o site", http.StatusBadRequest)
 			return
 		}
 		if rq.path == "/_nep/assistente/perguntas" {
-			s.assistentePerguntas(rq, in.Descricao, in.Motor)
+			s.assistentePerguntas(rq, in.Descricao, in.Motor, in.Dados)
 			return
 		}
-		s.assistenteCriar(rq, in.Descricao, in.Respostas, in.Conteudo, in.Motor, in.Visual)
+		s.assistenteCriar(rq, in.Descricao, in.Respostas, in.Conteudo, in.Motor, in.Visual, in.Dados)
 		return
 	}
 	if strings.HasPrefix(rq.path, "/_nep/") || strings.Contains(rq.path, ".") {
@@ -177,7 +183,7 @@ func (s *Server) askLocal(rq *request, schema map[string]any, system, user strin
 		[]iaMsg{{"system", system}, {"user", user}}, maxTokens, temp)
 }
 
-func (s *Server) assistentePerguntas(rq *request, desc, motor string) {
+func (s *Server) assistentePerguntas(rq *request, desc, motor string, d gerador.Dados) {
 	var txt string
 	var err error
 	switch {
@@ -188,14 +194,14 @@ func (s *Server) assistentePerguntas(rq *request, desc, motor string) {
 	default:
 		err = errNoIA
 	}
-	if p := gerador.LerPerguntas(txt); err == nil && len(p) > 0 {
+	if p := gerador.TirarPerguntasRespondidas(gerador.LerPerguntas(txt), d); err == nil && len(p) > 0 {
 		writeJSON(rq.w, map[string]any{"perguntas": p, "motor": motor})
 		return
 	}
-	writeJSON(rq.w, map[string]any{"perguntas": gerador.PerguntasPorRegras(desc), "motor": "regras"})
+	writeJSON(rq.w, map[string]any{"perguntas": gerador.TirarPerguntasRespondidas(gerador.PerguntasPorRegras(desc), d), "motor": "regras"})
 }
 
-func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, conteudo, motor, visual string) {
+func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, conteudo, motor, visual string, dados gerador.Dados) {
 	completa := gerador.DescricaoComRespostas(desc, resp)
 	semente := time.Now().UnixNano() // cada pedido pode sair com outro visual
 	p := gerador.EntenderComSemente(completa, semente)
@@ -240,6 +246,7 @@ func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, con
 	if insta != nil {
 		gerador.UsarInstagram(p, insta.Fotos, insta.Usuario, insta.Nome, insta.Site)
 	}
+	gerador.UsarDados(p, dados) // o que a pessoa digitou vale mais
 	src := gerador.Montar(p)
 
 	// guarda o arquivo anterior e grava o novo

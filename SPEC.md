@@ -572,7 +572,7 @@ Créditos e licenças em `LICENCA-DEPTH-ANYTHING.txt` e `LICENCA-LINGBOT.txt`. F
 
 ### 10.20 Central do Nepenthes (dois cliques)
 
-Dois cliques no `Nepenthes.exe` (ou `nep central`) abrem a Central em `http://localhost:8000/`, só para quem está no computador. Tudo vem no mesmo arquivo:
+Dois cliques no `Nepenthes.exe` (ou `nep central`) ligam a Central em `http://localhost:8000/`, só para quem está no computador. Na primeira vez (nenhum site pronto), o navegador abre direto na tela que cria o site (pasta `meu-site` com a tag `<nepenthes>`); depois, abre a Central. Um `index.html` com `<nepenthes>` na pasta do programa também abre direto essa tela. A tela pede os dados do site (tipo, entre eles portal de notícias, comunidade, loja, escola; nome, cidade, WhatsApp, e-mail, endereço e horário), que valem mais que o que a IA ou as regras acharem, e o site sai com páginas, banco, formulários e painel. Tudo vem no mesmo arquivo:
 - **Meus sites:** cada pasta em "Sites do Nepenthes" (ao lado do programa; ou Documentos\Nepenthes). Abrir, painel e banco de dados do site (`/_admin`), pasta e parar. Cada site roda numa porta própria (8001, 8002…).
 - **Criar site:** descrever o negócio (como `nep criar`), conversar com o assistente (tag `<nepenthes>`) ou começar de um modelo.
 - **Banco de dados (Nepenthes DB):** um PostgreSQL 16 sem Docker, ligado com um botão. Na primeira vez baixa os binários oficiais (uns 30 MB, via [embedded-postgres](https://github.com/fergusstrange/embedded-postgres), MIT, e zonky, Apache 2.0). Os dados ficam em "Nepenthes DB/dados", com usuário, senha e porta em `config.json`; só `localhost` conecta. Se ficou ligado, liga sozinho na próxima vez. Uma pasta de outra versão do PostgreSQL nunca é apagada.

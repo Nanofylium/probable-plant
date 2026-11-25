@@ -18,12 +18,18 @@ h1{font-size:clamp(1.7rem,4vw,2.4rem);line-height:1.15;margin:18px 0 8px;letter-
 label.campo{display:block;font-weight:600;margin:0 0 8px}
 textarea,input[type=text]{width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--linha);border-radius:12px;padding:12px 14px}
 textarea{min-height:120px;resize:vertical}
+.dados-site{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+label.dado{display:flex;flex-direction:column;gap:6px;font-size:.9rem;font-weight:500;min-width:0}
+label.dado>input,label.dado>select{flex:none;min-height:46px}
+label.dado select{width:100%;font:inherit;color:inherit;background:var(--cartao);border:1px solid var(--linha);border-radius:12px;padding:11px 12px}
+@media (max-width:600px){.dados-site{grid-template-columns:1fr}}
 textarea:focus,input:focus{outline:3px solid color-mix(in srgb,var(--cor) 30%,transparent);border-color:var(--cor)}
 .motores{display:grid;gap:10px;margin-top:6px}
 .motor{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--linha);border-radius:12px;padding:12px 14px;cursor:pointer}
 .motor:has(input:checked){border-color:var(--cor);background:color-mix(in srgb,var(--cor) 7%,transparent)}
 .motor.off{opacity:.5;cursor:not-allowed}
 .motor b{display:block}.motor small{color:var(--suave)}
+.motores{grid-template-columns:minmax(0,1fr)}.motor{min-width:0}.motor>span{min-width:0;overflow-wrap:anywhere}.motor select{max-width:100%}
 .motor select{margin-top:6px;font:inherit;font-size:.9rem;padding:4px 6px;border-radius:8px;border:1px solid var(--linha);background:var(--cartao);color:inherit}
 .acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:12px 22px;cursor:pointer;background:var(--cor);color:#fff}
@@ -74,7 +80,20 @@ details.dica ol{padding-left:20px;margin:8px 0 0}
   <!-- 1. o pedido -->
   <section id="passo1">
     <h1>Como você quer o seu site?</h1>
-    <p class="sub">Conte do seu jeito: o que é, para quem, o que não pode faltar. O Nepenthes pergunta o que faltar e depois escreve o site inteiro.</p>
+    <p class="sub">Preencha os dados e conte do seu jeito o que você quer: um site de empresa, uma loja, um portal de notícias, uma comunidade… O Nepenthes pergunta o que faltar e escreve o site inteiro, com banco de dados, formulários e painel.</p>
+    <div class="cartao">
+      <label class="campo">Dados do site <small style="font-weight:400;color:var(--suave)">(o que ficar em branco, o Nepenthes completa)</small></label>
+      <div class="dados-site">
+        <label class="dado" style="grid-column:1/-1">Que tipo de site?
+          <select id="d-tipo"><option value="">Deixar o Nepenthes descobrir pela descrição</option></select></label>
+        <label class="dado">Nome do negócio ou projeto<input type="text" id="d-nome" maxlength="60" autocomplete="organization"></label>
+        <label class="dado">Cidade<input type="text" id="d-cidade" maxlength="40" autocomplete="address-level2"></label>
+        <label class="dado">WhatsApp<input type="text" id="d-whatsapp" maxlength="30" inputmode="tel" placeholder="(71) 99999-9999" autocomplete="tel"></label>
+        <label class="dado">E-mail<input type="text" id="d-email" maxlength="120" inputmode="email" autocomplete="email"></label>
+        <label class="dado">Endereço<input type="text" id="d-endereco" maxlength="120" autocomplete="street-address"></label>
+        <label class="dado">Horário de atendimento<input type="text" id="d-horario" maxlength="120" placeholder="Seg. a sex., 8h às 18h"></label>
+      </div>
+    </div>
     <div class="cartao">
       <label class="campo" for="insta-usuario">Instagram do negócio <small style="font-weight:400;color:var(--suave)">(opcional, mas ajuda muito)</small></label>
       <div class="insta-linha">
@@ -116,7 +135,7 @@ details.dica ol{padding-left:20px;margin:8px 0 0}
       </div>
     </div>
     <div class="cartao">
-      <label class="campo" for="desc">Seu site</label>
+      <label class="campo" for="desc">Como é o site? O que não pode faltar?</label>
       <textarea id="desc" placeholder="Ex.: Uma doceria artesanal em Salvador chamada Cacau & Coco, com cardápio, encomendas pelo WhatsApp e um jeito alegre"></textarea>
     </div>
     <div class="cartao">
@@ -348,6 +367,7 @@ async function inicio() {
   if (estado.ideia) $("#desc").value = estado.ideia;
   mostraInsta(estado.instagram);
   mostraVisuais(estado.visuais);
+  (estado.tipos || []).forEach(t => { const o = document.createElement("option"); o.value = t[0]; o.textContent = t[1][0].toUpperCase() + t[1].slice(1); $("#d-tipo").appendChild(o); });
   mostraApp(estado.instagram_app);
   const q = new URLSearchParams(location.search);
   if (q.get("instagram_erro")) erro("#insta-erro", new Error(q.get("instagram_erro")));
@@ -362,26 +382,38 @@ async function inicio() {
   const pref = estado.servidor ? "servidor" : local.fase !== "erro" ? "local" : temGPU ? "navegador" : "regras";
   document.querySelector(`input[name=motor][value=${pref}]`).checked = true;
 }
+function dados() {
+  const v = id => $("#d-" + id).value.trim();
+  return {tipo: v("tipo"), nome: v("nome"), cidade: v("cidade"), whatsapp: v("whatsapp"), email: v("email"), endereco: v("endereco"), horario: v("horario")};
+}
+// a descrição com os dados digitados (para a IA do navegador, que lê texto)
+function descCompleta() {
+  const d = dados(), partes = [$("#desc").value.trim()];
+  const t = (estado.tipos || []).find(t => t[0] === d.tipo); if (t) partes.push(t[1]);
+  if (d.nome) partes.push(`chamado "${d.nome}"`);
+  if (d.cidade) partes.push("em " + d.cidade);
+  return partes.filter(Boolean).join(", ");
+}
 $("#ir1").onclick = async () => {
-  const desc = $("#desc").value.trim();
+  const desc = $("#desc").value.trim(), d = dados();
   $("#erro1").hidden = true;
-  if (!desc) { erro("#erro1", new Error("Escreva como você quer o site.")); return; }
+  if (!desc && !d.tipo && !d.nome) { erro("#erro1", new Error("Escolha o tipo de site, dê um nome ou escreva como você quer o site.")); return; }
   motor = document.querySelector("input[name=motor]:checked").value;
   $("#ir1").disabled = true;
   try {
     await guardaUsuario();
     if (motor === "navegador") {
       mostra("passo3");
-      const r = lerJSON(await qwen(estado.prompt_perguntas, desc, 300, 0.7));
+      const r = lerJSON(await qwen(estado.prompt_perguntas, descCompleta(), 300, 0.7));
       perguntas = (r && Array.isArray(r.perguntas) ? r.perguntas : []).filter(p => typeof p === "string" && p.trim()).slice(0, 4);
-      if (!perguntas.length) perguntas = (await post("perguntas", {descricao: desc, motor: "regras"})).perguntas;
+      if (!perguntas.length) perguntas = (await post("perguntas", {descricao: desc, motor: "regras", dados: d})).perguntas;
     } else if (motor === "local") {
       mostra("passo3");
       await preparaLocal();
       const para = relogio("A IA do Nepenthes está lendo o seu pedido…");
-      try { perguntas = (await post("perguntas", {descricao: desc, motor})).perguntas; } finally { para(); }
+      try { perguntas = (await post("perguntas", {descricao: desc, motor, dados: d})).perguntas; } finally { para(); }
     } else {
-      perguntas = (await post("perguntas", {descricao: desc, motor})).perguntas;
+      perguntas = (await post("perguntas", {descricao: desc, motor, dados: d})).perguntas;
     }
     const box = $("#perguntas"); box.innerHTML = "";
     perguntas.forEach((p, i) => {
@@ -404,7 +436,7 @@ $("#ir2").onclick = async () => {
   try {
     let conteudo = "";
     if (motor === "navegador") {
-      let msg = "Pedido: " + desc + "\n";
+      let msg = "Pedido: " + descCompleta() + "\n";
       respostas.forEach(([p, r]) => { if (r.trim()) msg += "Pergunta: " + p + "\nResposta: " + r.trim() + "\n"; });
       conteudo = await qwen(estado.prompt_site, msg, 2500, 0.9);
     }
@@ -412,7 +444,7 @@ $("#ir2").onclick = async () => {
     if (motor === "local") { await preparaLocal(); para = relogio("A IA do Nepenthes está escrevendo o site, sem placa de vídeo (leva de 1 a 3 minutos)…"); }
     else status(motor === "servidor" ? "O Qwen do servidor está escrevendo e o Nepenthes está montando…" : "O Nepenthes está montando as páginas…");
     let r;
-    try { r = await post("criar", {descricao: desc, respostas, conteudo, motor, visual: visualEscolhido()}); } finally { para(); }
+    try { r = await post("criar", {descricao: desc, respostas, conteudo, motor, visual: visualEscolhido(), dados: dados()}); } finally { para(); }
     $("#pronto-titulo").textContent = (r.nome ? r.nome + " está pronto!" : "Pronto!");
     $("#pronto-motor").textContent = {servidor: "Escrito pelo Qwen do servidor e montado pelo Nepenthes.", local: "Escrito pela IA do Nepenthes (Granite, neste computador) e montado pelo Nepenthes.", navegador: "Escrito pelo Qwen no seu navegador e montado pelo Nepenthes.", regras: "Montado pelas regras do Nepenthes."}[r.motor] || "";
     $("#pronto-notas").innerHTML = ""; (r.notas || []).forEach(n => { const li = document.createElement("li"); li.textContent = n; $("#pronto-notas").appendChild(li); });

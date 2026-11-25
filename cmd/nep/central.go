@@ -444,6 +444,38 @@ func (c *central) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// paginaInicial: sem nenhum site pronto, os dois cliques abrem direto a tela
+// que pede os dados e cria o site (a tag <nepenthes>); com sites, a Central.
+func (c *central) paginaInicial() string {
+	sites := c.listar()
+	for _, s := range sites {
+		if !s.Novo {
+			return "http://localhost:8000/"
+		}
+	}
+	pasta := ""
+	for _, s := range sites {
+		if s.Novo {
+			pasta = s.Pasta
+			break
+		}
+	}
+	if pasta == "" {
+		var err error
+		if pasta, err = c.pastaNova("meu-site"); err != nil {
+			return "http://localhost:8000/"
+		}
+		if os.WriteFile(filepath.Join(pasta, "index.html"), inicioHTML, 0o644) != nil {
+			return "http://localhost:8000/"
+		}
+	}
+	u, err := c.ligar(pasta)
+	if err != nil {
+		return "http://localhost:8000/"
+	}
+	return u
+}
+
 // pararTudo desliga os sites, o banco e a IA local (ao sair).
 func (c *central) pararTudo() {
 	c.mu.Lock()
@@ -494,14 +526,14 @@ func modoCentral(abrir bool) int {
 			}
 		}()
 	}
+	hs := &http.Server{Handler: c, ReadHeaderTimeout: 10 * time.Second}
+	go hs.Serve(l)
 	if abrir {
 		go func() {
 			time.Sleep(300 * time.Millisecond)
-			abrirNavegador("http://localhost:8000/")
+			abrirNavegador(c.paginaInicial())
 		}()
 	}
-	hs := &http.Server{Handler: c, ReadHeaderTimeout: 10 * time.Second}
-	go hs.Serve(l)
 	bandeja(c, func() {
 		hs.Close()
 		c.pararTudo()

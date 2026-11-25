@@ -56,7 +56,7 @@ func (g *ger) html() string {
 		}
 		w(`</span></if>`)
 	}
-	w(`<a href="tel:+5500000000000" editavel="topo.fone">(00) 0000-0000</a></span>
+	w(`<a href="tel:+` + g.foneDigitos() + `" editavel="topo.fone">` + ouExemplo(g.p.Telefone, "(00) 0000-0000") + `</a></span>
   </div>
   <header>
     <a class="marca" href="{{ url('/') }}"><span>«emoji»</span><b editavel="marca">«nome»</b></a>
@@ -96,7 +96,22 @@ func (g *ger) html() string {
 	return b.String()
 }
 
+// foneDigitos: o número para o link tel: (com o 55 do Brasil).
+func (g *ger) foneDigitos() string {
+	if d := strings.TrimPrefix(g.p.WhatsApp, "https://wa.me/"); g.p.Telefone != "" && d != g.p.WhatsApp {
+		return d
+	}
+	return "5500000000000"
+}
+
 func (g *ger) faixa() string {
+	if g.p.Horario != "" {
+		h := ouExemplo(g.p.Horario, "")
+		if g.p.Cidade != "" {
+			return "Atendimento em " + esc(g.p.Cidade) + " e região · " + h
+		}
+		return h
+	}
 	if g.p.Cidade != "" {
 		return "Atendimento em " + esc(g.p.Cidade) + " e região · Segunda a sábado"
 	}

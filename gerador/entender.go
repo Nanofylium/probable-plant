@@ -38,6 +38,9 @@ type Plano struct {
 	Fotos     []Foto // fotos de verdade (do Instagram): capa e galeria
 	Instagram string // @ do Instagram, sem o @
 	WhatsApp  string // link do WhatsApp (da bio do Instagram), se houver
+
+	// dados de contato que a pessoa digitou na tela (vazio = texto de exemplo)
+	Telefone, Email, Endereco, Horario string
 }
 
 // Foto é uma imagem já gravada nos arquivos do site (data/arquivos).

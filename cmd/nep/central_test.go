@@ -111,3 +111,28 @@ func TestCentral(t *testing.T) {
 	}
 
 }
+
+func TestCentralAbreDiretoNoAssistente(t *testing.T) {
+	c := novaCentral(t.TempDir())
+	c.extras = nil
+	defer c.pararTudo()
+	u := c.paginaInicial()
+	if !strings.HasPrefix(u, "http://localhost:80") || u == "http://localhost:8000/" {
+		t.Fatalf("sem sites devia abrir o assistente: %s", u)
+	}
+	ss := c.listar()
+	if len(ss) != 1 || !ss[0].Novo || ss[0].Nome != "meu-site" {
+		t.Fatalf("%+v", ss)
+	}
+	// de novo: reaproveita a mesma pasta
+	if c.paginaInicial() != u || len(c.listar()) != 1 {
+		t.Fatal("devia reaproveitar o assistente aberto")
+	}
+	// com um site pronto, abre a Central
+	if w := pedidoCentral(c, "POST", "/api/modelo", []byte(`{"modelo":"blog"}`), "application/json", true); w.Code != 200 {
+		t.Fatal(w.Body)
+	}
+	if c.paginaInicial() != "http://localhost:8000/" {
+		t.Fatal("com site pronto devia abrir a Central")
+	}
+}

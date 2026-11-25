@@ -61,8 +61,11 @@ func main() {
 	if len(args) == 0 {
 		// dois cliques no nep ao lado de um index.html com <nepenthes>: abre o
 		// assistente; senão, a Central do Nepenthes (meus sites, criar, passeio 3D…)
-		if b, err := os.ReadFile("index.html"); err == nil && reTagNepenthes.Match(b) {
-			os.Exit(abrirAssistente("index.html"))
+		// (na pasta de onde rodou ou ao lado do programa)
+		for _, f := range indexAoLado() {
+			if b, err := os.ReadFile(f); err == nil && reTagNepenthes.Match(b) {
+				os.Exit(abrirAssistente(f))
+			}
 		}
 		if cliqueDuplo() || os.Getenv("NEP_CLIQUE") == "1" {
 			os.Exit(modoCentral(true))
@@ -345,4 +348,15 @@ func repl() int {
 			fmt.Println(lang.Repr(res))
 		}
 	}
+}
+
+// indexAoLado: index.html da pasta atual e da pasta do programa.
+func indexAoLado() []string {
+	out := []string{"index.html"}
+	if exe, err := os.Executable(); err == nil {
+		if f := filepath.Join(filepath.Dir(exe), "index.html"); f != "index.html" {
+			out = append(out, f)
+		}
+	}
+	return out
 }

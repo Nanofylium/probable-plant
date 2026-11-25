@@ -790,10 +790,10 @@ func (g *ger) paginasFixas() string {
             <h1 editavel="contato.titulo">Fale com a gente</h1>
             <p class="intro" editavel="contato.texto">Conte o que você precisa. Respondemos em até um dia útil.</p>
             <dl>
-              <div><dt>WhatsApp</dt><dd editavel="contato.whatsapp">(00) 00000-0000</dd></div>
-              <div><dt>E-mail</dt><dd editavel="contato.email">contato@` + slugify(g.p.Nome) + `.com.br</dd></div>
-              <div><dt>Endereço</dt><dd editavel="contato.endereco">Rua Exemplo, 123` + g.vars["«cidade»"] + `</dd></div>
-              <div><dt>Horário</dt><dd editavel="contato.horario">Segunda a sexta, 8h às 18h · Sábado, 8h às 12h</dd></div>
+              <div><dt>WhatsApp</dt><dd editavel="contato.whatsapp">` + ouExemplo(g.p.Telefone, "(00) 00000-0000") + `</dd></div>
+              <div><dt>E-mail</dt><dd editavel="contato.email">` + ouExemplo(g.p.Email, "contato@"+slugify(g.p.Nome)+".com.br") + `</dd></div>
+              <div><dt>Endereço</dt><dd editavel="contato.endereco">` + ouExemplo(g.p.Endereco, "Rua Exemplo, 123"+g.vars["«cidade»"]) + `</dd></div>
+              <div><dt>Horário</dt><dd editavel="contato.horario">` + ouExemplo(g.p.Horario, "Segunda a sexta, 8h às 18h · Sábado, 8h às 12h") + `</dd></div>
             </dl>
           </div>
           <form class="cartao" save="contatos" avisar="dono" limit="5" success="Mensagem enviada! Respondemos em breve."
