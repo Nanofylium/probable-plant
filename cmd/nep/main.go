@@ -21,6 +21,9 @@ Uso:
   nep                      abre o modo interativo (ou, se houver um index.html com
                            <nepenthes> na pasta, abre a tela de criar o site no navegador)
   nep repl                 abre o modo interativo
+  nep central              abre a Central do Nepenthes no navegador (o mesmo que dois
+                           cliques no Windows): sites, criar site, Nepenthes DB
+                           (PostgreSQL sem Docker), análises com gráficos e IA local
   nep arquivo.nep [args]   executa um programa
   nep arquivo.lua [args]   executa um programa em Lua 5.4 (na mesma máquina virtual)
   nep run arquivo.nep      o mesmo que acima
@@ -62,11 +65,15 @@ func main() {
 			os.Exit(abrirAssistente("index.html"))
 		}
 		if cliqueDuplo() || os.Getenv("NEP_CLIQUE") == "1" {
-			os.Exit(modoCentral())
+			os.Exit(modoCentral(true))
 		}
 		os.Exit(repl())
 	}
 	switch args[0] {
+	case "--bandeja": // ao ligar o computador: Central pronta, sem abrir o navegador
+		os.Exit(modoCentral(false))
+	case "central":
+		os.Exit(modoCentral(true))
 	case "-h", "--help", "help", "ajuda":
 		fmt.Printf(ajuda, lang.Version)
 	case "repl", "interativo":

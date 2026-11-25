@@ -572,13 +572,16 @@ Créditos e licenças em `LICENCA-DEPTH-ANYTHING.txt` e `LICENCA-LINGBOT.txt`. F
 
 ### 10.20 Central do Nepenthes (dois cliques)
 
-Dois cliques no `Nepenthes.exe` (ou `NEP_CLIQUE=1 nep`) abrem a Central em `http://localhost:8000/`, só para quem está no computador. Tudo vem no mesmo arquivo:
-- **Meus sites:** cada pasta em "Sites do Nepenthes" (ao lado do programa; ou Documentos\Nepenthes). Abrir, painel e banco de dados (`/_admin`), pasta, parar e os passeios 3D de cada site. Cada site roda numa porta própria (8001, 8002…).
+Dois cliques no `Nepenthes.exe` (ou `nep central`) abrem a Central em `http://localhost:8000/`, só para quem está no computador. Tudo vem no mesmo arquivo:
+- **Meus sites:** cada pasta em "Sites do Nepenthes" (ao lado do programa; ou Documentos\Nepenthes). Abrir, painel e banco de dados do site (`/_admin`), pasta e parar. Cada site roda numa porta própria (8001, 8002…).
 - **Criar site:** descrever o negócio (como `nep criar`), conversar com o assistente (tag `<nepenthes>`) ou começar de um modelo.
-- **Passeio 3D:** escolher um site e uma foto; a Central faz o passeio e mostra o código `{{ mundo("nome") }}`.
+- **Banco de dados (Nepenthes DB):** um PostgreSQL 16 sem Docker, ligado com um botão. Na primeira vez baixa os binários oficiais (uns 30 MB, via [embedded-postgres](https://github.com/fergusstrange/embedded-postgres), MIT, e zonky, Apache 2.0). Os dados ficam em "Nepenthes DB/dados", com usuário, senha e porta em `config.json`; só `localhost` conecta. Se ficou ligado, liga sozinho na próxima vez. Uma pasta de outra versão do PostgreSQL nunca é apagada.
+- **Análises:** SQL com resposta em tabela e gráfico (Apache ECharts: barras, linha, pizza). Por padrão as consultas só leem; "Permitir alterar dados" libera a escrita. Os gráficos salvos (`paineis.json`) formam o painel. "Criar vendas de exemplo" monta uma tabela e dois gráficos para começar.
 - **IA local:** baixar e ver o estado da IA que escreve sites e responde o atendimento.
 
-Ações da Central exigem a chave da página (cabeçalho `X-Central`) e o endereço `localhost`. O Nepenthes DB e o Analytics em servidor (PostgreSQL e Lightdash) ficam fora, porque precisam do Docker.
+No Windows, a janela preta some e o Nepenthes fica num ícone perto do relógio (systray do Fyne, Apache 2.0): Abrir a Central, Pasta dos sites, Abrir junto com o Windows (`--bandeja`, sem abrir o navegador) e Sair (para os sites, o banco e a IA). Na primeira vez ele põe um atalho na área de trabalho. Em outros sistemas, `nep central` roda até Ctrl+C.
+
+Ações da Central exigem a chave da página (cabeçalho `X-Central`) e o endereço `localhost`. O Analytics em servidor com Lightdash continua só na pilha Docker.
 
 ## 11. Lua 5.4 na mesma máquina virtual
 

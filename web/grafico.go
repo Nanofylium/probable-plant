@@ -22,6 +22,9 @@ import (
 //go:embed assets/echarts.min.js
 var echartsJS []byte
 
+// EChartsJS é o Apache ECharts embutido (a Central do Nepenthes também usa).
+func EChartsJS() []byte { return echartsJS }
+
 //go:embed assets/grafico.js
 var graficoJS []byte
 

@@ -3,10 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"image"
-	"image/color"
-	"image/jpeg"
-	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -31,8 +27,6 @@ func pedidoCentral(c *central, metodo, caminho string, corpo []byte, tipo string
 }
 
 func TestCentral(t *testing.T) {
-	t.Setenv("NEP_PROFUNDIDADE", filepath.Join(t.TempDir(), "nao-existe.onnx"))
-	t.Setenv("HTTPS_PROXY", "http://127.0.0.1:1") // sem internet: o passeio usa a profundidade estimada
 	c := novaCentral(t.TempDir())
 	c.extras = nil
 	defer func() {
@@ -116,59 +110,4 @@ func TestCentral(t *testing.T) {
 		t.Fatal("o assistente devia aparecer como novo")
 	}
 
-	// passeio 3D a partir de uma foto
-	img := image.NewRGBA(image.Rect(0, 0, 320, 240))
-	for y := 0; y < 240; y++ {
-		for x := 0; x < 320; x++ {
-			img.Set(x, y, color.RGBA{uint8(x), uint8(y), 120, 255})
-		}
-	}
-	var foto bytes.Buffer
-	jpeg.Encode(&foto, img, nil)
-	var corpo bytes.Buffer
-	mp := multipart.NewWriter(&corpo)
-	mp.WriteField("pasta", criado.Pasta)
-	mp.WriteField("nome", "Fachada da Loja")
-	fw, _ := mp.CreateFormFile("foto", "f.jpg")
-	fw.Write(foto.Bytes())
-	mp.Close()
-	if w := pedidoCentral(c, "POST", "/api/passeio", corpo.Bytes(), mp.FormDataContentType(), true); w.Code != 200 {
-		t.Fatalf("passeio: %s", w.Body)
-	}
-	for i := 0; i < 300; i++ {
-		c.mu.Lock()
-		ativa := c.tarefa.Ativa
-		c.mu.Unlock()
-		if !ativa {
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
-	if c.tarefa.Ativa || c.tarefa.Erro != "" {
-		t.Fatalf("tarefa: %+v", c.tarefa)
-	}
-	nome := filepath.Base(criado.Pasta)
-	for _, s := range c.listar() {
-		if s.Pasta == criado.Pasta {
-			if len(s.Mundos) != 1 || s.Mundos[0] != "fachada-da-loja" {
-				t.Fatalf("mundos: %v", s.Mundos)
-			}
-		}
-	}
-	w = pedidoCentral(c, "GET", "/ver/"+nome+"/fachada-da-loja/", nil, "", false)
-	if w.Code != 200 || !strings.Contains(w.Body.String(), `/ver/`+nome+`/fachada-da-loja/arq/foto.jpg`) || !strings.Contains(w.Body.String(), `src="/_nep/mundo.js"`) {
-		t.Fatalf("ver: %d %s", w.Code, w.Body)
-	}
-	if w := pedidoCentral(c, "GET", "/ver/"+nome+"/fachada-da-loja/arq/profundidade.png", nil, "", false); w.Code != 200 {
-		t.Fatalf("arquivo: %d", w.Code)
-	}
-	if w := pedidoCentral(c, "GET", "/ver/"+nome+"/fachada-da-loja/arq/mundo.json", nil, "", false); w.Code != 404 {
-		t.Fatal("só a foto e a profundidade são entregues")
-	}
-	if w := pedidoCentral(c, "GET", "/ver/nao-existe/x/", nil, "", false); w.Code != 404 {
-		t.Fatal("site inexistente")
-	}
-	if w := pedidoCentral(c, "GET", "/_nep/mundo.js", nil, "", false); w.Code != 200 || w.Body.Len() < 1000 {
-		t.Fatal("mundo.js")
-	}
 }

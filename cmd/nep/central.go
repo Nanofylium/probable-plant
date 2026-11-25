@@ -3,7 +3,7 @@ package main
 // Central do Nepenthes: o que abre com dois cliques no Nepenthes.exe. Uma tela
 // no navegador com tudo num lugar só: meus sites (abrir, painel e banco de
 // dados, prévia, pasta), criar site descrevendo, assistente com IA, modelos
-// prontos, passeio 3D a partir de uma foto e a IA local. Cada site roda neste
+// prontos e a IA local. Cada site roda neste
 // mesmo programa, numa porta própria (8001, 8002…).
 
 import (
@@ -16,7 +16,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,8 +28,6 @@ import (
 	"github.com/Nanofylium/probable-plant/gerador"
 	"github.com/Nanofylium/probable-plant/ialocal"
 	"github.com/Nanofylium/probable-plant/lang"
-	"github.com/Nanofylium/probable-plant/mundo"
-	"github.com/Nanofylium/probable-plant/rede"
 	"github.com/Nanofylium/probable-plant/web"
 )
 
@@ -48,6 +45,7 @@ type central struct {
 	token  string
 	mu     sync.Mutex
 	sites  map[string]*siteRodando // pasta -> servidor
+	db     *nepDB
 	tarefa struct {
 		Ativa    bool   `json:"ativa"`
 		Texto    string `json:"texto"`
@@ -58,15 +56,14 @@ type central struct {
 }
 
 type siteInfo struct {
-	Nome     string   `json:"nome"`
-	Pasta    string   `json:"pasta"`
-	Arquivo  string   `json:"arquivo"`
-	Rodando  bool     `json:"rodando"`
-	URL      string   `json:"url,omitempty"`
-	Previa   bool     `json:"previa"`
-	Mundos   []string `json:"mundos"`
-	Alterado string   `json:"alterado"`
-	Novo     bool     `json:"novo"` // ainda só com a tag <nepenthes> (assistente)
+	Nome     string `json:"nome"`
+	Pasta    string `json:"pasta"`
+	Arquivo  string `json:"arquivo"`
+	Rodando  bool   `json:"rodando"`
+	URL      string `json:"url,omitempty"`
+	Previa   bool   `json:"previa"`
+	Alterado string `json:"alterado"`
+	Novo     bool   `json:"novo"` // ainda só com a tag <nepenthes> (assistente)
 }
 
 // pastaBase: "Sites do Nepenthes" ao lado do executável; se ele rodou de
@@ -89,7 +86,7 @@ func pastaBase() string {
 func novaCentral(base string) *central {
 	b := make([]byte, 16)
 	rand.Read(b)
-	c := &central{base: base, token: hex.EncodeToString(b), sites: map[string]*siteRodando{}}
+	c := &central{base: base, token: hex.EncodeToString(b), sites: map[string]*siteRodando{}, db: novoNepDB(base)}
 	// os sites das versões anteriores ("Meu site" ao lado do programa, ou
 	// Documentos\Nepenthes) continuam aparecendo
 	if exe, err := os.Executable(); err == nil {
@@ -131,7 +128,7 @@ func (c *central) listar() []siteInfo {
 			continue
 		}
 		vistos[abs] = true
-		si := siteInfo{Nome: filepath.Base(abs), Pasta: abs, Arquivo: filepath.Base(f), Mundos: []string{}}
+		si := siteInfo{Nome: filepath.Base(abs), Pasta: abs, Arquivo: filepath.Base(f)}
 		if st, err := os.Stat(f); err == nil {
 			si.Alterado = st.ModTime().Format("02/01/2006 15:04")
 		}
@@ -141,13 +138,6 @@ func (c *central) listar() []siteInfo {
 		prev := strings.TrimSuffix(strings.TrimSuffix(f, ".html"), ".nep") + "-previa.html"
 		if _, err := os.Stat(prev); err == nil {
 			si.Previa = true
-		}
-		if ms, err := os.ReadDir(filepath.Join(abs, "mundos")); err == nil {
-			for _, m := range ms {
-				if m.IsDir() {
-					si.Mundos = append(si.Mundos, m.Name())
-				}
-			}
 		}
 		if r := c.sites[abs]; r != nil {
 			si.Rodando, si.URL = true, fmt.Sprintf("http://localhost:%d/", r.porta)
@@ -281,42 +271,6 @@ func (c *central) fimTarefa(resp any, err error) {
 	c.mu.Unlock()
 }
 
-// passeio3D faz o passeio de uma foto dentro de um site (com o modelo de
-// profundidade; sem internet na primeira vez, com a profundidade estimada).
-func (c *central) passeio3D(pasta string, foto []byte, nome, titulo string) {
-	m := &mundo.Mundo{Nome: nome, Titulo: titulo, Fonte: "depth-anything"}
-	var mapa *mundo.Mapa
-	usar := true
-	if !mundo.ModeloProfBaixado() {
-		c.tarefaPasso("Baixando o modelo de profundidade (95 MB, só desta vez)…", 1)
-		if err := mundo.BaixarModeloProf(func(f, t int64) {
-			c.tarefaPasso("Baixando o modelo de profundidade (95 MB, só desta vez)…", int(f*80/t))
-		}); err != nil {
-			usar = false
-		}
-	}
-	if usar {
-		c.tarefaPasso("Calculando a profundidade da foto no processador (uns 10 segundos)…", 85)
-		rd, err := rede.Abrir(mundo.CaminhoModeloProf())
-		if err == nil {
-			mapa, err = mundo.CalcularProfundidade(rd, foto, 518)
-		}
-		if err != nil {
-			usar = false
-		}
-	}
-	if !usar {
-		m.Fonte = "estimado"
-		var err error
-		if mapa, err = mundo.EstimarProfundidade(foto); err != nil {
-			c.fimTarefa(nil, err)
-			return
-		}
-	}
-	err := mundo.Salvar3D(filepath.Join(pasta, "mundos"), m, foto, mapa)
-	c.fimTarefa(map[string]any{"pasta": pasta, "nome": nome, "fonte": m.Fonte, "codigo": fmt.Sprintf(`{{ mundo(%q) }}`, nome)}, err)
-}
-
 func (c *central) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// só quem está neste computador usa a Central
 	if h, _, _ := net.SplitHostPort(r.RemoteAddr); h != "127.0.0.1" && h != "::1" {
@@ -334,12 +288,10 @@ func (c *central) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		io.WriteString(w, strings.Replace(centralHTML, "{{token}}", c.token, 1))
 		return
-	case r.URL.Path == "/_nep/mundo.js":
+	case r.URL.Path == "/_nep/echarts.js":
 		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
-		w.Write(web.MundoJS())
-		return
-	case strings.HasPrefix(r.URL.Path, "/ver/"):
-		c.verMundo(w, r)
+		w.Header().Set("Cache-Control", "max-age=86400")
+		w.Write(web.EChartsJS())
 		return
 	case !strings.HasPrefix(r.URL.Path, "/api/"):
 		http.NotFound(w, r)
@@ -360,7 +312,9 @@ func (c *central) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(v)
 	}
 	var in struct {
-		Pasta, Descricao, Visual, Nome, Modelo, Titulo string
+		Pasta, Descricao, Visual, Nome, Modelo, Titulo, SQL, ID string
+		Escrever                                                bool
+		Painel                                                  painel
 	}
 	if r.Method == http.MethodPost && !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
 		json.NewDecoder(io.LimitReader(r.Body, 64<<10)).Decode(&in)
@@ -376,7 +330,7 @@ func (c *central) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		resp(map[string]any{
 			"sites": c.listar(), "base": c.base, "versao": lang.Version, "tarefa": tarefa,
-			"ia": ialocal.Ver(), "profundidade": mundo.ModeloProfBaixado(), "visuais": visuais, "modelos": modelos(),
+			"ia": ialocal.Ver(), "db": c.db.Estado(), "visuais": visuais, "modelos": modelos(),
 		}, nil)
 	case "/api/abrir":
 		p, ok := c.pastaConhecida(in.Pasta)
@@ -457,92 +411,65 @@ func (c *central) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		previaAoCriar(f)
 		u, err := c.ligar(pasta)
 		resp(map[string]any{"url": u, "pasta": pasta}, err)
+	case "/api/db/ligar": // Nepenthes DB: PostgreSQL sem Docker
+		c.db.LembrarLigado(true)
+		go c.db.Ligar()
+		resp(map[string]bool{"ok": true}, nil)
+	case "/api/db/parar":
+		c.db.LembrarLigado(false)
+		resp(map[string]bool{"ok": true}, c.db.Desligar())
+	case "/api/db/consulta":
+		resp(c.db.Consultar(r.Context(), in.SQL, in.Escrever))
+	case "/api/db/exemplo":
+		resp(map[string]bool{"ok": true}, c.db.Exemplo(r.Context()))
+	case "/api/db/paineis":
+		if r.Method == http.MethodPost {
+			if in.ID != "" {
+				resp(map[string]bool{"ok": true}, c.db.ApagarPainel(in.ID))
+			} else {
+				resp(c.db.SalvarPainel(in.Painel))
+			}
+			return
+		}
+		resp(c.db.Paineis(), nil)
+	case "/api/db/pasta":
+		os.MkdirAll(c.db.pasta, 0o755)
+		abrirPasta(c.db.pasta)
+		resp(map[string]bool{"ok": true}, nil)
 	case "/api/ia/baixar":
 		go ialocal.Baixar()
-		resp(map[string]bool{"ok": true}, nil)
-	case "/api/passeio": // foto -> passeio 3D dentro de um site
-		if err := r.ParseMultipartForm(40 << 20); err != nil {
-			resp(nil, errors.New("foto grande demais (até 40 MB)"))
-			return
-		}
-		p, ok := c.pastaConhecida(r.FormValue("pasta"))
-		if !ok {
-			resp(nil, errors.New("escolha um site"))
-			return
-		}
-		f, _, err := r.FormFile("foto")
-		if err != nil {
-			resp(nil, errors.New("escolha uma foto"))
-			return
-		}
-		foto, _ := io.ReadAll(io.LimitReader(f, 40<<20))
-		f.Close()
-		nome := slugMundo(r.FormValue("nome"))
-		if strings.TrimSpace(r.FormValue("nome")) == "" {
-			nome = "passeio"
-		}
-		if _, err := mundo.EstimarProfundidade(foto); err != nil { // confere a foto antes
-			resp(nil, err)
-			return
-		}
-		if !c.comecaTarefa("Preparando o passeio 3D…") {
-			resp(nil, errors.New("espere a tarefa anterior terminar"))
-			return
-		}
-		go c.passeio3D(p, foto, nome, r.FormValue("titulo"))
 		resp(map[string]bool{"ok": true}, nil)
 	default:
 		http.NotFound(w, r)
 	}
 }
 
-// /ver/<site>/<mundo>/ mostra o passeio 3D na Central; /ver/<site>/<mundo>/arq/… entrega os arquivos.
-func (c *central) verMundo(w http.ResponseWriter, r *http.Request) {
-	partes := strings.SplitN(strings.TrimPrefix(r.URL.Path, "/ver/"), "/", 4)
-	if len(partes) < 3 {
-		http.NotFound(w, r)
-		return
+// pararTudo desliga os sites, o banco e a IA local (ao sair).
+func (c *central) pararTudo() {
+	c.mu.Lock()
+	var ps []string
+	for p := range c.sites {
+		ps = append(ps, p)
 	}
-	var site *siteInfo
-	for _, s := range c.listar() {
-		if s.Nome == partes[0] {
-			site = &s
-			break
-		}
+	c.mu.Unlock()
+	for _, p := range ps {
+		c.parar(p)
 	}
-	if site == nil {
-		http.NotFound(w, r)
-		return
-	}
-	pasta := filepath.Join(site.Pasta, "mundos")
-	m, err := mundo.Abrir(pasta, partes[1])
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-	if len(partes) == 4 && partes[2] == "arq" {
-		arq := filepath.Base(partes[3])
-		if arq != m.Foto && arq != m.Profundidade {
-			http.NotFound(w, r)
-			return
-		}
-		http.ServeFile(w, r, filepath.Join(pasta, m.Nome, arq))
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fig := web.FiguraMundo("/ver/"+url.PathEscape(site.Nome)+"/"+m.Nome+"/arq/", "", m, m.Titulo, "", false)
-	fmt.Fprintf(w, `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Passeio · %s</title>
-<style>body{margin:0;background:#0f1512;color:#eef3ef;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px}h1{font-size:1.1rem;font-weight:600;margin:0 0 6px;text-align:center}p{text-align:center;opacity:.75;margin:0}</style></head>
-<body><h1>Passeio 3D: %s</h1><p>No site, escreva {{ mundo(%q) }} onde ele deve aparecer.</p>%s</body></html>`, m.Nome, m.Nome, m.Nome, fig)
+	c.db.Desligar()
+	ialocal.Parar()
 }
 
-// modoCentral: dois cliques no Nepenthes.exe abrem a Central no navegador.
-func modoCentral() int {
+// modoCentral: dois cliques no Nepenthes.exe abrem a Central no navegador e
+// põem o ícone do Nepenthes perto do relógio. abrir=false (--bandeja, ao
+// ligar o computador) só deixa tudo pronto, sem abrir o navegador.
+func modoCentral(abrir bool) int {
 	if r, err := http.Get("http://127.0.0.1:8000/api/estado"); err == nil {
 		r.Body.Close()
-		fmt.Println("O Nepenthes já está aberto: abrindo a Central no navegador.")
-		abrirNavegador("http://localhost:8000/")
-		time.Sleep(2 * time.Second)
+		if abrir {
+			fmt.Println("O Nepenthes já está aberto: abrindo a Central no navegador.")
+			abrirNavegador("http://localhost:8000/")
+			time.Sleep(2 * time.Second)
+		}
 		return 0
 	}
 	c := novaCentral(pastaBase())
@@ -555,15 +482,29 @@ func modoCentral() int {
 	}
 	fmt.Println("Central do Nepenthes: http://localhost:8000/")
 	fmt.Println("Seus sites ficam em:", c.base)
-	fmt.Println("Deixe esta janela aberta enquanto usa. Para parar, feche-a.")
-	go func() {
-		time.Sleep(300 * time.Millisecond)
-		abrirNavegador("http://localhost:8000/")
-	}()
-	defer ialocal.Parar()
-	hs := &http.Server{Handler: c, ReadHeaderTimeout: 10 * time.Second}
-	if err := hs.Serve(l); err != nil {
-		return esperaErro(err)
+	if c.db.cfg.Ligar {
+		go c.db.Ligar()
 	}
+	// na primeira vez, um atalho na área de trabalho
+	marca := filepath.Join(c.base, ".atalho")
+	if _, err := os.Stat(marca); err != nil {
+		go func() {
+			if criarAtalho() == nil {
+				os.WriteFile(marca, []byte("ok"), 0o644)
+			}
+		}()
+	}
+	if abrir {
+		go func() {
+			time.Sleep(300 * time.Millisecond)
+			abrirNavegador("http://localhost:8000/")
+		}()
+	}
+	hs := &http.Server{Handler: c, ReadHeaderTimeout: 10 * time.Second}
+	go hs.Serve(l)
+	bandeja(c, func() {
+		hs.Close()
+		c.pararTudo()
+	})
 	return 0
 }

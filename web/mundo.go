@@ -48,9 +48,6 @@ func (s *Server) mundoBuiltin(a []lang.Value) (lang.Value, error) {
 	return lang.HTML(FiguraMundo(s.opt.Base+"/mundos/"+m.Nome+"/", s.opt.Base, m, titulo, strOrEmpty(opc("texto")), rolar)), nil
 }
 
-// MundoJS é o script do passeio (a Central do Nepenthes também usa).
-func MundoJS() []byte { return mundoJS }
-
 // FiguraMundo monta o HTML do passeio: base é o endereço da pasta do mundo e
 // scriptBase o prefixo de /_nep/mundo.js.
 func FiguraMundo(base, scriptBase string, m *mundo.Mundo, titulo, texto string, rolar bool) string {
