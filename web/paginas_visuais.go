@@ -595,16 +595,16 @@ func (a *adminPage) paginasPage(post bool) error {
 		if s.paginaVisual(p.Route) != nil {
 			marca = ` <small class="muted">· montada no construtor</small>`
 		}
-		b.WriteString(`<tr><td>` + esc(tit) + marca + `</td><td><code>` + esc(p.Route) + `</code></td><td class="row" style="gap:8px;justify-content:flex-end">`)
+		b.WriteString(`<tr><td>` + esc(tit) + marca + `</td><td><code>` + esc(p.Route) + `</code></td><td><div class="row" style="gap:8px;justify-content:flex-end">`)
 		b.WriteString(`<a class="btn" href="` + a.base + `/paginas/editar?r=` + url.QueryEscape(p.Route) + `">Editar arrastando</a>`)
 		if s.paginaVisual(p.Route) != nil {
 			b.WriteString(`<form method="post">` + a.tok() + `<input type="hidden" name="acao" value="original"><input type="hidden" name="r" value="` + esc(p.Route) + `"><button class="ghost">Voltar ao original</button></form>`)
 		}
-		b.WriteString(`</td></tr>`)
+		b.WriteString(`</div></td></tr>`)
 	}
 	b.WriteString(`</table><h2>Página nova</h2><form method="post" class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">` + a.tok() +
 		`<input type="hidden" name="acao" value="nova"><label>Título<input name="titulo" maxlength="80" required></label><label>Endereço<input name="endereco" maxlength="60" placeholder="quem-somos" required></label><button>Criar e montar</button></form>`)
-	return a.out("Páginas", b.String(), true)
+	return a.out("Montar páginas", b.String(), true)
 }
 
 // paginaEditar: a tela cheia do construtor para uma página.
