@@ -105,7 +105,10 @@ func isDataImg(v string) bool {
 }
 
 // cleanVisual limpa o HTML: tira tags e atributos fora da lista, eventos e links perigosos.
-func cleanVisual(src string) string {
+func cleanVisual(src string) string { return cleanVisualCom(src, nil) }
+
+// cleanVisualCom aceita também os atributos que extra aprovar (páginas visuais).
+func cleanVisualCom(src string, extra func(string) bool) string {
 	var b strings.Builder
 	last := 0
 	skip := "" // dentro de <script>... até fechar
@@ -149,7 +152,7 @@ func cleanVisual(src string) string {
 		sort.Strings(keys)
 		for _, k := range keys {
 			v := html.UnescapeString(at[k])
-			if !visAttrs[k] {
+			if !visAttrs[k] && (extra == nil || strings.HasPrefix(k, "on") || !extra(k)) {
 				continue
 			}
 			switch k {
@@ -190,7 +193,11 @@ func cleanVisual(src string) string {
 }
 
 // scopeCSS prende todas as regras dentro de .nep-visual (body/html viram o próprio bloco).
-func scopeCSS(css string) string {
+func scopeCSS(css string) string { return scopeCSSCom(css, ".nep-visual") }
+
+// scopeCSSCom: com prefixo vazio, as regras ficam soltas e as de body/html/*
+// somem (CSS de uma página visual).
+func scopeCSSCom(css, pre string) string {
 	css = strings.ReplaceAll(css, "<", "")
 	css = badStyle.ReplaceAllString(css, "x-")
 	css = cssData.ReplaceAllStringFunc(css, func(m string) string {
@@ -220,7 +227,7 @@ func scopeCSS(css string) string {
 		body := css[i+j+1 : max(k-1, i+j+1)]
 		switch {
 		case strings.HasPrefix(sel, "@media") || strings.HasPrefix(sel, "@supports"):
-			b.WriteString(sel + "{" + scopeCSS(body) + "}")
+			b.WriteString(sel + "{" + scopeCSSCom(body, pre) + "}")
 		case strings.HasPrefix(sel, "@keyframes") || strings.HasPrefix(sel, "@font-face"):
 			b.WriteString(sel + "{" + body + "}")
 		case strings.HasPrefix(sel, "@"):
@@ -235,11 +242,13 @@ func scopeCSS(css string) string {
 				low := strings.ToLower(s)
 				switch {
 				case low == "body" || low == "html" || low == "*" || low == ":root":
-					parts = append(parts, ".nep-visual")
+					if pre != "" {
+						parts = append(parts, pre)
+					}
 				case strings.HasPrefix(low, "body ") || strings.HasPrefix(low, "html "):
-					parts = append(parts, ".nep-visual "+strings.TrimSpace(s[5:]))
+					parts = append(parts, strings.TrimSpace(pre+" "+strings.TrimSpace(s[5:])))
 				default:
-					parts = append(parts, ".nep-visual "+s)
+					parts = append(parts, strings.TrimSpace(pre+" "+s))
 				}
 			}
 			if len(parts) > 0 {

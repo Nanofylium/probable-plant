@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -17,7 +18,14 @@ import (
 const ajuda = `Nepenthes %s
 
 Uso:
-  nep                      abre o modo interativo
+  nep                      abre o modo interativo (ou, se houver um index.html com
+                           <nepenthes> na pasta, abre a tela de criar o site no navegador;
+                           com <nepenthes tipo="blog|portal|wiki|estatico" nome=...> o site
+                           sai pronto, sem tela: veja exemplos/folha-do-vale)
+  nep repl                 abre o modo interativo
+  nep central              abre a Central do Nepenthes no navegador (o mesmo que dois
+                           cliques no Windows): sites, criar site, Nepenthes DB
+                           (PostgreSQL sem Docker), análises com gráficos e IA local
   nep arquivo.nep [args]   executa um programa
   nep arquivo.lua [args]   executa um programa em Lua 5.4 (na mesma máquina virtual)
   nep run arquivo.nep      o mesmo que acima
@@ -26,7 +34,16 @@ Uso:
   nep criar "descrição"    monta um site completo a partir do que você escrever, ex.:
                            nep criar "escola de música chamada Sol Maior em Salvador,
                            com blog, eventos e wiki, azul e elegante"
-                           (--pasta X escolhe a pasta; --plano só mostra o que entendeu)
+                           (--pasta X escolhe a pasta; --plano só mostra o que entendeu;
+                           --visual X: nepenthes, editorial, noturno, vitrine, brutal,
+                           suave, minimo ou luxo)
+  nep ia baixar            baixa a IA do Nepenthes (llama.cpp + Granite 3.3 2B, 1,5 GB, uma vez
+                           só); com ela, a tag <nepenthes> cria sites sem GPU e sem chave
+  nep ia                   mostra se a IA do Nepenthes já está baixada e onde
+  nep mundo foto.jpg "descrição"  transforma a foto num passeio 3D (sem GPU: profundidade
+                           calculada no processador, cena montada no navegador); no site:
+                           {{ mundo("nome") }}  (--nome X; --sem-modelo; --servidor host:porta
+                           usa o LingBot-World num servidor com GPU; --ajuda-gpu)
   nep dev site.nep.html    roda o site no computador, com erros detalhados
   nep previa site.nep.html cria site-previa.html: o site pronto num arquivo que abre
                            com dois cliques, sem servidor (para mostrar a alguém)
@@ -44,11 +61,28 @@ func main() {
 		os.Exit(cgiMode(""))
 	}
 	if len(args) == 0 {
+		// dois cliques no nep ao lado de um index.html com <nepenthes>: abre o
+		// assistente; senão, a Central do Nepenthes (meus sites, criar, passeio 3D…)
+		// (na pasta de onde rodou ou ao lado do programa)
+		for _, f := range indexAoLado() {
+			if b, err := os.ReadFile(f); err == nil && reTagNepenthes.Match(b) {
+				os.Exit(abrirAssistente(f))
+			}
+		}
+		if cliqueDuplo() || os.Getenv("NEP_CLIQUE") == "1" {
+			os.Exit(modoCentral(true))
+		}
 		os.Exit(repl())
 	}
 	switch args[0] {
+	case "--bandeja": // ao ligar o computador: Central pronta, sem abrir o navegador
+		os.Exit(modoCentral(false))
+	case "central":
+		os.Exit(modoCentral(true))
 	case "-h", "--help", "help", "ajuda":
 		fmt.Printf(ajuda, lang.Version)
+	case "repl", "interativo":
+		os.Exit(repl())
 	case "-v", "--version", "version", "versao":
 		fmt.Println("nepenthes", lang.Version)
 	case "run":
@@ -72,6 +106,10 @@ func main() {
 		os.Exit(criar(args[1:]))
 	case "novo", "new":
 		os.Exit(novo(args[1:]))
+	case "ia":
+		os.Exit(ia(args[1:]))
+	case "mundo", "passeio":
+		os.Exit(mundoCmd(args[1:]))
 	case "dev":
 		os.Exit(serve(args[1:], true))
 	case "cgi":
@@ -266,6 +304,14 @@ func repl() int {
 		if buf.Len() == 0 && (strings.TrimSpace(line) == "sair" || strings.TrimSpace(line) == "exit") {
 			return 0
 		}
+		// quem digita "nep serve index.html" (ou .\nep.exe ...) aqui queria o terminal: roda o comando
+		if m := reComandoNep.FindStringSubmatch(strings.TrimSpace(line)); buf.Len() == 0 && m != nil {
+			fmt.Println("(isso é um comando do nep, não código: rodando " + m[1] + ")")
+			c := exec.Command(os.Args[0], strings.Fields(m[1])...)
+			c.Stdin, c.Stdout, c.Stderr = os.Stdin, os.Stdout, os.Stderr
+			c.Run()
+			continue
+		}
 		buf.WriteString(line)
 		src := buf.String()
 		if strings.TrimSpace(src) == "" {
@@ -304,4 +350,15 @@ func repl() int {
 			fmt.Println(lang.Repr(res))
 		}
 	}
+}
+
+// indexAoLado: index.html da pasta atual e da pasta do programa.
+func indexAoLado() []string {
+	out := []string{"index.html"}
+	if exe, err := os.Executable(); err == nil {
+		if f := filepath.Join(filepath.Dir(exe), "index.html"); f != "index.html" {
+			out = append(out, f)
+		}
+	}
+	return out
 }

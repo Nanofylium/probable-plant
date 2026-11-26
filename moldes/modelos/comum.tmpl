@@ -1,0 +1,130 @@
+⟦define "aviso"⟧<!doctype html>
+<!--
+  Site montado pelo Nepenthes a partir da tag <nepenthes tipo="⟦.Molde.ID⟧"> (molde "⟦.Molde.Nome⟧").
+  Visual: ⟦.Molde.Origem⟧ (⟦.Molde.URL⟧), licença MIT, Copyright 2013-2023 Start Bootstrap.
+  Bootstrap 5.2.3 e Bootstrap Icons: MIT, The Bootstrap Authors. Créditos em LICENCA-STARTBOOTSTRAP.txt.
+  O conteúdo (textos, posts, páginas, mensagens) fica no banco do site e é editado em /_admin.
+-->
+⟦end⟧
+
+⟦define "cabeca"⟧
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{ default(page.description, ⟦s .Resumo⟧) }}">
+  <title>{{ page.title }} · ⟦h .Nome⟧</title>
+  <link rel="stylesheet" href="⟦arq (printf "%s.css" (maior .Molde.CSS .Molde.ID))⟧">
+  <style>
+    :root { --bs-primary: ⟦.Cor⟧; --bs-primary-rgb: ⟦.Rgb⟧; --bs-link-color: ⟦.Cor⟧; --bs-link-hover-color: color-mix(in srgb, ⟦.Cor⟧ 78%, #000); --nep-cor: ⟦.Cor⟧; }
+    .btn-primary { --bs-btn-bg: ⟦.Cor⟧; --bs-btn-border-color: ⟦.Cor⟧; --bs-btn-hover-bg: color-mix(in srgb, ⟦.Cor⟧ 85%, #000); --bs-btn-hover-border-color: color-mix(in srgb, ⟦.Cor⟧ 85%, #000);
+      --bs-btn-active-bg: color-mix(in srgb, ⟦.Cor⟧ 75%, #000); --bs-btn-active-border-color: color-mix(in srgb, ⟦.Cor⟧ 75%, #000); --bs-btn-disabled-bg: ⟦.Cor⟧; --bs-btn-disabled-border-color: ⟦.Cor⟧; --bs-btn-focus-shadow-rgb: ⟦.Rgb⟧; }
+    .btn-outline-primary { --bs-btn-color: ⟦.Cor⟧; --bs-btn-border-color: ⟦.Cor⟧; --bs-btn-hover-bg: ⟦.Cor⟧; --bs-btn-hover-border-color: ⟦.Cor⟧; --bs-btn-active-bg: ⟦.Cor⟧; --bs-btn-active-border-color: ⟦.Cor⟧; }
+    .form-control:focus, .form-select:focus { border-color: color-mix(in srgb, ⟦.Cor⟧ 50%, #fff); box-shadow: 0 0 0 .25rem rgba(⟦.Rgb⟧, .2); }
+    .pagination { --bs-pagination-active-bg: ⟦.Cor⟧; --bs-pagination-active-border-color: ⟦.Cor⟧; --bs-pagination-color: ⟦.Cor⟧; }
+    .ico svg, svg.bi { vertical-align: -.125em; }
+    .nep-ok { background: #e6f6ec; color: #135c2f; padding: .75rem 1rem; border-radius: .5rem; margin: 0 0 1rem; }
+    .nep-erros { background: #fdeceb; color: #8a1f17; padding: .25rem 1rem; border-radius: .5rem; margin: 0 0 1rem; }
+    .nep-comentarios { border-top: 1px solid #dee2e6; margin-top: 2.5rem; padding-top: 1rem; }
+    .nep-comentario { border-bottom: 1px solid #eee; padding: .75rem 0; }
+    .nep-comentar { display: grid; gap: .75rem; }
+    .nep-comentar label { display: grid; gap: .25rem; font-weight: 600; font-size: .95rem; }
+    .nep-comentar input, .nep-comentar textarea { display: block; width: 100%; padding: .5rem .75rem; border: 1px solid #ced4da; border-radius: .375rem; font: inherit; }
+    .nep-comentar button { justify-self: start; background: var(--nep-cor); color: #fff; border: 0; border-radius: .375rem; padding: .55rem 1.2rem; font-weight: 600; }
+    .nep-comentarios h2, .nep-comentarios h3 { font-size: 1.3rem; font-weight: 700; margin: 1rem 0; }
+    .corpo img { max-width: 100%; height: auto; border-radius: .5rem; }
+    .corpo blockquote { border-left: 4px solid var(--nep-cor); padding: .25rem 1rem; color: #555; margin: 1.5rem 0; }
+  </style>
+⟦end⟧
+
+⟦define "scripts"⟧
+  <script src="⟦arq "bootstrap.bundle.min.js"⟧" defer></script>
+  <script src="⟦arq "molde.js"⟧" defer></script>
+  <if test="ia_ligada()">{{ lowii("Dúvidas? Pergunte aqui.") }}</if>
+⟦end⟧
+
+⟦/* código comum: datas, resumo, leitura, newsletter, contato */⟧
+⟦define "nep-comum"⟧
+  let MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+  let MES3 = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+
+  # "2026-10-21T10:30" (painel) ou "2026-10-21 10:30:00" (banco)
+  fn ler_data(s) do
+    let m = match(default(s, ""), "^(%d%d%d%d)%-(%d%d)%-(%d%d)[T ](%d%d):(%d%d)")
+    if not m do return {ano: "", mm: "", dia: "", mes: "", m3: "", txt: "", chave: "", hora: ""} end
+    let mes = MESES[int(m[1]) - 1]
+    return {ano: m[0], mm: m[1], dia: str(int(m[2])), mes: mes, m3: MES3[int(m[1]) - 1], hora: m[3] + ":" + m[4],
+            chave: m[0] + "-" + m[1] + "-" + m[2] + " " + m[3] + ":" + m[4],
+            txt: str(int(m[2])) + " de " + mes + " de " + m[0]}
+  end
+
+  fn minutos_de_leitura(texto) do
+    let n = 0
+    for w in gmatch(default(texto, ""), "%S+") do n = n + 1 end
+    return max(1, round(n / 200))
+  end
+
+  fn resumo_de(p) do
+    if p.resumo do return p.resumo end
+    let t = gsub(default(p.corpo, ""), "%[([^%]]*)%]%b()", "%1")
+    t = gsub(t, "\n%s*[-*]%s+", "\n")
+    t = gsub(t, "[#*_`>%[%]]", "")
+    t = gsub(t, "%s+", " ")
+    return truncate(trim(t), 170)
+  end
+
+  # Imagem de capa: a enviada no painel ou uma das fotos do molde.
+  let CAPAS = ["mesa.jpg", "mapa.jpg", "notebook.jpg", "objetos.jpg", "telefone.jpg", "codigo.jpg", "mar.jpg", "luz.jpg"]
+  fn capa_de(p) do
+    if p.capa and p.capa.url do return p.capa.url end
+    return url("/_nep/molde/img/" + CAPAS[default(p.id, 0) % len(CAPAS)])
+  end
+
+  fn preparar(p) do
+    p.data = ler_data(default(p.publicar_em, p.created_at))
+    p.tags_l = split(default(p.tags, ""), ",") |> map(trim) |> filter(fn(t) do t != "" end)
+    p.leitura = minutos_de_leitura(p.corpo)
+    p.excerto = resumo_de(p)
+    p.autor = default(p.autor, ⟦s (printf "Equipe %s" .Nome)⟧)
+    p.img = capa_de(p)
+    return p
+  end
+
+  fn assinar(d) do
+    d.email = lower(trim(d.email))
+    if len(db.where("assinantes", "email", d.email)) > 0 do recusar("Esse e-mail já está na lista.") end
+  end
+
+  let por_pagina = 5
+  let pagina_atual = 1
+  if match(default(request.query.pagina, ""), "^%d+$") do pagina_atual = max(1, int(request.query.pagina)) end
+⟦end⟧
+
+⟦define "form-contato"⟧
+<form save="mensagens" limit="5" success="Mensagem enviada! Respondemos em breve." ⟦if emailok .Email⟧avisar="⟦h .Email⟧"⟦else⟧avisar="dono"⟦end⟧>
+  <div class="form-floating mb-3">
+    <input class="form-control" id="c-nome" name="nome" type="text" placeholder="Seu nome" required maxlength="80">
+    <label for="c-nome">Seu nome</label>
+  </div>
+  <div class="form-floating mb-3">
+    <input class="form-control" id="c-email" name="email" type="email" placeholder="nome@exemplo.com" required maxlength="120">
+    <label for="c-email">E-mail</label>
+  </div>
+  <div class="form-floating mb-3">
+    <input class="form-control" id="c-fone" name="telefone" type="tel" placeholder="(00) 00000-0000" maxlength="30">
+    <label for="c-fone">Telefone ou WhatsApp (opcional)</label>
+  </div>
+  <div class="form-floating mb-3">
+    <textarea class="form-control" id="c-msg" name="mensagem" placeholder="Escreva aqui" style="height: 10rem" required maxlength="4000"></textarea>
+    <label for="c-msg">Mensagem</label>
+  </div>
+  <button class="btn btn-primary btn-lg" type="submit">Enviar</button>
+</form>
+⟦end⟧
+
+⟦define "contatos"⟧
+⟦if .Endereco⟧<li class="mb-2"><span class="ico me-2">⟦icone "geo-alt"⟧</span>⟦h .Endereco⟧⟦if .Cidade⟧, ⟦h .Cidade⟧⟦end⟧</li>⟦else⟧⟦if .Cidade⟧<li class="mb-2"><span class="ico me-2">⟦icone "geo-alt"⟧</span>⟦h .Cidade⟧</li>⟦end⟧⟦end⟧
+⟦if .Telefone⟧<li class="mb-2"><span class="ico me-2">⟦icone "telephone"⟧</span>⟦h .Telefone⟧</li>⟦end⟧
+⟦if .Zap⟧<li class="mb-2"><span class="ico me-2">⟦icone "whatsapp"⟧</span><a href="⟦.Zap⟧" target="_blank" rel="noopener">Conversar no WhatsApp</a></li>⟦end⟧
+⟦if .Email⟧<li class="mb-2"><span class="ico me-2">⟦icone "envelope"⟧</span><a href="mailto:⟦h .Email⟧">⟦h .Email⟧</a></li>⟦end⟧
+⟦if .Horario⟧<li class="mb-2"><span class="ico me-2">⟦icone "clock"⟧</span>⟦h .Horario⟧</li>⟦end⟧
+⟦if .Insta⟧<li class="mb-2"><span class="ico me-2">⟦icone "instagram"⟧</span><a href="⟦.Insta⟧" target="_blank" rel="noopener">@⟦h .Instagram⟧</a></li>⟦end⟧
+⟦end⟧

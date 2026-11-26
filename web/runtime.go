@@ -245,7 +245,11 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	s.iaModules(rq, def) // ia(), rajah, lowii, ampullaria, villosa, truncata (Qwen)
 	def("enviar_email", s.emailBuiltin(rq))
 	def("send_email", s.emailBuiltin(rq))
+	def("grafico", s.graficoBuiltin) // gráficos com o Apache ECharts (ver grafico.go)
+	def("jogo", s.jogoBuiltin(rq))   // roleta, raspadinha e memória com cupom (ver jogos.go)
+	def("mundo", s.mundoBuiltin)     // passeio vivo gerado com o LingBot-World (ver mundo.go)
 	def("visual", func(a []lang.Value) (lang.Value, error) { return Visual(strOrEmpty(argv(a, 0))), nil })
+	s.pixBuiltins(def) // pix(), qrcode(), token() (ver pix.go)
 	// textos editáveis (editavel="chave")
 	def("__edhas", func(a []lang.Value) (lang.Value, error) {
 		_, ok := s.edGet(lang.Str(argv(a, 0)))
@@ -290,6 +294,13 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 			return e.Default, nil
 		}
 		return "", nil
+	})
+	def("global", func(a []lang.Value) (lang.Value, error) { // global("rodape").telefone
+		g := site.Global(lang.Str(argv(a, 0)))
+		if g == nil {
+			return nil, fmt.Errorf("global: não existe <global nome=%q> neste site", lang.Str(argv(a, 0)))
+		}
+		return s.globalValor(g, false), nil
 	})
 	def("texto", func(a []lang.Value) (lang.Value, error) { // texto("chave", "padrão") no código
 		if v, ok := s.edGet(lang.Str(argv(a, 0))); ok {
@@ -371,7 +382,7 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 			if it == nil || (!published(it) && !rq.sess.isAdmin()) {
 				return stop(halt{kind: "not_found"})
 			}
-			mod.Define("item", it)
+			mod.Define("item", s.itemSaida(site, c, it, 1, rq.sess.isAdmin())) // relações já vêm com o item
 			rq.item, rq.itemCol = it, c.Name
 			if pg.Title == "" {
 				pv.SetStr("title", itemTitle(c, it))
@@ -388,6 +399,9 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	req := lang.NewTable()
 	req.SetStr("method", rq.r.Method)
 	req.SetStr("path", rq.path)
+	if rq.site != nil {
+		req.SetStr("site", s.siteURL(rq)) // https://dominio/base, para links em e-mails
+	}
 	req.SetStr("live", rq.r.URL.Query().Get("_nep_live") != "")
 	q := lang.NewTable()
 	for k, v := range rq.r.URL.Query() {

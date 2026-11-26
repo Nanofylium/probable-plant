@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Folha do Vale</title>
+  <!-- Só aparece se alguém abrir este arquivo direto, sem o Nepenthes. -->
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #1d4ed8; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 620px; margin: 24px; padding: 32px; background: #fff; border-radius: 20px; box-shadow: 0 30px 70px rgba(0,0,0,.3); }
+    small { font-weight: 800; letter-spacing: .14em; color: #1d4ed8; }
+    nepenthes { display: block; margin: 16px 0; padding: 14px 18px; background: #eef2ff; border-radius: 12px; color: #1e293b; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+<main>
+  <small>NEPENTHES · SITE NUM ARQUIVO SÓ</small>
+  <h1>Folha do Vale</h1>
+  <p>Este arquivo inteiro é o site. A tag abaixo diz o que o Nepenthes deve montar:</p>
+
+  <nepenthes tipo="portal" nome="Folha do Vale" cidade="Aveiro"
+             whatsapp="(93) 90000-0000" email="redacao@exemplo.com.br"
+             endereco="Rua das Flores, 120, Centro" horario="Seg a sex, 8h às 18h"
+             instagram="@folhadovale">
+    Portal de notícias da cidade de Aveiro, com agenda cultural, guia do comércio e newsletter semanal.
+  </nepenthes>
+
+  <p>Troque <code>tipo="portal"</code> por <code>blog</code>, <code>wiki</code> ou <code>estatico</code> e o site muda de forma.
+  Para ver sem servidor, abra a <a href="site-previa.html">prévia (site-previa.html)</a>.</p>
+</main>
+</body>
+</html>

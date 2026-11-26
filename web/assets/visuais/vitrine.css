@@ -1,0 +1,51 @@
+/* Visual "vitrine": impacto. Capa de ponta a ponta com a foto (ou a cor) ao
+   fundo e o texto em cima, títulos altos em Bebas Neue, faixa de números na
+   cor do site, cabeçalho escuro. */
+@font-face { font-family: "Bebas Neue"; src: url("{{fontes}}/bebas-neue.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Manrope"; src: url("{{fontes}}/manrope.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+:root {
+  --nep-fonte: "Manrope", system-ui, sans-serif; --nep-fonte-titulo: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+  --nep-raio: 6px; --nep-escuro: #101114;
+}
+:root h1, :root h2 { font-weight: 400; letter-spacing: .01em; line-height: .95; }
+:root h2 { font-size: clamp(2.4rem, 5.4vw, 3.8rem); }
+:root h3 { font-family: var(--nep-fonte); font-weight: 800; letter-spacing: -.01em; }
+
+:root .topo-faixa { background: var(--nep-cor); color: #fff; }
+:root body > header { background: var(--nep-escuro); border-bottom: 0; }
+:root body > header .marca, :root body > header .carrinho-topo { color: #fff; }
+:root body > header .marca span { background: var(--nep-cor); border-color: var(--nep-cor); }
+:root body > header .marca span .nep-ic { color: #fff; }
+:root body > header nav a { color: rgba(255,255,255,.78); text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; font-weight: 700; }
+:root body > header nav a:hover, :root body > header nav a[aria-current] { color: #fff; background: rgba(255,255,255,.1); }
+
+:root .capa:not(.cor) { position: relative; overflow: hidden; background: var(--nep-escuro); color: #fff; min-height: min(84vh, 760px); display: grid; align-items: center; }
+:root .capa .lado { grid-template-columns: 1fr; }
+:root .capa .lado > div:first-child { position: relative; z-index: 2; max-width: 780px; }
+:root .capa .ilustracao { position: absolute; inset: 0; aspect-ratio: auto; border-radius: 0; box-shadow: none; z-index: 0; place-items: center end; padding-right: 6%; transform: none !important; }
+:root .capa .ilustracao::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(0,0,0,.82), rgba(0,0,0,.45) 55%, rgba(0,0,0,.15)); }
+:root .capa .ilustracao::after { display: none; }
+:root .capa .ilustracao span { opacity: .35; font-size: clamp(10rem, 30vw, 22rem); }
+:root .capa h1 { font-size: clamp(3.6rem, 10vw, 7.6rem); color: #fff; max-width: 11em; }
+:root .capa p { color: rgba(255,255,255,.82); }
+:root .capa .chapeu { color: #fff; background: var(--nep-cor); padding: 5px 12px; border-radius: 3px; opacity: 1; }
+:root .capa .botao.secundario { color: #fff; border-color: rgba(255,255,255,.7); }
+@media (max-width: 640px) { :root .capa:not(.cor) { min-height: 78vh; } :root .capa .ilustracao::before { background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.8)); } }
+
+:root .chapeu::before { content: ""; display: inline-block; width: 26px; height: 3px; background: var(--nep-cor); vertical-align: middle; margin-right: 10px; }
+:root .capa .chapeu::before, :root .capa.cor .chapeu::before { display: none; }
+:root .secao.alt { background: color-mix(in srgb, var(--nep-cor) 7%, #fff); }
+:root .secao:has(> .numeros) { background: var(--nep-cor); color: #fff; }
+:root .numeros strong { color: #fff; font-size: clamp(3rem, 7vw, 4.6rem); }
+:root .numeros span { color: rgba(255,255,255,.85); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; font-size: .78rem; }
+:root .numeros > * + * { border-left-color: rgba(255,255,255,.3); }
+
+:root .cartao { border: 0; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.08); }
+:root a.cartao:hover { transform: translateY(-6px); box-shadow: 0 30px 60px rgba(0,0,0,.18); }
+:root .icone { background: var(--nep-cor); border-radius: 6px; }
+:root .icone .nep-ic { color: #fff; }
+:root .botao, :root button, :root input[type=submit] { border-radius: 4px; text-transform: uppercase; letter-spacing: .08em; font-size: .86rem; font-weight: 800; padding: 15px 26px; }
+:root .foto-item { border-radius: 4px; }
+:root .capa.cor { background: var(--nep-escuro); }
+:root .capa.cor h2 { font-size: clamp(2.8rem, 7vw, 5rem); }
+:root .capa.cor .botao { background: var(--nep-cor); color: #fff; }

@@ -1,0 +1,220 @@
+⟦template "aviso" .⟧
+<nep-config nome="⟦h .Nome⟧" lang="pt-BR"
+  lowii="Você atende a wiki ⟦h .Nome⟧. Responda com base nas páginas da wiki e indique a página certa.">
+
+<conteudo nome="wiki" titulo="Páginas da wiki" item="página">
+  <label>Título <input name="titulo" required maxlength="120"></label>
+  <label>Categoria <input name="categoria" maxlength="40" placeholder="Geral"></label>
+  <label>Texto (use [[Nome de outra página]] para criar links) <textarea name="corpo" data-editor required maxlength="80000"></textarea></label>
+</conteudo>
+
+<conteudo nome="sugestoes" titulo="Sugestões de edição" item="sugestão">
+  <label>Página <input name="pagina" maxlength="140"></label>
+  <label>Título <input name="titulo" required maxlength="120"></label>
+  <label>Texto sugerido <textarea name="corpo" required maxlength="80000" rows="10"></textarea></label>
+  <label>Quem sugeriu <input name="autor" maxlength="60"></label>
+  <label>Situação <select name="status"><option>Para revisar</option><option>Aceita</option><option>Recusada</option></select></label>
+</conteudo>
+
+<nep>
+⟦template "nep-comum" .⟧
+  if db.count("wiki") == 0 do
+⟦range .Paginas⟧    db.insert("wiki", {titulo: ⟦s .Titulo⟧, slug: slug(⟦s .Titulo⟧), categoria: ⟦s .Cat⟧, publicado: true, corpo: ⟦s .Corpo⟧})
+⟦end⟧  end
+
+  # [[Página]] e [[Página|texto]] viram links; página que não existe leva a sugerir.
+  fn wiki_links(t) do
+    return gsub(default(t, ""), "%[%[([^%]|]+)|?([^%]]*)%]%]", fn(alvo, texto) do
+      if texto == "" do texto = alvo end
+      return "[" + texto + "](" + url("/wiki/" + slug(alvo)) + ")"
+    end)
+  end
+  let todas = db.all("wiki") |> sort_by("titulo")
+  fn inicial() do return first(db.where("wiki", "slug", "pagina-inicial")) or first(todas) end
+  fn categorias() do
+    let c = todas |> count_by(fn(p) do default(p.categoria, "Geral") end)
+    let out = []
+    for k in keys(c) do push(out, {nome: k, n: c[k]}) end
+    return out |> sort_by("nome")
+  end
+  fn recentes() do
+    return todas |> sort_by(fn(p) do default(p.updated_at, p.created_at) end) |> reverse
+  end
+  fn apontam_para(p) do
+    return todas |> filter(fn(o) do o.id != p.id and contains(lower(default(o.corpo, "")), "[[" + lower(p.titulo)) end)
+  end
+  fn sugerir(a) do
+    a.status = "Para revisar"
+    if not a.pagina do a.pagina = slug(a.titulo) end
+  end
+  fn ativo(r) do return (request.path == r and " active") or "" end
+</nep>
+
+<api route="/api/paginas">
+  return todas |> map(fn(p) do {titulo: p.titulo, categoria: p.categoria, url: url("/wiki/" + p.slug)} end)
+</api>
+
+<html lang="pt-BR">
+<head>
+⟦template "cabeca" .⟧
+  <style>
+    body { font-family: "Inter", system-ui, sans-serif; background: #fff; }
+    #sidebar-wrapper .sidebar-heading { font-weight: 800; font-size: 1.15rem; }
+    #sidebar-wrapper .sidebar-heading small { display: block; font-weight: 500; font-size: .78rem; color: #6c757d; margin-top: .25rem; }
+    .list-group-item.active { background: rgba(⟦.Rgb⟧, .12) !important; color: var(--nep-cor) !important; border-color: transparent !important; font-weight: 700; }
+    .lado-titulo { padding: 1rem 1.25rem .25rem; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: #6c757d; font-weight: 700; }
+    .conteudo { max-width: 52rem; }
+    .corpo h2 { margin-top: 2rem; font-size: 1.4rem; font-weight: 700; padding-bottom: .35rem; border-bottom: 1px solid #e9ecef; }
+    .letra { font-size: 1.4rem; font-weight: 800; color: var(--nep-cor); border-bottom: 2px solid #e9ecef; margin: 1.5rem 0 .5rem; }
+    .info-pagina { font-size: .85rem; color: #6c757d; }
+    #page-content-wrapper { min-width: 0; }
+    @media (max-width: 767.98px) { .navbar form { width: 100%; margin-top: .5rem; } }
+  </style>
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+  <div class="border-end bg-white" id="sidebar-wrapper">
+    <div class="sidebar-heading border-bottom bg-light"><a class="text-decoration-none text-dark" href="{{ url('/') }}" editavel="tema.nome">⟦h .Nome⟧</a><small editavel="tema.descricao">Wiki</small></div>
+    <div class="list-group list-group-flush">
+      <a class="list-group-item list-group-item-action list-group-item-light p-3{{ ativo('/') }}" href="{{ url('/') }}">⟦icone "house"⟧ Página inicial</a>
+      <a class="list-group-item list-group-item-action list-group-item-light p-3{{ ativo('/indice') }}" href="{{ url('/indice') }}">⟦icone "book"⟧ Índice A–Z</a>
+      <a class="list-group-item list-group-item-action list-group-item-light p-3{{ ativo('/recentes') }}" href="{{ url('/recentes') }}">⟦icone "clock-history"⟧ Mudanças recentes</a>
+      <a class="list-group-item list-group-item-action list-group-item-light p-3{{ ativo('/sugerir') }}" href="{{ url('/sugerir') }}">⟦icone "pencil-square"⟧ Sugerir página</a>
+    </div>
+    <div class="lado-titulo">Categorias</div>
+    <div class="list-group list-group-flush">
+      <each c in="categorias()"><a class="list-group-item list-group-item-action list-group-item-light px-3 py-2 d-flex justify-content-between" href="{{ url('/categoria/' + slug(c.nome)) }}"><span>{{ c.nome }}</span><span class="text-muted">{{ c.n }}</span></a></each>
+    </div>
+  </div>
+
+  <div id="page-content-wrapper">
+    <nav class="navbar navbar-expand-md navbar-light bg-light border-bottom">
+      <div class="container-fluid">
+        <button class="btn btn-primary" id="sidebarToggle">⟦icone "list"⟧ Menu</button>
+        <form class="d-flex ms-md-auto" method="get" action="{{ url('/busca') }}" role="search">
+          <input class="form-control me-2" type="search" name="q" value="{{ default(request.query.q, '') }}" placeholder="Buscar na wiki" aria-label="Buscar">
+          <button class="btn btn-outline-primary" type="submit">⟦icone "search"⟧</button>
+        </form>
+      </div>
+    </nav>
+
+    <div class="container-fluid px-4 py-4 conteudo">
+      <page route="/" title="Página inicial" description="⟦h .Resumo⟧">
+        <nep>let p = inicial()</nep>
+        <if test="p">
+          <h1 class="mt-2 fw-bold">{{ p.titulo }}</h1>
+          <div class="corpo mt-3">{{ markdown(wiki_links(p.corpo)) }}</div>
+        </if>
+        <h2 class="h5 fw-bold mt-5">Atualizadas há pouco</h2>
+        <ul><each r in="recentes() |> take(5)"><li><a href="{{ url('/wiki/' + r.slug) }}">{{ r.titulo }}</a></li></each></ul>
+      </page>
+
+      <page route="/wiki/:slug" title="Página">
+        <nep>
+          let p = first(db.where("wiki", "slug", params.slug))
+          if p and not p.publicado do
+            p = nil
+          end
+          if p do page.title = p.titulo else page.title = "Página nova" end
+        </nep>
+        <if test="p">
+          <div class="info-pagina mb-2"><a href="{{ url('/categoria/' + slug(default(p.categoria, 'Geral'))) }}">{{ default(p.categoria, 'Geral') }}</a> · atualizada em {{ ler_data(default(p.updated_at, p.created_at)).txt }}</div>
+          <h1 class="fw-bold">{{ p.titulo }}</h1>
+          <div class="corpo mt-3">{{ markdown(wiki_links(p.corpo)) }}</div>
+          <nep>let links = apontam_para(p)</nep>
+          <if test="len(links) > 0">
+            <div class="border-top mt-5 pt-3"><b class="small text-muted">Páginas que apontam para cá:</b>
+              <each l in="links"><a class="ms-2" href="{{ url('/wiki/' + l.slug) }}">{{ l.titulo }}</a></each></div>
+          </if>
+          <if test="request.query.sugestao">
+            <div class="nep-ok mt-4">Sugestão recebida! A equipe revisa e publica.</div>
+          </if>
+          <details class="mt-4 border rounded p-3">
+            <summary class="fw-bold">⟦icone "pencil-square"⟧ Sugerir edição desta página</summary>
+            <form class="mt-3" save="sugestoes" run="sugerir" limit="5" success="Sugestão recebida! A equipe revisa e publica.">
+              <input type="hidden" name="pagina" value="{{ p.slug }}">
+              <input type="hidden" name="titulo" value="{{ p.titulo }}">
+              <div class="mb-3"><label class="form-label" for="s-corpo">Texto novo</label><textarea class="form-control" id="s-corpo" name="corpo" rows="10" required maxlength="80000">{{ p.corpo }}</textarea></div>
+              <div class="mb-3"><label class="form-label" for="s-autor">Seu nome (opcional)</label><input class="form-control" id="s-autor" name="autor" maxlength="60"></div>
+              <button class="btn btn-primary" type="submit">Enviar sugestão</button>
+            </form>
+          </details>
+        <else>
+          <h1 class="fw-bold">Esta página ainda não existe</h1>
+          <p class="lead">Quer escrever “{{ capitalize(gsub(params.slug, '%-', ' ')) }}”? Envie o texto: a equipe revisa e publica.</p>
+          <form save="sugestoes" run="sugerir" limit="5" success="Sugestão recebida! A equipe revisa e publica.">
+            <input type="hidden" name="pagina" value="{{ params.slug }}">
+            <div class="mb-3"><label class="form-label" for="n-titulo">Título</label><input class="form-control" id="n-titulo" name="titulo" required maxlength="120" value="{{ capitalize(gsub(params.slug, '%-', ' ')) }}"></div>
+            <div class="mb-3"><label class="form-label" for="n-corpo">Texto</label><textarea class="form-control" id="n-corpo" name="corpo" rows="10" required maxlength="80000"></textarea></div>
+            <div class="mb-3"><label class="form-label" for="n-autor">Seu nome (opcional)</label><input class="form-control" id="n-autor" name="autor" maxlength="60"></div>
+            <button class="btn btn-primary" type="submit">Enviar</button>
+          </form>
+        </if>
+      </page>
+
+      <page route="/indice" title="Índice A–Z">
+        <h1 class="fw-bold">Índice A–Z</h1>
+        <p class="text-muted">{{ len(todas) }} páginas.</p>
+        <nep>let grupos = todas |> group_by(fn(p) do upper(substr(p.titulo, 0, 1)) end)</nep>
+        <each letra in="sort(keys(grupos))">
+          <div class="letra">{{ letra }}</div>
+          <ul class="list-unstyled ms-2"><each p in="grupos[letra]"><li class="mb-1"><a href="{{ url('/wiki/' + p.slug) }}">{{ p.titulo }}</a> <span class="text-muted small">· {{ default(p.categoria, 'Geral') }}</span></li></each></ul>
+        </each>
+      </page>
+
+      <page route="/categoria/:cat" title="Categoria">
+        <nep>
+          let lista = todas |> filter(fn(p) do slug(default(p.categoria, "Geral")) == params.cat end)
+          if len(lista) == 0 do not_found() end
+          page.title = default(first(lista).categoria, "Geral")
+        </nep>
+        <h1 class="fw-bold">{{ page.title }}</h1>
+        <ul class="mt-3"><each p in="lista"><li class="mb-1"><a href="{{ url('/wiki/' + p.slug) }}">{{ p.titulo }}</a></li></each></ul>
+      </page>
+
+      <page route="/recentes" title="Mudanças recentes">
+        <h1 class="fw-bold">Mudanças recentes</h1>
+        <table class="table mt-3"><thead><tr><th>Página</th><th>Quando</th></tr></thead><tbody>
+          <each p in="recentes() |> take(30)"><tr><td><a href="{{ url('/wiki/' + p.slug) }}">{{ p.titulo }}</a></td><td class="text-muted">{{ ler_data(default(p.updated_at, p.created_at)).txt }}</td></tr></each>
+        </tbody></table>
+      </page>
+
+      <page route="/busca" title="Busca" noindex>
+        <nep>
+          let q = trim(default(request.query.q, ""))
+          let achados = []
+          if q != "" do achados = buscar(q, "wiki") |> map(fn(r) do r.item end) end
+        </nep>
+        <h1 class="fw-bold">Busca</h1>
+        <if test="q == ''"><p class="text-muted">Digite uma palavra na caixa de busca.</p><else>
+          <p class="text-muted">{{ len(achados) }} resultado(s) para “{{ q }}”.</p>
+          <each p in="achados"><div class="mb-3"><a class="fw-semibold" href="{{ url('/wiki/' + p.slug) }}">{{ p.titulo }}</a><div class="small text-muted">{{ truncate(gsub(default(p.corpo, ''), '[#*_%[%]>]', ''), 160) }}</div></div></each>
+          <p>Não achou? <a href="{{ url('/wiki/' + slug(q)) }}">Sugira a página “{{ q }}”</a>.</p>
+        </if>
+      </page>
+
+      <page route="/sugerir" title="Sugerir página">
+        <h1 class="fw-bold">Sugerir uma página</h1>
+        <p class="lead">Escreva o que sabe. A equipe revisa antes de publicar.</p>
+        <form save="sugestoes" run="sugerir" limit="5" success="Sugestão recebida! A equipe revisa e publica.">
+          <div class="mb-3"><label class="form-label" for="g-titulo">Título</label><input class="form-control" id="g-titulo" name="titulo" required maxlength="120"></div>
+          <div class="mb-3"><label class="form-label" for="g-corpo">Texto (use [[Nome de outra página]] para criar links)</label><textarea class="form-control" id="g-corpo" name="corpo" rows="10" required maxlength="80000"></textarea></div>
+          <div class="mb-3"><label class="form-label" for="g-autor">Seu nome (opcional)</label><input class="form-control" id="g-autor" name="autor" maxlength="60"></div>
+          <button class="btn btn-primary" type="submit">Enviar sugestão</button>
+        </form>
+      </page>
+
+      <page route="404" title="Não encontrado">
+        <h1 class="fw-bold">Página não encontrada</h1>
+        <p>Veja o <a href="{{ url('/indice') }}">índice</a> ou use a busca.</p>
+      </page>
+
+      <footer class="border-top mt-5 pt-3 small text-muted">
+        © ⟦h .Nome⟧ ⟦.Ano⟧ · <a href="{{ url('/_admin') }}">Painel</a> · Feito com Nepenthes · tema Simple Sidebar (Start Bootstrap, MIT)
+      </footer>
+    </div>
+  </div>
+</div>
+⟦template "scripts" .⟧
+</body>
+</html>

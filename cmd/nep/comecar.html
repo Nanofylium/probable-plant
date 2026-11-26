@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nepenthes</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3c5 6 9 11 9 17a9 9 0 0 1-18 0c0-6 4-11 9-17z' fill='%232f7d5b'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f5f4ef;--card:#fff;--ink:#1d2420;--mut:#5f6a64;--line:#e2e1da;--acc:#2f7d5b;--acc2:#24664a;--soft:#e8f2ec;--warn:#a5552a;--azul:#2c5d8f;--azul-soft:#e7eef6;--sh:0 1px 2px rgba(20,30,25,.06),0 10px 30px rgba(20,30,25,.07)}
+@media (prefers-color-scheme:dark){:root{--bg:#121714;--card:#1a211d;--ink:#e9eee9;--mut:#9ba69f;--line:#2a332e;--acc:#52b285;--acc2:#6cc69b;--soft:#1f3229;--warn:#e09a6e;--azul:#7fb0e0;--azul-soft:#1c2834;--sh:none}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+a{color:var(--acc)}
+main{flex:1;width:100%;max-width:980px;margin:0 auto;padding:56px 20px 40px}
+.marca{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;color:var(--mut);margin-bottom:28px}
+.marca svg{width:30px;height:30px}
+h1{font-size:clamp(1.8rem,4.6vw,2.6rem);letter-spacing:-.025em;line-height:1.12;margin:0 0 10px}
+.sub{color:var(--mut);font-size:1.08rem;margin:0 0 34px;max-width:620px}
+.escolhas{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.escolha{position:relative;display:flex;flex-direction:column;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:28px 26px 26px;box-shadow:var(--sh);cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,transform .15s}
+.escolha:hover,.escolha:focus-visible{border-color:var(--c);transform:translateY(-2px);outline:none}
+.escolha .ico{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;background:var(--cs);color:var(--c);margin-bottom:18px}
+.escolha .ico svg{width:28px;height:28px}
+.escolha h2{font-size:1.4rem;letter-spacing:-.015em;margin:0 0 8px}
+.escolha p{color:var(--mut);margin:0 0 16px}
+.escolha ul{margin:0 0 22px;padding:0;list-style:none;display:grid;gap:7px;font-size:.95rem}
+.escolha li{display:flex;gap:9px;align-items:flex-start}
+.escolha li:before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--c);margin-top:.6em}
+.escolha .ir{margin-top:auto;display:inline-flex;align-items:center;gap:8px;align-self:flex-start;background:var(--c);color:#fff;font-weight:600;padding:11px 18px;border-radius:12px}
+@media (prefers-color-scheme:dark){.escolha .ir{color:#0f1512}}
+.site{--c:var(--acc);--cs:var(--soft)}
+.prog{--c:var(--azul);--cs:var(--azul-soft)}
+.rodape{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;margin-top:30px;color:var(--mut);font-size:.92rem}
+.rodape a{font-weight:600;text-decoration:none}
+.rodape a:hover{text-decoration:underline}
+.esperando{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 88%,transparent);display:none;place-items:center;font-weight:600;color:var(--mut)}
+.esperando.on{display:grid}
+.erro{color:var(--warn);margin-top:16px}
+@media (max-width:720px){main{padding-top:32px}.escolhas{grid-template-columns:1fr}.escolha{padding:22px 20px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="marca"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c5 6 9 11 9 17a9 9 0 0 1-18 0c0-6 4-11 9-17z" fill="#2f7d5b"/><path d="M16 12v13M16 18l-4-3M16 21l4-3" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>Nepenthes</div>
+  <h1>O que vamos fazer agora?</h1>
+  <p class="sub">A IA do Nepenthes ajuda nas duas coisas. Escolha uma; da próxima vez que abrir o Nepenthes, ele pergunta de novo.</p>
+
+  <div class="escolhas">
+    <button type="button" class="escolha site" id="ir-site">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01M8 13h8M8 16.5h5"/></svg></span>
+      <h2>Criar um site</h2>
+      <p>A IA pergunta sobre o seu negócio e monta o site inteiro num arquivo .nep.html, pronto para publicar.</p>
+      <ul>
+        <li>Nome, contatos, endereço e horário</li>
+        <li>Logo e fotos enviadas do computador</li>
+        <li>Instagram, Facebook, TikTok, YouTube, LinkedIn e X</li>
+      </ul>
+      <span class="ir">Criar site →</span>
+    </button>
+    <button type="button" class="escolha prog" id="ir-prog">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></svg></span>
+      <h2>Programar</h2>
+      <p>Escreva em Nepenthes ou em Lua, ou diga o que quer e a IA escreve o programa. Rode na hora, aqui mesmo.</p>
+      <ul>
+        <li>Editor com botão Rodar (Ctrl+Enter)</li>
+        <li>A IA escreve e conserta o código</li>
+        <li>Roda neste computador, sem internet</li>
+      </ul>
+      <span class="ir">Abrir o editor →</span>
+    </button>
+  </div>
+  <p class="erro" id="erro" hidden></p>
+
+  <div class="rodape">
+    <span>Já tem sites? <a href="/">Abrir a Central</a> (sites, banco de dados e análises)</span>
+    <span>Tudo roda neste computador.</span>
+  </div>
+</main>
+<div class="esperando" id="esperando">Preparando a tela do site…</div>
+<script>
+const TOKEN = "{{token}}";
+document.getElementById("ir-prog").onclick = () => { location.href = "/programar"; };
+document.getElementById("ir-site").onclick = async () => {
+  const e = document.getElementById("esperando"), er = document.getElementById("erro");
+  e.classList.add("on"); er.hidden = true;
+  try {
+    const r = await fetch("/api/comecar-site", {method: "POST", headers: {"X-Central": TOKEN, "Content-Type": "application/json"}, body: "{}"});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.erro || "erro " + r.status);
+    location.href = d.url;
+  } catch (x) {
+    e.classList.remove("on"); er.hidden = false;
+    er.textContent = "Não consegui abrir a tela do site: " + x.message;
+  }
+};
+</script>
+</body>
+</html>

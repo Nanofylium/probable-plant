@@ -88,6 +88,14 @@ go build -o nep ./cmd/nep
 | Mac (Apple Silicon) | `nep-macos-arm64` |
 | Mac (Intel) | `nep-macos-amd64` |
 
+**WhatsApp:** o dono manda "chegou bolo de cenoura, R$ 12" com uma foto e o item aparece no site. "acabou o bolo de cenoura" tira o item, "amanhã fecho às 14h" vira um aviso no topo e "desfazer" volta o último passo. Há um simulador em `/_admin/whatsapp` e a ligação com a API oficial da Meta. Detalhes em SPEC 10.24.
+
+**Tipos, API e globais (ideias do Payload CMS):** em `/_admin/tipos` uma frase vira um tipo de conteúdo completo: formulário, páginas e API. Todo `<conteudo>` ganha `/api/<nome>` com filtros, ordem e páginas, e escrita com chave feita em `/_admin/api`. Também há relações entre tipos (`data-relacao`), ganchos `antes`/`depois` e `<global>` para dados do site inteiro. Detalhes em SPEC 10.23.
+
+**Construtor de páginas:** no painel (`/_admin/paginas`), qualquer página do site pode ser montada arrastando blocos, como no Wix, sem perder o código do Nepenthes (GrapesJS, BSD).
+
+**Dois cliques** no executável do Windows perguntam, a cada uso, se você quer **criar um site** (a IA pergunta sobre o negócio e recebe logo, fotos e redes sociais) ou **programar** (editor de Nepenthes e Lua com botão Rodar e a IA local que escreve e conserta o código). A **Central do Nepenthes** fica a um clique: meus sites (com painel e banco de dados), criar site descrevendo o negócio, assistente com IA, modelos prontos, **Nepenthes DB** (PostgreSQL 16 sem Docker, um botão), **Análises** (SQL e gráficos) e a IA local, tudo num arquivo só. O Nepenthes fica num ícone perto do relógio, pode abrir junto com o Windows e cria um atalho na área de trabalho. Em outros sistemas: `nep central`.
+
 No Linux/Mac: `chmod +x nep-*` e, no Mac, na primeira vez, clique com o botão direito > Abrir (o executável ainda não é assinado).
 
 ## Usar
@@ -113,6 +121,10 @@ nep criar "escola de música chamada Sol Maior em Salvador, com blog, eventos e 
 ```
 
 O `nep criar` entende o ramo, o nome, a cidade, a cor e o estilo, e monta um `site.nep.html` com a complexidade de um Joomla, WordPress, Backdrop ou TikiWiki: loja com carrinho, agendamento e reservas, eventos com inscrição, blog completo, wiki com `[[links]]`, fórum moderado, downloads, vagas, newsletter, painel e SEO. `com X` acrescenta, `sem X` tira e `só X` deixa só o que você pediu. Sai junto o `site-previa.html`. Detalhes na seção 10.16 da SPEC.
+
+**Sem tela, num arquivo só:** escreva `<nepenthes tipo="portal" nome="Folha do Vale" cidade="Aveiro">Portal de notícias da cidade</nepenthes>` num `index.html` (o tipo pode ser `blog`, `portal`, `wiki`, `estatico` ou `auto`). O Nepenthes monta o site inteiro a partir de modelos gratuitos do GitHub com licença MIT (Start Bootstrap), com banco, painel, formulários e comentários, sem reescrever o arquivo. Na Mindnet basta enviar `nep.cgi`, `.htaccess` e o `index.html`. Exemplo em `exemplos/folha-do-vale/`; detalhes na seção 10.21 da SPEC.
+
+**Com IA:** escreva `<nepenthes></nepenthes>` num `index.html` e rode `nep serve index.html`. Ao abrir o site, uma tela pergunta como você quer o site, a IA escreve o conteúdo (a IA do Nepenthes, que roda no próprio computador sem GPU e sem chave, baixada uma vez com `nep ia baixar` ou pela tela; o Qwen do servidor, se configurado no painel; ou o Qwen no seu navegador) e o Nepenthes reescreve o arquivo inteiro com o site pronto. Cada pedido sai diferente. Dá para mandar prints do Instagram (da grade do perfil ou de posts): o Nepenthes acha as fotos dentro de cada print, recorta e põe na capa e na galeria. Também dá para enviar o arquivo de dados do Instagram ("Baixar suas informações"), em que a bio e as legendas guiam o texto. Todo site sai com um atendente que responde aos visitantes. Cada site sai com um de oito visuais (editorial, noturno, vitrine, brutal, suave, mínimo, luxo ou o clássico), com fontes e ícones de verdade; dá para escolher na tela ou deixar o Nepenthes sortear. Veja a seção 10.17 da SPEC.
 
 ## Colocar um site no ar
 
@@ -159,6 +171,10 @@ A definição completa está em [`SPEC.md`](SPEC.md). A seção 10 descreve as t
 - `testdata/`: programas com a saída esperada, usados nos testes automáticos. Em `testdata/lua`, a saída esperada foi gerada pelo Lua 5.4 oficial.
 - `exemplos/lua/`: programas em Lua que rodam no `nep`.
 - `LICENCA-LUA.txt`: crédito e licença MIT do Lua.
+- `LICENCA-DEPTH-ANYTHING.txt`: passeio 3D sem GPU (Depth Anything V2 Small, Apache 2.0), rodado no processador pelo pacote `rede` (executor de ONNX em Go).
+- `LICENCA-LINGBOT.txt`: passeio vivo com `nep mundo` e `mundo()` (LingBot-World, da Robbyant, Apache 2.0, servido pelo SGLang).
+- `LICENCA-ECHARTS.txt`: gráficos com `grafico()` (Apache ECharts, Apache 2.0). `LICENCA-HILO.txt`: roleta, raspadinha e memória com `jogo()` (Hilo, da Alibaba, MIT).
+- `LICENCA-FONTES.txt`: fontes dos visuais (Fontsource, SIL OFL 1.1). `icones/LICENSE-lucide.txt`: ícones do Lucide (ISC).
 
 ## Desempenho
 

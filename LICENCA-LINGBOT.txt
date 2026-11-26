@@ -1,0 +1,18 @@
+LingBot-World (Robbyant), usado pelo passeio vivo: `nep mundo` e {{ mundo() }}.
+https://github.com/Robbyant/lingbot-world
+Modelos: https://huggingface.co/robbyant/lingbot-world-fast-diffusers (Apache 2.0)
+
+O Nepenthes não traz código nem pesos do LingBot-World. O pacote mundo/ fala
+com um servidor SGLang (https://github.com/sgl-project/sglang, Apache 2.0) que
+a pessoa roda numa máquina com GPU, pelo protocolo público
+/v1/realtime_video/generate. Os quadros gerados ficam na pasta do site.
+
+Só a versão 1 do LingBot-World é usada, por ter licença Apache 2.0 (uso
+comercial permitido). O LingBot-World 2.0 ("Infinity") tem licença
+CC BY-NC-SA 4.0, que proíbe uso comercial, e por isso não é usado.
+
+Licença Apache 2.0, versão completa: https://www.apache.org/licenses/LICENSE-2.0
+
+Citação pedida pelos autores:
+  LingBot-World: Advancing Open-source World Models. Robbyant Team, 2026.
+  arXiv:2601.20540

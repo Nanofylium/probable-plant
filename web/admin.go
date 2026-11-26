@@ -124,8 +124,21 @@ func (s *Server) admin(rq *request) error {
 		if post && ValidCol(c) {
 			id, _ := strconv.ParseInt(r.PostForm.Get("id"), 10, 64)
 			if st := a.site(); st != nil && st.Content(c) != nil { // conteúdo vai para a lixeira
+				ct := st.Content(c)
+				if rec := s.Store.Find(c, id); rec != nil && ct.Antes != "" {
+					if _, err := s.gancho(rq, st, ct.Antes, rec.ToValue(), infoGancho("apagar", id, rec.ToValue())); err != nil {
+						if msg, ok := recusado(err); ok {
+							return a.out("Não deu para apagar", errP(msg)+`<p><a href="`+base+`/conteudo?c=`+url.QueryEscape(c)+`">Voltar</a></p>`, true)
+						}
+						return err
+					}
+				}
+				old := s.Store.Find(c, id)
 				if err := s.trash(c, id, a.who()); err != nil {
 					return err
+				}
+				if old != nil {
+					s.depois(rq, st, ct, "apagar", id, old.ToValue())
 				}
 			} else if _, err := s.Store.Delete(c, id); err != nil {
 				return err
@@ -164,6 +177,26 @@ func (s *Server) admin(rq *request) error {
 		return a.backupPage(post)
 	case "/ia":
 		return a.iaPage(post)
+	case "/sites":
+		return a.sitesPage(post)
+	case "/paginas":
+		return a.paginasPage(post)
+	case "/api":
+		return a.apiPage(post)
+	case "/whatsapp":
+		return a.whatsappPage(post)
+	case "/whatsapp/enviar":
+		if !post {
+			s.redirect(rq, base+"/whatsapp", http.StatusFound)
+			return nil
+		}
+		return a.whatsappEnviar()
+	case "/global":
+		return a.globalPage(post)
+	case "/tipos":
+		return a.tiposPage(post)
+	case "/paginas/editar":
+		return a.paginaEditar(post)
 	case "/ia/rascunho":
 		return a.iaDraft()
 	case "/construtor/arquivo":
@@ -194,7 +227,7 @@ func (a *adminPage) out(title, body string, nav bool) error {
 	if nav {
 		links := a.navCMS()
 		if a.rq.sess.isOwner() {
-			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a><a href="` + a.base + `/email">E-mail</a><a href="` + a.base + `/backup">Cópia</a><a href="` + a.base + `/ia">IA</a>`
+			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a><a href="` + a.base + `/email">E-mail</a><a href="` + a.base + `/backup">Cópia</a><a href="` + a.base + `/ia">IA</a><a href="` + a.base + `/paginas">Montar páginas</a><a href="` + a.base + `/whatsapp">WhatsApp</a><a href="` + a.base + `/tipos">Tipos com IA</a><a href="` + a.base + `/api">API</a><a href="` + a.base + `/sites">Criar site</a>`
 		}
 		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div>` + links +
 			`<a href="` + esc(a.s.opt.Base+"/") + `">Ver site</a></div>` +

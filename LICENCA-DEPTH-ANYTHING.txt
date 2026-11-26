@@ -1,0 +1,17 @@
+Depth Anything V2 Small, usado pelo passeio 3D sem GPU (`nep mundo` sem --servidor).
+https://github.com/DepthAnything/Depth-Anything-V2
+Pesos em ONNX: https://huggingface.co/onnx-community/depth-anything-v2-small (Apache 2.0)
+
+O Nepenthes não traz os pesos no executável: `nep mundo` baixa o arquivo uma
+vez (95 MB, SHA-256 conferido) e o roda no processador com o pacote rede/,
+um executor de ONNX escrito em Go para o Nepenthes.
+
+Só o modelo Small é usado, por ter licença Apache 2.0 (uso comercial
+permitido). Os modelos Base, Large e Giant do Depth Anything V2 têm licença
+CC BY-NC 4.0, que proíbe uso comercial, e por isso não são usados.
+
+Licença Apache 2.0, versão completa: https://www.apache.org/licenses/LICENSE-2.0
+
+Citação pedida pelos autores:
+  Depth Anything V2. Lihe Yang, Bingyi Kang, Zilong Huang, Zhen Zhao,
+  Xiaogang Xu, Jiashi Feng, Hengshuang Zhao. arXiv:2406.09414, 2024.

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meu site com Nepenthes</title>
+<!--
+  Este arquivo pede ao Nepenthes que crie o site.
+  Para começar já com uma ideia, escreva-a dentro da tag, por exemplo:
+    <nepenthes>uma padaria artesanal em Olinda, com cardápio e WhatsApp</nepenthes>
+  Deixando vazia, a tela abre em branco e você escreve lá.
+-->
+<style nep-fonte>
+  nepenthes { display: none; }
+  :root { color-scheme: light dark; --fundo: #f4f6f3; --cartao: #fff; --texto: #1b2a22; --suave: #5b6b62; --cor: #2f6b4f; --linha: #dfe5e0; }
+  @media (prefers-color-scheme: dark) { :root { --fundo: #121a16; --cartao: #1b2620; --texto: #e6eee9; --suave: #9fb2a7; --cor: #7cc3a0; --linha: #2c3a33; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  aside { max-width: 640px; margin: 8vh auto; padding: 0 16px; }
+  .marca { color: var(--cor); font-weight: 700; letter-spacing: .02em; }
+  h1 { font-size: clamp(1.7rem, 5vw, 2.3rem); line-height: 1.15; margin: .4em 0 .3em; }
+  .sub { color: var(--suave); margin: 0 0 1.4em; }
+  .cartao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 16px; padding: 22px 24px; }
+  ol { margin: 0; padding-left: 1.3em; }
+  li { margin: .7em 0; }
+  code { background: color-mix(in srgb, var(--cor) 12%, transparent); padding: 2px 7px; border-radius: 6px; font-size: .92em; word-break: break-all; }
+  small { color: var(--suave); }
+</style>
+</head>
+<body>
+
+<nepenthes></nepenthes>
+
+<aside nep-fonte>
+  <div class="marca">Nepenthes</div>
+  <h1>Seu site nasce aqui</h1>
+  <p class="sub">Você abriu o arquivo direto, com dois cliques. O navegador sozinho não consegue reescrever arquivos no seu computador, então quem faz a mágica é o programa <b>nep</b>.</p>
+  <div class="cartao">
+    <ol>
+      <li>Coloque este <code>index.html</code> e o <b>nep</b> na mesma pasta (o Nepenthes.exe já faz isso sozinho).</li>
+      <li>Abra o terminal nessa pasta e rode:<br>
+        <code>./nep serve index.html</code> &nbsp;<small>(no Windows: <code>nep.exe serve index.html</code>)</small></li>
+      <li>Abra <code>http://localhost:8000</code> no navegador.</li>
+      <li>A tela do Nepenthes pergunta como você quer o site. Escolha <b>IA do Nepenthes</b> (baixa uma vez, 1,5 GB) ou <b>Sem IA</b>, responda às perguntas e pronto: este arquivo vira o site.</li>
+    </ol>
+  </div>
+  <p><small>O arquivo antigo fica guardado como <code>index.html.antes-…</code>, e o Nepenthes cria também um <code>index-previa.html</code>, que abre com dois cliques.</small></p>
+</aside>
+
+</body>
+</html>

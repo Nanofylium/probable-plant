@@ -114,6 +114,8 @@ type Field struct {
 	Public bool
 	// textarea com data-construtor: montado no construtor visual do painel
 	Builder bool
+	// select com data-relacao="colecao": guarda o número de um item de outro <conteudo>
+	Rel string
 }
 
 // API é um <api route="/api/x" method="GET"> com código que devolve JSON.
@@ -138,6 +140,18 @@ type Content struct {
 	Fields []*Field
 	HTML   string // os campos, do jeito que o programador escreveu
 	Order  string // campo de ordenação no painel (padrão: mais novo primeiro)
+	SemAPI bool   // api="nao": fora da API automática (/api/colecao)
+	Antes  string // função chamada antes de salvar (pode mudar os dados ou recusar)
+	Depois string // função chamada depois de salvar
+}
+
+// Global é um <global nome="rodape">: um conjunto de campos do site inteiro
+// (telefone, redes, aviso do topo…) editado numa tela só do painel.
+type Global struct {
+	Name, Title string
+	Line        int
+	Fields      []*Field
+	HTML        string
 }
 
 // Editable é um trecho com editavel="chave" (ou um menu com menu-editavel="nome"): o texto padrão fica no HTML e
@@ -174,6 +188,7 @@ type Site struct {
 	Lives  []*Live
 	// CMS
 	Contents  []*Content
+	Globals   []*Global
 	Editables []*Editable
 	texts     []string
 	root      *node
@@ -205,6 +220,16 @@ func (s *Site) Content(name string) *Content {
 	for _, c := range s.Contents {
 		if c.Name == name {
 			return c
+		}
+	}
+	return nil
+}
+
+// Global devolve o bloco global pelo nome.
+func (s *Site) Global(name string) *Global {
+	for _, g := range s.Globals {
+		if g.Name == name {
+			return g
 		}
 	}
 	return nil
@@ -415,7 +440,8 @@ func ParseSite(file, src string) (*Site, error) {
 				return nil, err
 			}
 			inner := src[end : end+e]
-			c := &Content{Name: nm, Title: first(a, "titulo", "title"), Item: first(a, "item"), Line: ln, Fields: extractFields(inner), HTML: inner, Order: first(a, "ordem", "order")}
+			c := &Content{Name: nm, Title: first(a, "titulo", "title"), Item: first(a, "item"), Line: ln, Fields: extractFields(inner), HTML: inner, Order: first(a, "ordem", "order"),
+				SemAPI: strings.EqualFold(first(a, "api"), "nao") || strings.EqualFold(first(a, "api"), "não"), Antes: first(a, "antes", "before"), Depois: first(a, "depois", "after")}
 			if c.Title == "" {
 				c.Title = strings.ToUpper(nm[:1]) + nm[1:]
 			}
@@ -436,6 +462,40 @@ func ParseSite(file, src string) (*Site, error) {
 			}
 			s.Contents = append(s.Contents, c)
 			pos = end + e + len(closeTag)
+			textStart = pos
+			continue
+		case "global":
+			e := strings.Index(strings.ToLower(src[end:]), "</global>")
+			if e < 0 {
+				return nil, fail(ln, "<global> sem </global>")
+			}
+			if top.kind != kRoot {
+				return nil, fail(ln, "<global> precisa ficar fora das outras tags")
+			}
+			a := parseAttrs(attrs)
+			nm := first(a, "nome", "name")
+			if !ValidCol(nm) {
+				return nil, fail(ln, `<global> precisa de nome="chave" (letras, números, - e _)`)
+			}
+			if s.Global(nm) != nil {
+				return nil, fail(ln, "o global %q já foi declarado", nm)
+			}
+			if err := flush(at); err != nil {
+				return nil, err
+			}
+			inner := src[end : end+e]
+			if strings.Contains(inner, "{{") {
+				return nil, fail(ln, "os campos de <global> são HTML fixo: {{ }} não vale aqui")
+			}
+			g := &Global{Name: nm, Title: first(a, "titulo", "title"), Line: ln, Fields: extractFields(inner), HTML: inner}
+			if g.Title == "" {
+				g.Title = strings.ToUpper(nm[:1]) + nm[1:]
+			}
+			if len(g.Fields) == 0 {
+				return nil, fail(ln, "<global nome=%q> não tem campos", nm)
+			}
+			s.Globals = append(s.Globals, g)
+			pos = end + e + len("</global>")
 			textStart = pos
 			continue
 		case "data":
@@ -1075,6 +1135,9 @@ func extractFields(html string) []*Field {
 		if v, err := strconv.Atoi(at["maxlength"]); err == nil {
 			f.MaxLen = v
 		}
+		if r := first(at, "data-relacao", "data-relation"); r != "" && tag == "select" {
+			f.Rel = r
+		}
 		if typ == "textarea" {
 			_, b1 := at["data-construtor"]
 			_, b2 := at["data-builder"]
@@ -1126,7 +1189,9 @@ func extractFields(html string) []*Field {
 		}
 	}
 	for _, f := range list {
-		if len(f.Options) == 1 && f.Options[0] == "dyn" {
+		if f.Rel != "" {
+			f.Options = nil // relação: o servidor confere se o item existe
+		} else if len(f.Options) == 1 && f.Options[0] == "dyn" {
 			f.Options = nil // opções geradas pelo código: aceita qualquer valor
 		} else if f.Options != nil {
 			sort.Strings(f.Options)

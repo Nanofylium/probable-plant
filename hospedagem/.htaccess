@@ -1,6 +1,7 @@
 # Nepenthes em hospedagem compartilhada (Apache + CGI, como cPanel).
 # Envie para a pasta do site: este .htaccess, o executável renomeado para nep.cgi
-# (versão linux-amd64, com permissão 755) e o seu site.nep.html.
+# (versão linux-amd64, com permissão 755) e o seu site.nep.html, ou um index.html
+# com a tag <nepenthes tipo="..."> (o Nepenthes monta o site a partir dela).
 Options -Indexes +ExecCGI
 AddHandler cgi-script .cgi
 DirectoryIndex nep.cgi
@@ -11,12 +12,16 @@ DirectoryIndex nep.cgi
   RewriteRule (^|/)\.(?!well-known/) - [F,L]
   RewriteRule ^data(/|$) - [F,L]
   RewriteRule \.(nep\.html|nep|db|lock|log)$ - [F,L]
+  RewriteRule \.antes-[0-9-]+$ - [F,L]
+  # o index.html com a tag <nepenthes> é a fonte do site: /index.html leva à página inicial
+  RewriteCond %{REQUEST_URI} ^(.*/)index\.html$
+  RewriteRule ^index\.html$ %1 [R=301,L]
   # o que não é arquivo de verdade (páginas, /_admin, /_nep/...) vai para o Nepenthes
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^ nep.cgi [L,QSA]
 </IfModule>
 
-<FilesMatch "(\.nep\.html|\.nep|\.db|\.lock|\.log|SETUP_TOKEN\.txt)$">
+<FilesMatch "(\.nep\.html|\.nep|\.db|\.lock|\.log|SETUP_TOKEN\.txt|\.antes-[0-9-]+)$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

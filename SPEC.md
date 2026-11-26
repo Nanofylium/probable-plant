@@ -340,7 +340,7 @@ Toda página vista é contada em `data/visitas-AAAA-MM.log` com dia, caminho, si
 
 ### 10.11 Site gerenciável: conteúdo e textos editáveis (CMS)
 
-Quem programa escreve o tema à mão, no próprio `.nep.html`. Quem cuida do site (sem saber código) publica e troca conteúdo em `/_admin`. Não há construtor de arrastar e soltar, e o layout continua sendo só o que o programador escreveu.
+Quem programa escreve o tema à mão, no próprio `.nep.html`. Quem cuida do site (sem saber código) publica e troca conteúdo em `/_admin`. Além das áreas `construtor="..."`, o dono pode montar qualquer página inteira arrastando blocos (seção 10.22).
 
 **Tipos de conteúdo.** Os campos são declarados como num formulário comum, com as mesmas regras de validação (10.3) e de upload (10.8):
 
@@ -470,6 +470,8 @@ Todo site sai com cara de site profissional, como um tema do WordPress, sem prec
 - Sem `<meta name="viewport">`, o `nep` coloca uma (o site funciona no celular). Um site com CSS próprio que não estilizou os avisos de formulário e os comentários recebe um estilo mínimo para eles.
 - **Ver o site sem servidor:** `nep previa site.nep.html` cria `site-previa.html`, um arquivo só (CSS embutido) com todas as páginas como ficam no ar, que abre com dois cliques ou em qualquer visualizador de HTML. É uma foto: formulários e regiões `<live>` funcionam só com o `nep`.
 - **Abrir o código direto não mostra bagunça:** um `<style nep-fonte>` e um `<aside nep-fonte>` no começo do arquivo escondem o código e mostram um aviso (o que é o arquivo, como ver a prévia e como rodar). O `nep` tira esses trechos antes de tudo, então o visitante nunca os vê. Os modelos do `nep novo` e os exemplos já vêm com eles.
+- **Visuais.** `<nep-config visual="...">` põe por cima do tema uma família de aparência que muda a estrutura do site, não só a cor: `nepenthes` (o clássico, com Outfit e Fraunces), `editorial` (marca grande no centro, menu em versalete entre fios, serifa itálica Playfair Display e Lora, capa centrada com a imagem larga embaixo, cartões sem caixa), `noturno` (escuro, brilho da cor do site atrás da capa, título em degradê, cartões de vidro; Space Grotesk e Inter), `vitrine` (capa de ponta a ponta com a imagem ao fundo e o texto em cima, títulos em Bebas Neue, faixa de números na cor do site), `brutal` (neobrutalismo: bordas pretas grossas, sombras duras, amarelo; Archivo Black), `suave` (pastel, tudo arredondado, cabeçalho flutuante em pílula, imagem em bolha; Nunito), `minimo` (suíço: preto e branco, Inter enorme, seções numeradas "01 —", fios no lugar de caixas) e `luxo` (capa escura com moldura dourada, Cormorant Garamond, caixa alta espaçada). O CSS do visual (`/_nep/visual/<nome>.css`) entra no fim do `<head>`, depois do CSS do site. As fontes vêm do Fontsource (SIL OFL 1.1, `LICENCA-FONTES.txt`) e são servidas pelo próprio `nep` em `/_nep/fontes/` (nada de Google Fonts, sem rastreio de visitante). A prévia (`nep previa`) embute as fontes. Visual desconhecido é ignorado.
+- **Ícones.** `icone("☕")` devolve o ícone de traço do Lucide (licença ISC, `icones/LICENSE-lucide.txt`) para o emoji, em SVG que pega a cor do texto; emoji sem ícone volta como está. São cerca de 200 emojis de negócios mapeados (`icones/gerar.py`). Os sites do `nep criar` e da tag `<nepenthes>` usam `icone()` nos serviços, produtos, marca e capa, e o painel continua pedindo "um emoji".
 - `nep novo pasta` cria um site completo de empresa (abertura, serviços, números, depoimentos, novidades, contato com aviso por e-mail, páginas do painel, rodapé com menus editáveis); `nep novo pasta --modelo blog` cria o tema de blog estilo WordPress de `exemplos/ascidia`.
 
 ### 10.16 `nep criar`: descreva o site e o Nepenthes monta
@@ -483,10 +485,238 @@ nep criar "associação de moradores do Jardim Europa sem blog" --pasta bairro
 nep criar "pousada em Paraty chamada Maré Mansa" --plano     # só mostra o que entendeu
 ```
 
-- **O que ele lê:** o ramo (clínica, veterinária, beleza, restaurante, hotel/pousada, escola, academia, escritório, tecnologia, loja, associação/ONG/igreja, comunidade/wiki; o resto vira "empresa"), o nome (`chamada X`, `"X"` entre aspas ou o começo da frase, como "associação de moradores do Jardim Europa"), a cidade (`em Salvador`), a cor (verde, azul, marinho, vinho, rosa, roxo, laranja, dourado... ou `#1d4ed8`) e o estilo (elegante, clássico, moderno, divertido, acolhedor), que escolhe a fonte do tema.
+- **O que ele lê:** o ramo (clínica, veterinária, beleza, restaurante, hotel/pousada, escola, academia, escritório, tecnologia, loja, associação/ONG/igreja, comunidade/wiki; o resto vira "empresa"), o nome (`chamada X`, `"X"` entre aspas ou o começo da frase, como "associação de moradores do Jardim Europa"), a cidade (`em Salvador`), a cor (verde, azul, marinho, vinho, rosa, roxo, laranja, dourado... ou `#1d4ed8`) o estilo (elegante, clássico, moderno, divertido, acolhedor), que escolhe a fonte do tema, e o visual (seção 10.15): palavras como "escuro", "luxo", "minimalista", "revista", "ousado", "alegre" ou "impactante" escolhem um; sem elas, sai um dos que combinam com o ramo (a mesma frase dá sempre o mesmo, e `--visual X` força um). Na tela da tag `<nepenthes>`, a pessoa escolhe o visual ou deixa em "Surpresa", que sorteia a cada pedido. As regras do visual não estão no `Entender.php` do Mirabilis, que usa os templates do Joomla.
 - **Quem pede manda:** cada ramo tem as seções que um site do tipo costuma ter; `com X` acrescenta, `sem X` (também "não quero X", "sem X e Y") tira, e `só X` (ou "apenas", "somente") deixa só o que foi pedido. Contato, páginas livres (Sobre e Política de privacidade/LGPD já escritas), busca, SEO, RSS, mapa do site, painel e atendente lowii (com a IA ligada) entram sempre.
 - **Seções (módulos):** serviços com página de cada um; loja ou cardápio com categorias, carrinho na sessão e pedido (o total vem do banco, nunca do navegador) e `/api/produtos`; agendamento com horários livres ao vivo, vagas por horário e recusa de horário ocupado ou passado (`/api/horarios`); reservas por diária para hotel, que recusam datas sobrepostas (`/api/disponibilidade`); eventos com inscrição, vagas que diminuem ao vivo e recusa de e-mail repetido (`/api/eventos`); planos e preços; equipe; galeria com álbuns; depoimentos; blog com categorias, tags, arquivo por mês, paginação, tempo de leitura, posts relacionados, comentários e widgets; wiki no estilo TikiWiki com `[[Página]]` e `[[Página|texto]]`, índice A–Z, busca, mudanças recentes, "páginas que apontam para cá", página que não existe convidando a criá-la e sugestões de edição revisadas pela equipe (o histórico fica nas versões do painel); fórum moderado (tópico novo entra como rascunho, respostas pelos comentários); downloads por categoria; trabalhe conosco com envio de currículo restrito ao painel; perguntas frequentes; newsletter; tradução com `?idioma=en` pela villosa (com a IA ligada).
 - Todo conteúdo de exemplo entra uma vez só (a marca fica na coleção `instalacao`); depois, tudo pelo painel. O arquivo gerado é Nepenthes comum, com comentários, para a pessoa mudar à vontade.
+
+### 10.17 A tag `<nepenthes>`: o site pergunta e se escreve
+
+Um arquivo de site (`index.html`, `site.nep.html`) com a tag `<nepenthes>` não é mostrado: o `nep` abre uma tela que pergunta como a pessoa quer o site, faz de 2 a 4 perguntas sobre o que faltar e então **reescreve o arquivo inteiro** com o site pronto. Também grava a prévia (`*-previa.html`) e guarda o arquivo anterior como `ARQUIVO.antes-AAAAMMDD-HHMMSS`.
+
+```html
+<nepenthes></nepenthes>                                    <!-- tela em branco -->
+<nepenthes>uma doceria em Salvador, com encomendas</nepenthes>  <!-- já começa com a ideia -->
+```
+
+Quem escreve o conteúdo é uma IA. A tela oferece quatro motores:
+
+| Motor | Onde roda | Precisa de |
+|---|---|---|
+| Qwen no servidor | na API configurada no painel (IA): DashScope, ou Ollama/vLLM no seu servidor | chave no painel ou `NEP_IA_*` |
+| IA do Nepenthes | no computador (ou VPS) que roda o `nep`: o motor [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) com o modelo IBM Granite 3.3 2B Instruct (Apache 2.0). Só processador, sem GPU; no Mac usa a GPU pelo Metal. Leva de 1 a 3 minutos por site | baixar uma vez, 1,5 GB: pela própria tela ou `nep ia baixar` |
+| Qwen no navegador | no navegador de quem cria, com WebLLM (WebGPU). O modelo (Qwen 2.5 de 0.5B, 1.5B ou 3B) é baixado uma vez e fica guardado no navegador | Chrome ou Edge recentes. Nada para instalar, sem chave |
+| Sem IA | regras do `nep criar` | nada |
+
+A IA não escreve código: devolve um JSON com nome, ramo, cor, estilo, frases da capa, serviços, preços, números, perguntas, depoimentos, equipe, posts e seções. O gerador confere cada campo (tamanho, cor `#RRGGBB`, preço numérico, ramo e seções que existem, o que a pessoa tirou continua fora) e monta o `.nep.html` com o tema profissional. Assim o mesmo pedido gera sites diferentes, mas o site sempre funciona e nada do texto da IA entra sem escapar.
+
+**A IA do Nepenthes** (pacote `ialocal`) faz parte da instalação. No Windows x64 o motor vai dentro do `Nepenthes.exe`: um `llama-server` compilado com MinGW-w64 (`scripts/motor-windows.sh`), que só usa DLLs que todo Windows tem e por isso não depende do Visual C++ Redistributable (sem ele, o pacote oficial do llama.cpp para Windows fecha ao ligar). Quando a Central abre, o motor vai para a pasta da IA e o modelo começa a baixar em segundo plano, uma vez só. Nos outros sistemas, o `nep` baixa o `llama-server` do seu sistema (Linux, macOS e Windows arm64) e o modelo dos Releases do probable-plant (`ia-1`); se lá não estiver, das fontes originais (Releases do llama.cpp e Hugging Face da IBM). Cada arquivo tem o SHA-256 fixado no código e é conferido; download interrompido continua de onde parou. Fica em `<cache do usuário>/nepenthes/ia` (ou na pasta de `NEP_IA_LOCAL`) e depois roda sem internet. O `llama-server` escuta só em `127.0.0.1`, numa porta livre, sem abrir janela, e é desligado quando o `nep` sai. Se ele fechar ao ligar, a mensagem diz o motivo (DLL faltando, processador, memória) e traz as últimas linhas do registro. A resposta fica presa a um JSON Schema, então o modelo não erra o formato. `nep ia` mostra o estado.
+
+Como modelos pequenos erram mais, o gerador dá preferência ao que a pessoa escreveu: se as regras reconheceram o ramo ou a cor na descrição, a IA não troca; telefone não entra como "número de destaque"; ícone tem de ser emoji; e uma lista de seções que copia quase todas as opções é ignorada.
+
+**Instagram.** O jeito principal é o botão **Entrar com Instagram**, que usa a API oficial ("Instagram API with Instagram Login", escopo `instagram_business_basic`) e serve para contas comerciais e de criador. A pessoa entra uma vez, e o Nepenthes troca o código por um token. Com ele, lê o perfil e os 30 posts mais recentes: fotos (inclusive as dos carrosséis), legendas e links dos posts. O token não fica guardado. Isso exige um app Meta de quem instala o Nepenthes. O App ID e a App Secret vão na própria tela ou em `NEP_INSTA_APP_ID`/`NEP_INSTA_SEGREDO`, e a secret nunca volta ao navegador. O endereço de volta aparece na tela para ser cadastrado no app. O login é protegido por um `state` que vale 15 minutos. Antes da revisão da Meta, só entram as contas adicionadas ao app, e para elas também dá para colar um token gerado no painel do app. Os links dos posts aparecem na galeria ("ver no Instagram"), e um link de WhatsApp no site do perfil vai para o rodapé. Para conta pessoal, a tela aceita o @ do negócio e o arquivo que o próprio Instagram entrega em *Configurações > Central de Contas > Suas informações e permissões > Baixar suas informações* (formato JSON). O pacote `instagram` lê desse zip o nome, o @, a bio, as legendas e as fotos dos posts. Ele aceita rótulos em inglês ou português e conserta os acentos que o Instagram grava errado. Até 12 fotos dos posts mais recentes viram arquivos públicos do site e vão para a capa e para a galeria. A galeria entra sozinha quando há 3 fotos ou mais. A bio e as legendas vão para a IA, que escreve no jeito do perfil. Sem IA, a bio ajuda as regras a achar o ramo. O nome do perfil é usado quando a descrição não traz um, e o @ vai para o link do rodapé. **Prints.** O jeito mais simples, para qualquer conta, é mandar prints (capturas de tela, PNG ou JPG) do perfil ou de posts, tirados no celular ou no computador. O botão **Enviar prints do Instagram** aceita vários de uma vez (campo `print`, repetível, no mesmo `POST /_nep/assistente/instagram`). `instagram.Recortar` acha as fotos em cada print: a cor do fundo é a das bordas (tema claro ou escuro), e o print é cortado pelas linhas e colunas inteiras dessa cor, pedaço por pedaço, até sobrar foto por foto. Um pedaço vira foto se for grande, no formato das fotos do Instagram (1:1, 4:5, 3:4, ou paisagem na largura da tela), quase sem fundo dentro (a foto redonda do perfil e os destaques ficam de fora) e com detalhe (botões lisos ficam de fora). Uma foto cortada pela borda de cima ou de baixo do print é deixada de lado. Uma foto com uma faixa da cor do fundo na borda (um céu branco) é esticada até a altura das vizinhas da mesma linha. As bordas borradas pelo JPG são aparadas. Cada recorte vira um JPG público do site e soma às fotos que já estavam, até 12. Prints que se cobrem não repetem foto: cada recorte é comparado pela miniatura 8 x 8 do brilho (`instagram.Marcar`). A resposta conta os prints enviados e os em que não achou foto, e a tela avisa. Prints trazem só as fotos: o @ digitado vai para o rodapé, e a bio pode ser escrita na descrição. Cada print tem limite de 25 MB e 40 megapixels.
+
+O Nepenthes não pede senha nem entra no Instagram: raspar o site do Instagram é proibido pelos termos de uso e é bloqueado.
+
+**Atendente em todo site.** Todo site criado pelo gerador traz o atendente (`lowii()`), a não ser que a descrição diga "sem atendente". Quem responde depende do que estiver disponível:
+1. a IA do painel, se estiver configurada;
+2. senão, a IA do Nepenthes, se já estiver baixada no computador ou VPS (fora do CGI);
+3. senão, sem IA: mostra o trecho do site que a busca achou, com os links.
+
+Assim o atendente funciona até em hospedagem compartilhada.
+
+Só vê a tela e pode criar quem acessa do próprio computador (`localhost`, sem proxy) ou entrou no painel como administrador. Os outros visitantes veem "site em construção". Em CGI (hospedagem compartilhada) é sempre pelo painel.
+
+### 10.18 Gráficos (ECharts) e jogos de promoção (Hilo)
+
+`{{ grafico(tipo, dados, opções) }}` desenha um gráfico com o Apache ECharts (Baidu, Apache 2.0), na cor e na fonte do site.
+
+- Tipos: `barras`, `horizontal`, `linhas`, `area`, `pizza`, `rosca`.
+- Dados: uma tabela `{Jan: 10, Fev: 12}`, uma lista de números, ou uma lista de registros (`db.find(...)`). Nos registros, `x` é o campo do rótulo e `y` o campo (ou lista de campos) dos valores; sem eles, o Nepenthes adivinha.
+- Opções: `titulo`, `moeda` (R$), `altura` (160 a 900), `nome` da série.
+- Sem JavaScript, aparece uma tabela com os mesmos números. O ECharts só é baixado quando a página tem gráfico.
+- O painel mostra as visitas num gráfico de área.
+
+`{{ jogo(tipo, opções) }}` põe um jogo de promoção feito com o Hilo (Alibaba, MIT): `roleta`, `raspadinha` ou `memoria`.
+
+- Opções: `premios` (lista de textos ou `{nome, chance, cupom}`; até 12), ou um `premio` só; `titulo`, `texto`, `botao`; `contato` (pede nome e WhatsApp/e-mail com aceite, padrão `true`); `validade` em dias (padrão 7); `prefixo` do cupom (padrão `NEP`); `imagens` das cartas da memória.
+- Quem sorteia é o servidor (`POST /_nep/jogo`, com CSRF): uma jogada por dia por aparelho e por contato. A memória só paga depois de 6 segundos de jogo.
+- Cada prêmio vira um cupom `PREFIXO-XXXXXX` na coleção `cupons` (aparece no painel), com prazo de validade e campo `usado`.
+
+Créditos e licenças em `LICENCA-ECHARTS.txt` e `LICENCA-HILO.txt`.
+
+### 10.19 Passeio vivo (3D sem GPU, ou LingBot-World)
+
+`nep mundo foto.jpg "descrição do lugar" --nome loja` transforma a foto num lugar por onde o visitante anda, e grava em `mundos/loja/`. Há três modos.
+
+**Passeio 3D, sem GPU (padrão).**
+- O `nep` calcula a distância de cada ponto da foto com o Depth Anything V2 Small (Apache 2.0). O modelo é baixado uma vez (95 MB, SHA-256 conferido) e roda no processador, em uns 7 s numa máquina de 4 núcleos.
+- Quem roda o modelo é o pacote `rede`, um executor de redes neurais no formato ONNX escrito em Go, sem Python e sem GPU. A saída é conferida com o onnxruntime oficial nos testes.
+- Grava `foto.jpg` e `profundidade.png` (16 bits, no vermelho e no verde). O navegador de quem visita monta a cena com WebGL, em duas camadas. Os objetos que se destacam do fundo (uma árvore, um muro, uma pessoa) viram um recorte inteiro, com contorno fino tirado da profundidade, e se movem juntos, sem rasgar. Atrás do recorte, o fundo é completado espelhando o que está em volta da beirada. A câmera anda, vira e mostra a paralaxe ao vivo, e o site baixa só a foto e a profundidade (algumas centenas de KB).
+- `--sem-modelo` (ou sem internet na primeira vez) usa uma profundidade estimada: embaixo perto, em cima longe. `--lado N` muda o tamanho da entrada do modelo (padrão 518).
+
+**LingBot-World, com GPU.** `--servidor host:porta` (ou `NEP_MUNDO_SERVIDOR`) gera quadros com o LingBot-World (Robbyant, Apache 2.0) num servidor SGLang. Para subir o servidor:
+```
+sglang serve --model-path robbyant/lingbot-world-fast-diffusers --pipeline-class-name LingBotWorldCausalDMDPipeline
+```
+O `nep` fala o protocolo `/v1/realtime_video/generate` (WebSocket + MessagePack). Caminhos (`--caminhos`): `frente`, `esquerda`, `direita` e `redor`. `nep mundo --ajuda-gpu` explica como subir o servidor.
+
+**Quadros 2D.** `--simular` faz quadros 2D: aproxima e vira a câmera sobre a foto.
+
+**No site.** `{{ mundo("loja", opções) }}` mostra o passeio.
+- Controles: segurar ↑, a tela ou "Andar" anda; ↓ volta; ← → (ou arrastar) olha em volta.
+- Opções: `titulo`, `texto` e `rolar` (rolar a página anda).
+- Sem JavaScript ou WebGL, e na prévia, aparece a foto.
+
+Créditos e licenças em `LICENCA-DEPTH-ANYTHING.txt` e `LICENCA-LINGBOT.txt`. Ficam de fora o LingBot-World 2.0 e os modelos Base, Large e Giant do Depth Anything V2, porque as licenças deles proíbem uso comercial.
+
+### 10.20 Central do Nepenthes (dois cliques)
+
+Dois cliques no `Nepenthes.exe` (ou `nep central`) ligam a Central em `http://localhost:8000/`, só para quem está no computador. A cada uso, o navegador abre em `/comecar`, que pergunta o que a pessoa quer fazer agora: **Criar um site** ou **Programar**. Um `index.html` com `<nepenthes>` na pasta do programa abre direto a tela do site.
+
+**Criar um site** abre a tela da tag `<nepenthes>` (numa pasta `meu-site` nova, ou na que ainda não virou site). A tela pede os dados do site (tipo, entre eles portal de notícias, comunidade, loja, escola; nome, cidade, WhatsApp, e-mail, endereço e horário), o **logo e até 12 fotos** (`POST /_nep/assistente/fotos`, multipart `logo` e `fotos`: PNG, JPG ou GIF até 20 MB; o Nepenthes lê, reduz para 1600 px, tira os dados do celular e grava em `data/arquivos`; o logo perde as bordas transparentes e fica PNG; a primeira foto vira a capa e, com 3 ou mais, entra a galeria) e as **redes sociais** (Instagram, Facebook, TikTok, YouTube, LinkedIn e X: o @ ou o link do perfil; link de outro domínio é ignorado), que aparecem no rodapé. Tudo isso vale mais que o que a IA ou as regras acharem, e o site sai com páginas, banco, formulários e painel.
+
+**Programar** (`/programar`) é um editor de Lua (o padrão, porque os modelos pequenos já conhecem a linguagem e erram menos) e de Nepenthes com o botão Rodar (Ctrl+Enter): o programa é gravado em "Programas do Nepenthes" (ao lado da pasta dos sites) e roda num processo à parte (`nep run`), com a entrada do `input()` digitada na tela, até 20 segundos e 128 KB de saída. A IA do Nepenthes (Granite, no computador) recebe a sintaxe da linguagem, escreve o programa pedido, confere se ele compila e, se não, mostra o erro a ela e pede de novo (até 3 vezes). Em Lua, o programa usa as funções do Nepenthes pela tabela `nep` (`nep.money(19.9)`). Blocos sem `end` são fechados pelo recuo antes de pedir de novo. Depois de um erro ao rodar, "Consertar o erro" manda o código e a mensagem para a IA. A IA não roda o código sozinha: quem aperta Rodar é a pessoa. Tudo vem no mesmo arquivo:
+- **Meus sites:** cada pasta em "Sites do Nepenthes" (ao lado do programa; ou Documentos\Nepenthes). Abrir, painel e banco de dados do site (`/_admin`), pasta e parar. Cada site roda numa porta própria (8001, 8002…).
+- **Criar site:** descrever o negócio (como `nep criar`), conversar com o assistente (tag `<nepenthes>`) ou começar de um modelo.
+- **Banco de dados (Nepenthes DB):** um PostgreSQL 16 sem Docker, ligado com um botão. Na primeira vez baixa os binários oficiais (uns 30 MB, via [embedded-postgres](https://github.com/fergusstrange/embedded-postgres), MIT, e zonky, Apache 2.0). Os dados ficam em "Nepenthes DB/dados", com usuário, senha e porta em `config.json`; só `localhost` conecta. Se ficou ligado, liga sozinho na próxima vez. Uma pasta de outra versão do PostgreSQL nunca é apagada.
+- **Análises:** SQL com resposta em tabela e gráfico (Apache ECharts: barras, linha, pizza). Por padrão as consultas só leem; "Permitir alterar dados" libera a escrita. Os gráficos salvos (`paineis.json`) formam o painel. "Criar vendas de exemplo" monta uma tabela e dois gráficos para começar.
+- **IA local:** baixar e ver o estado da IA que escreve sites e responde o atendimento.
+
+No Windows, a janela preta some e o Nepenthes fica num ícone perto do relógio (systray do Fyne, Apache 2.0): Abrir a Central, Pasta dos sites, Abrir junto com o Windows (`--bandeja`, sem abrir o navegador) e Sair (para os sites, o banco e a IA). Na primeira vez ele põe um atalho na área de trabalho. Em outros sistemas, `nep central` roda até Ctrl+C.
+
+Ações da Central exigem a chave da página (cabeçalho `X-Central`) e o endereço `localhost`. O Analytics em servidor com Lightdash continua só na pilha Docker.
+
+### 10.21 Moldes: site inteiro a partir de uma tag
+
+Um `index.html` com a tag `<nepenthes>` **com atributos** vira o site inteiro, sem tela e sem IA:
+
+```html
+<nepenthes tipo="portal" nome="Folha do Vale" cidade="Aveiro" whatsapp="(93) 90000-0000"
+           email="redacao@exemplo.com.br" endereco="Rua das Flores, 120" horario="Seg a sex, 8h às 18h"
+           instagram="@folhadovale" cor="#1d4ed8">
+  Portal de notícias da cidade, com agenda cultural e newsletter.
+</nepenthes>
+```
+
+| `tipo` | Molde (modelo gratuito do GitHub, MIT) | O que vem pronto |
+|---|---|---|
+| `blog` | Start Bootstrap Clean Blog | posts com categorias, tags, comentários, busca, RSS, newsletter, sobre e contato |
+| `portal` | Start Bootstrap Modern Business | notícias com editorias e destaque, agenda com inscrição e vagas, newsletter, sobre com equipe, perguntas, contato |
+| `wiki` | Start Bootstrap Simple Sidebar | páginas com `[[links]]`, índice A–Z, categorias, mudanças recentes, busca, sugestões de edição revisadas no painel |
+| `associacao` | Start Bootstrap Modern Business | ficha de sócio (aprovada no painel), área do sócio por link privado com carteirinha digital e QR de verificação, mensalidades geradas mês a mês com Pix copia e cola e QR (`pix=`, `mensalidade=`), "já paguei" e baixa na tesouraria (`/tesouraria`, só diretoria), assembleias com presença e ata, avisos, documentos e transparência |
+| `estatico` | Start Bootstrap Landing Page | uma página: serviços, quem somos, onde estamos, depoimentos e formulário de contato |
+| `auto` | escolhido pela descrição | wiki, portal, blog ou estático, pelas palavras do texto |
+
+Funções novas para qualquer site: `pix(chave, recebedor, cidade, valor, txid)` devolve o Pix copia e cola (BR Code do Banco Central, com CRC16), `qrcode(texto)` desenha o QR Code em SVG (rsc.io/qr, BSD) e `token(n)` gera um código aleatório. O Pix é o estático com valor: qualquer banco paga; a baixa é manual (o sócio avisa, a tesouraria confirma).
+
+Também aceita `molde=` no lugar de `tipo=` e apelidos (`site`, `landing`, `noticias`, `documentacao`). Sem nenhum atributo (`<nepenthes>ideia</nepenthes>`) continua valendo o assistente da seção 10.17.
+
+Como funciona: o `nep` lê a tag, monta o `.nep.html` do molde **na memória** (de novo só quando o arquivo muda) e serve. O arquivo da pessoa não é reescrito, por isso funciona igual no computador e no CGI da hospedagem compartilhada, onde o site não pode se regravar. Os textos de partida vêm das regras do gerador (ramo reconhecido pela descrição) e entram no banco só na primeira vez; depois, posts, notícias, eventos, páginas da wiki e os trechos com `editavel` se editam no painel (`/_admin`). Mensagens, inscrições, assinantes e sugestões ficam no banco; o contato avisa o `email` da tag. O CSS, o Bootstrap JS, as imagens (reduzidas) e as fontes vêm embutidos no `nep` e saem em `/_nep/molde/...`, sem CDN. `nep previa index.html` gera a prévia com as imagens dentro (cada uma uma vez só). `nep check index.html` mostra as páginas do site montado. Créditos e licenças em `LICENCA-STARTBOOTSTRAP.txt`.
+
+**Criar site pelo navegador, na hospedagem:** em `/_admin/sites` (só o dono), o `nep` que já está no ar cria um site novo numa pasta ao lado (na raiz do domínio, `DOCUMENT_ROOT`): copia a si mesmo como `nep.cgi` (755), grava o `.htaccess` e um `index.html` com a tag montada pelo formulário, e o painel do site novo já abre com a mesma senha. Não sobrescreve pasta existente nem usa nomes reservados (`cgi-bin`, `data`...). Sem zip, sem .exe, sem token do cPanel.
+
+Na hospedagem: `nep.cgi` + `.htaccess` (pasta `hospedagem/`) + o `index.html`. Sem `site.nep.html` na pasta, o CGI usa o `index.html`; o `.htaccess` manda `/index.html` para a página inicial e bloqueia as cópias `.antes-*`.
+
+### 10.22 Páginas visuais: a página inteira no construtor
+
+Em `/_admin/paginas`, o dono abre qualquer página de endereço fixo (e a 404) no construtor visual (GrapesJS, BSD-3-Clause) em tela cheia, como num construtor de sites: arrasta seções prontas (capa, 3 serviços, imagem e texto, depoimento, chamada), blocos básicos (colunas, texto, imagem, vídeo, mapa) e blocos do Nepenthes (formulário de contato, receber novidades), edita textos clicando, muda estilos e vê como fica no computador, tablet e celular. Também cria páginas novas (título e endereço).
+
+- O miolo da `<page>` é dividido em HTML comum, que vira blocos editáveis, e **ilhas**: tudo que é código ou não é HTML simples (`<each>`, `<if>`, `<form>`, `<live>`, `<nep>`, `{{ expressões }}`, SVG, scripts). As ilhas aparecem com a prévia de verdade (a página é renderizada para isso), com borda tracejada, podem ser movidas, duplicadas ou apagadas, e voltam intactas ao salvar.
+- Ao salvar, o HTML passa pela limpeza do construtor (sem scripts nem eventos; aceita também `aria-*`, `data-*`, `role`, `editavel`, `nep-*`), as chaves viram `&#123;` (o texto digitado nunca vira código) e os links do próprio site voltam a ser `{{ url('...') }}`. O CSS da página fica sem regras de `body`, `html` e `*`. A página é conferida (compila) antes de ser guardada.
+- A página montada fica no banco do site (`visual:pagina:/rota`) e substitui o miolo da `<page>` quando o site é lido: o arquivo `.nep.html` não muda, então funciona no CGI e nos moldes. "Voltar ao original" apaga o registro. Se uma página visual impedir o site de compilar, o site segue sem as páginas visuais e o erro vai para o log.
+
+### 10.23 Tipos, API, relações, ganchos e globais (ideias do Payload CMS)
+
+Ideias do Payload CMS (MIT), escritas de novo em Go e na linguagem Nepenthes. Nenhum código do Payload é usado.
+
+**API automática.** Todo `<conteudo nome="x">` responde em `/api/x`, a não ser que tenha `api="nao"`. Rotas `<api>` do próprio site vêm antes.
+
+- `GET /api/x` lista os itens. Parâmetros:
+  - `limit` (até 100) e `page`;
+  - `sort=campo` ou `sort=-campo`;
+  - `where[campo]=valor`, ou `where[campo][op]=valor` com `op` igual a `igual`, `diferente`, `contem`, `em`, `existe`, `maior`, `menor`, `maior_igual` ou `menor_igual` (os nomes do Payload também valem: `equals`, `contains`, `greater_than`…).
+  - A resposta tem `docs`, `totalDocs`, `limit`, `page`, `totalPages`, `hasPrevPage`, `hasNextPage`, `prevPage` e `nextPage`.
+- `GET /api/x/<id ou endereço>` devolve um item. `depth=0..3` controla quantos níveis de relações vêm junto (padrão 1).
+- `POST /api/x`, `PATCH /api/x/<id>` e `DELETE /api/x/<id>` pedem `Authorization: Bearer <chave>` com escrita e corpo JSON.
+  - Os dados passam pelas mesmas regras do formulário (`required`, `type`, opções, `maxlength`).
+  - `PATCH` muda só os campos enviados e guarda a versão anterior.
+  - `DELETE` manda o item para a lixeira.
+  - Campos de arquivo só se enviam pelo painel.
+- Sem chave, só aparece o que está publicado, e arquivos sem `data-publico` ficam de fora.
+- `GET /api` descreve todos os tipos e globais.
+- As chaves são criadas e revogadas em `/_admin/api` (só o dono). Ficam guardadas só como hash e aparecem uma única vez.
+
+**Relações.** `<select name="corretor" data-relacao="corretores">` guarda o número de um item de outro `<conteudo>`.
+
+- O painel lista os itens do outro tipo como opções.
+- O servidor confere se o item existe. A API também aceita o endereço (slug) do item.
+- Na página do item (`<page conteudo=...>`) e na API, o campo traz o item inteiro: `{{ item.corretor.nome }}`.
+- `select multiple` com `name="x[]"` guarda vários itens.
+
+**Ganchos.** `<conteudo antes="fn" depois="fn">` chama funções do código do site:
+
+- quando o item é criado, editado ou apagado, tanto no painel quanto na API;
+- a função recebe `(dados, info)`, com `info.operacao` (`criar`, `editar` ou `apagar`), `info.id` e `info.anterior`;
+- em `antes`, a tabela devolvida (ou a própria tabela recebida, alterada) é o que se salva, e `recusar("motivo")` cancela;
+- `depois` serve para avisos e registros; um erro ali só vai para o `erros.log`.
+
+**Globais.** `<global nome="contato" titulo="Contato">` com campos de formulário é um conjunto único de dados do site inteiro (rodapé, contatos, horário).
+
+- É editado em `/_admin/global?g=contato`, e editores também podem editar.
+- No código: `global("contato").telefone`.
+- Para outros programas: `GET /api/globais/contato`.
+
+**Tipos criados por uma frase.** Em `/_admin/tipos` a pessoa escreve, por exemplo, "imóveis com preço, bairro, quartos, foto, situação (à venda, vendido) e corretor".
+
+- Quem desenha o tipo é uma destas opções:
+  - as regras do Nepenthes (na hora);
+  - a IA do servidor;
+  - a IA local (Granite, com esquema JSON; cerca de 20 s).
+- O desenho é sempre limpo pelo servidor:
+  - nomes seguros e sem palavras reservadas;
+  - tipos de campo conhecidos;
+  - relação só com tipos que existem;
+  - o título sempre vem primeiro.
+- Tipos de campo: `texto`, `texto_longo`, `numero`, `dinheiro`, `data`, `email`, `telefone`, `link`, `imagem`, `arquivo`, `sim_nao`, `escolha` e `relacao`.
+- O Nepenthes escreve o `<conteudo>`, a página de lista (`/nome`) e a página do item (`/nome/:slug`). Mostra o código antes de criar.
+- O tipo fica nos dados do site (meta `tipos:lista`) e é somado ao arquivo quando ele é lido, como as páginas visuais.
+- Se o arquivo já declara um tipo com o mesmo nome, vale o do arquivo.
+- Tirar o tipo não apaga os itens.
+
+### 10.24 O dono cuida do site pelo WhatsApp
+
+Em `/_admin/whatsapp` (só o dono) há um simulador com cara de WhatsApp e a ligação com o WhatsApp oficial (Cloud API da Meta).
+
+**O que o dono manda:**
+- **Item novo:** "chegou bolo de cenoura, R$ 12", com foto ou não.
+  - Vai para o tipo de conteúdo que tem preço e foto (ou o último usado).
+  - A foto é reduzida e gravada sem os dados do celular.
+  - Se falta um campo obrigatório, o item fica fora do site e o site pergunta. A resposta vem como "categoria: Doces".
+- **Preço:** "brigadeiro agora R$ 5" ou "o brigadeiro subiu pra 5 conto".
+- **Sumir e voltar:** "acabou o bolo de cenoura" / "voltou o bolo de cenoura" (o item só deixa de ser publicado).
+- **Aviso:** "amanhã fecho às 14h", "aviso: …" ou mensagens com promoção ou desconto.
+  - Viram uma faixa no topo de todas as páginas, com botão de fechar.
+  - A faixa vale até o fim do dia ("hoje"), de amanhã ("amanhã"), daqui a 7 dias ("semana") ou, nos outros casos, daqui a 2 dias.
+  - "tirar aviso" apaga.
+- **Horário:** "horário: …" muda os textos editáveis e os campos de `<global>` que tenham "horario" no nome.
+- **Lista:** "lista" mostra os itens.
+- **Desfazer:** "desfazer" volta o último passo (até 20). Um item criado vai para a lixeira.
+
+**Quem entende as mensagens:**
+- Regras do Nepenthes, sem internet.
+- Frases que elas não entendem vão para a IA (do servidor ou a local), que só pode escolher uma dessas ações.
+- Quando o nome bate só em parte ("acabou o bolo"), o site pergunta "Você quis dizer…" antes de mexer.
+
+**WhatsApp oficial:** a Meta chama `/_nep/whatsapp`.
+- No GET, confere o token de verificação gerado no painel.
+- No POST, confere o `X-Hub-Signature-256` com a chave secreta do app.
+- Só aceita os números do dono cadastrados. Celulares brasileiros batem com ou sem o nono dígito.
+- Ignora mensagens repetidas.
+- Baixa a foto pela API e responde pela API.
+- Token e chave secreta ficam só nos dados do site. O painel nunca os mostra de volta.
+
+A conversa (simulador e WhatsApp) aparece no painel.
 
 ## 11. Lua 5.4 na mesma máquina virtual
 

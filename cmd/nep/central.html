@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Central do Nepenthes</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3c5 6 9 11 9 17a9 9 0 0 1-18 0c0-6 4-11 9-17z' fill='%232f7d5b'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f5f4ef;--card:#fff;--ink:#1d2420;--mut:#5f6a64;--line:#e2e1da;--acc:#2f7d5b;--acc2:#24664a;--soft:#e8f2ec;--warn:#a5552a;--r:14px;--sh:0 1px 2px rgba(20,30,25,.06),0 4px 16px rgba(20,30,25,.05)}
+@media (prefers-color-scheme:dark){:root{--bg:#121714;--card:#1a211d;--ink:#e9eee9;--mut:#9ba69f;--line:#2a332e;--acc:#52b285;--acc2:#6cc69b;--soft:#1f3229;--warn:#e09a6e;--sh:none}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--acc)}
+header{background:var(--card);border-bottom:1px solid var(--line)}
+.topo{max-width:1120px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.08rem;letter-spacing:-.01em}
+.marca svg{width:28px;height:28px}
+.marca small{font-weight:500;color:var(--mut);font-size:.8rem}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button{background:none;border:0;color:var(--mut);font:inherit;font-weight:500;padding:8px 12px;border-radius:9px;cursor:pointer}
+nav button:hover{background:var(--soft);color:var(--ink)}
+nav button.ativo{background:var(--soft);color:var(--acc2)}
+main{max-width:1120px;margin:0 auto;padding:26px 20px 60px}
+h1{font-size:1.6rem;letter-spacing:-.02em;margin:0 0 4px;line-height:1.2}
+h2{font-size:1.12rem;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--mut);margin:0 0 22px}
+.aba{display:none}.aba.ativa{display:block}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh)}
+.site h2{display:flex;align-items:center;gap:8px;overflow-wrap:anywhere}
+.ponto{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.ponto.on{background:#3fb37a;box-shadow:0 0 0 3px rgba(63,179,122,.2)}
+.meta{color:var(--mut);font-size:.84rem;margin:0 0 14px}
+.acoes{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:500;font-size:.9rem;padding:8px 13px;border-radius:10px;cursor:pointer;text-decoration:none;min-height:38px}
+.btn:hover{border-color:var(--acc);color:var(--acc2)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.pri:hover{background:var(--acc2);color:#fff}
+.btn:disabled{opacity:.55;cursor:wait}
+h2 .ponto{display:inline-block;vertical-align:middle;margin:0 6px 3px 0}
+.tag{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--acc2);margin-left:auto}
+label{display:block;font-weight:600;font-size:.9rem;margin:14px 0 6px}
+textarea,input[type=text],select,input[type=file]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:120px;resize:vertical}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--acc);outline-offset:1px}
+.dica{color:var(--mut);font-size:.84rem;margin:6px 0 0}
+.lado{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+.exemplos{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.exemplos button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:99px;padding:4px 10px;cursor:pointer}
+.exemplos button:hover{color:var(--acc2);border-color:var(--acc)}
+.vazio{text-align:center;padding:40px 20px}
+.vazio p{color:var(--mut);max-width:440px;margin:6px auto 18px}
+.barra{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:10px}
+.barra i{display:block;height:100%;background:var(--acc);width:0;transition:width .3s}
+.aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:11px;font-size:.9rem;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.2);display:none;z-index:9}
+.aviso.erro{background:var(--warn);color:#fff}
+.lista{margin:8px 0 0;padding-left:18px;color:var(--mut);font-size:.9rem}
+.lista li{margin:3px 0}
+code{background:var(--soft);padding:1px 6px;border-radius:6px;font-size:.86em}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rod{color:var(--mut);font-size:.82rem;margin-top:28px;text-align:center}
+.dados{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0 0 14px;font-size:.92rem}
+.dados dt{color:var(--mut)}.dados dd{margin:0;font-family:ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+.link{background:none;border:0;color:var(--acc);font:inherit;font-size:.86rem;cursor:pointer;padding:0;text-decoration:underline}
+.linha-f{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin-top:10px}
+.ck{display:flex;align-items:center;gap:6px;font-weight:500;margin:0}
+.cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grafico{height:320px;margin-top:14px}
+.painel .grafico{height:260px;margin-top:6px}
+.painel h2{display:flex;gap:8px;align-items:baseline}
+.painel h2 .link{margin-left:auto;font-weight:400}
+.tabela{overflow:auto;max-height:280px;margin-top:12px;border:1px solid var(--line);border-radius:10px}
+.tabela table{border-collapse:collapse;width:100%;font-size:.86rem}
+.tabela th,.tabela td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.tabela th{position:sticky;top:0;background:var(--card)}
+.erro-sql{color:var(--warn);font-family:ui-monospace,Consolas,monospace;font-size:.86rem;margin-top:12px;white-space:pre-wrap}
+@keyframes anda{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media (max-width:760px){
+ .cols4{grid-template-columns:1fr 1fr}
+ .lado,.cols2{grid-template-columns:1fr}
+ nav{margin-left:0;width:100%;overflow-x:auto;flex-wrap:nowrap}
+ nav button{white-space:nowrap;padding:7px 10px}
+ h1{font-size:1.35rem}
+ main{padding:20px 16px 50px}.topo{padding:12px 16px}
+ .grade{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header><div class="topo">
+ <div class="marca"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c5 6 9 11 9 17a9 9 0 0 1-18 0c0-6 4-11 9-17z" fill="#2f7d5b"/><path d="M16 11v15M16 18l-4-3M16 21l4-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+ <span>Nepenthes <small id="versao"></small></span></div>
+ <nav id="nav">
+  <button data-aba="sites" class="ativo">Meus sites</button>
+  <button data-aba="criar">Criar site</button>
+  <button data-aba="banco">Banco de dados</button>
+  <button data-aba="analises">Análises</button>
+  <button data-aba="ia">IA local</button>
+ </nav>
+</div></header>
+<main>
+
+<section class="aba ativa" id="aba-sites">
+ <h1>Meus sites</h1>
+ <p class="sub">Cada site roda aqui no seu computador. O painel de cada um tem o banco de dados, as páginas, a mídia e as cópias de segurança.</p>
+ <div class="grade" id="sites"></div>
+ <div class="acoes" style="margin-top:18px"><button class="btn" data-pasta="">Abrir a pasta dos sites</button></div>
+</section>
+
+<section class="aba" id="aba-criar">
+ <h1>Criar um site</h1>
+ <p class="sub">Escolha um jeito. O site fica pronto na hora e abre numa aba nova.</p>
+ <div class="lado">
+  <form class="card" id="f-criar">
+   <h2>Descreva o seu negócio</h2>
+   <p class="meta">O Nepenthes entende o ramo e monta páginas, textos, cores e formulários. Depois é só ajustar no painel.</p>
+   <label for="desc">Como é o site?</label>
+   <textarea id="desc" required placeholder="Ex.: padaria artesanal em Curitiba, com cardápio, encomendas pelo WhatsApp e horário de funcionamento"></textarea>
+   <div class="exemplos" id="exemplos"></div>
+   <label for="visual">Aparência</label>
+   <select id="visual"><option value="">Deixar o Nepenthes escolher</option></select>
+   <div class="acoes" style="margin-top:16px"><button class="btn pri" type="submit">Criar site</button></div>
+  </form>
+  <div style="display:grid;gap:16px">
+   <form class="card" id="f-assist">
+    <h2>Conversar com o assistente</h2>
+    <p class="meta">Uma tela pergunta sobre o seu negócio, e a IA escreve o site com você. Funciona com a IA local (aba IA local) ou com as regras do Nepenthes.</p>
+    <label for="nome-assist">Nome da pasta</label>
+    <input type="text" id="nome-assist" placeholder="meu-negocio">
+    <div class="acoes" style="margin-top:14px"><button class="btn pri" type="submit">Abrir o assistente</button></div>
+   </form>
+   <div class="card">
+    <h2>Começar de um modelo</h2>
+    <p class="meta">Sites prontos para editar.</p>
+    <div class="acoes" id="modelos"></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section class="aba" id="aba-banco">
+ <h1>Nepenthes DB</h1>
+ <p class="sub">Um PostgreSQL 16 de verdade rodando no seu computador, sem Docker e sem instalar nada. Serve para sistemas, planilhas grandes e programas que falam com banco de dados.</p>
+ <div class="cols2">
+  <div class="card">
+   <h2><span class="ponto" id="db-ponto"></span> <span id="db-titulo">Desligado</span></h2>
+   <p class="meta" id="db-texto">Na primeira vez ele baixa o PostgreSQL (uns 30 MB). Depois liga em segundos.</p>
+   <div class="barra" id="db-barra" hidden><i style="width:100%;animation:anda 1.2s linear infinite"></i></div>
+   <div class="acoes" style="margin-top:14px">
+    <button class="btn pri" id="db-ligar">Ligar o banco</button>
+    <button class="btn" id="db-parar" hidden>Desligar</button>
+    <button class="btn" id="db-pasta">Pasta dos dados</button>
+   </div>
+  </div>
+  <div class="card" id="db-conexao" hidden>
+   <h2>Como conectar</h2>
+   <p class="meta">Use estes dados em qualquer programa (DBeaver, pgAdmin, Excel, Python, PHP). Só este computador acessa.</p>
+   <dl class="dados">
+    <dt>Endereço</dt><dd>localhost</dd>
+    <dt>Porta</dt><dd id="db-porta"></dd>
+    <dt>Banco</dt><dd id="db-banco"></dd>
+    <dt>Usuário</dt><dd id="db-usuario"></dd>
+    <dt>Senha</dt><dd><span id="db-senha" class="oculto">••••••••</span> <button class="link" id="db-ver">mostrar</button></dd>
+   </dl>
+   <div class="acoes"><button class="btn" id="db-copiar">Copiar endereço completo</button></div>
+  </div>
+ </div>
+ <p class="dica" style="margin-top:16px">O banco liga sozinho quando o Nepenthes abre, se você deixou ligado da última vez. Ele liga a partir do PostgreSQL oficial, empacotado pelos projetos de código aberto embedded-postgres (MIT) e zonky (Apache 2.0).</p>
+</section>
+
+<section class="aba" id="aba-analises">
+ <h1>Análises</h1>
+ <p class="sub">Pergunte ao banco em SQL e veja a resposta em gráfico. Os gráficos salvos formam o seu painel.</p>
+ <div id="an-desligado" class="card vazio" hidden><h2>O banco está desligado</h2><p>As análises leem o Nepenthes DB. Ligue o banco para começar.</p><button class="btn pri" onclick="document.querySelector('[data-aba=banco]').click()">Ir para Banco de dados</button></div>
+ <div id="an-ligado" hidden>
+  <div class="grade" id="paineis"></div>
+  <form class="card" id="f-consulta" style="margin-top:16px">
+   <h2>Nova consulta</h2>
+   <label for="sql">SQL</label>
+   <textarea id="sql" spellcheck="false" style="font-family:ui-monospace,Consolas,monospace;font-size:.88rem;min-height:110px">SELECT now() AS agora</textarea>
+   <div class="linha-f">
+    <label class="ck"><input type="checkbox" id="escrever"> Permitir alterar dados</label>
+    <span class="dica" id="sem-dados">Sem dados ainda? <button class="link" type="button" id="exemplo">Criar vendas de exemplo</button></span>
+   </div>
+   <div class="acoes" style="margin-top:12px"><button class="btn pri" type="submit">Rodar</button></div>
+   <div id="resultado" hidden>
+    <div class="cols4">
+     <div><label for="g-tipo">Gráfico</label><select id="g-tipo"><option value="barra">Barras</option><option value="linha">Linha</option><option value="pizza">Pizza</option><option value="tabela">Só tabela</option></select></div>
+     <div><label for="g-x">Eixo X / rótulo</label><select id="g-x"></select></div>
+     <div><label for="g-y">Valor</label><select id="g-y"></select></div>
+     <div><label for="g-titulo">Título</label><input type="text" id="g-titulo" placeholder="Vendas por mês"></div>
+    </div>
+    <div class="grafico" id="g-ver"></div>
+    <div class="tabela" id="g-tabela"></div>
+    <div class="acoes" style="margin-top:12px"><button class="btn pri" type="button" id="g-salvar">Salvar no painel</button></div>
+   </div>
+  </form>
+ </div>
+</section>
+
+<section class="aba" id="aba-ia">
+ <h1>IA local</h1>
+ <p class="sub">A IA que roda no seu computador, sem mandar nada para fora. Ela escreve sites no assistente e responde o atendimento "Tire suas dúvidas" dos sites.</p>
+ <div class="cols2">
+  <div class="card">
+   <h2 id="ia-nome">Modelo</h2>
+   <p class="meta" id="ia-estado"></p>
+   <div class="barra" id="ia-barra" hidden><i></i></div>
+   <div class="acoes" style="margin-top:14px"><button class="btn pri" id="ia-baixar">Baixar a IA</button></div>
+  </div>
+  <div class="card">
+   <h2>O que já vem dentro</h2>
+   <ul class="lista">
+    <li>Servidor de sites e linguagem Nepenthes (também roda arquivos Lua).</li>
+    <li>Banco de dados de cada site, com painel, versões, lixeira, busca, comentários e backup.</li>
+    <li>Criador de sites, assistente, 8 aparências, gráficos e jogos de promoção.</li>
+   </ul>
+   <p class="dica">O Nepenthes DB (PostgreSQL 16) e as Análises também vêm dentro, sem Docker: veja as abas Banco de dados e Análises.</p>
+  </div>
+ </div>
+</section>
+
+<p class="rod">Seus sites ficam em <span id="base"></span>. O Nepenthes fica no ícone perto do relógio; para fechar tudo, clique nele e escolha Sair.</p>
+</main>
+<div class="aviso" id="aviso" role="status"></div>
+
+<script src="/_nep/echarts.js"></script>
+<script>
+const TOKEN = "{{token}}";
+let estado = null;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function aviso(t, erro) {
+  const a = $("#aviso");
+  a.textContent = t; a.className = "aviso" + (erro ? " erro" : ""); a.style.display = "block";
+  clearTimeout(aviso.t); aviso.t = setTimeout(() => a.style.display = "none", erro ? 7000 : 3500);
+}
+async function api(caminho, dados, botao) {
+  if (botao) botao.disabled = true;
+  try {
+    const op = {method: "POST", headers: {"X-Central": TOKEN}};
+    if (dados instanceof FormData) op.body = dados;
+    else { op.headers["Content-Type"] = "application/json"; op.body = JSON.stringify(dados || {}); }
+    const r = await fetch(caminho, op);
+    const j = await r.json().catch(() => ({erro: "resposta inválida"}));
+    if (!r.ok) throw new Error(j.erro || "não deu certo");
+    return j;
+  } catch (e) { aviso(e.message, true); throw e; }
+  finally { if (botao) botao.disabled = false; }
+}
+function abrirAba(url) { const w = window.open(url, "_blank"); if (!w) location.href = url; }
+
+document.querySelectorAll("#nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#nav button").forEach(x => x.classList.toggle("ativo", x === b));
+  document.querySelectorAll(".aba").forEach(s => s.classList.toggle("ativa", s.id === "aba-" + b.dataset.aba));
+  history.replaceState(null, "", "#" + b.dataset.aba);
+  requestAnimationFrame(() => graficos.forEach(g => g.resize()));
+});
+if (location.hash) { const b = document.querySelector(`#nav [data-aba="${location.hash.slice(1)}"]`); if (b) b.click(); }
+
+function desenharSites() {
+  const el = $("#sites");
+  if (!estado.sites.length) {
+    el.innerHTML = `<div class="card vazio" style="grid-column:1/-1"><h2>Nenhum site ainda</h2><p>Descreva o seu negócio e o Nepenthes monta o primeiro site em segundos.</p><button class="btn pri" onclick="document.querySelector('[data-aba=criar]').click()">Criar meu primeiro site</button></div>`;
+    return;
+  }
+  el.innerHTML = estado.sites.map((s, i) => `
+    <article class="card site">
+      <h2><span class="ponto ${s.rodando ? "on" : ""}" title="${s.rodando ? "rodando" : "parado"}"></span>${esc(s.nome)}${s.novo ? '<span class="tag">assistente</span>' : ""}</h2>
+      <p class="meta">${esc(s.arquivo)} · alterado em ${esc(s.alterado)}${s.rodando ? ` · <a href="${esc(s.url)}" target="_blank">${esc(s.url.replace("http://", "").replace(/\/$/, ""))}</a>` : ""}</p>
+      <div class="acoes">
+        <button class="btn pri" data-abrir="${i}">${s.novo ? "Abrir o assistente" : "Abrir o site"}</button>
+        ${s.novo ? "" : `<button class="btn" data-painel="${i}">Painel e banco de dados</button>`}
+        <button class="btn" data-pasta="${i}">Pasta</button>
+        ${s.rodando ? `<button class="btn" data-parar="${i}">Parar</button>` : ""}
+      </div>
+    </article>`).join("");
+}
+$("#sites").onclick = async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const d = b.dataset, s = estado.sites[d.abrir ?? d.painel ?? d.parar];
+  if (d.abrir != null || d.painel != null) {
+    const w = window.open("about:blank", "_blank");
+    try {
+      const r = await api("/api/abrir", {pasta: s.pasta}, b);
+      const u = r.url + (d.painel != null ? "_admin" : "");
+      if (w) w.location = u; else location.href = u;
+    } catch { if (w) w.close(); }
+    atualizar();
+  } else if (d.parar != null) { await api("/api/parar", {pasta: s.pasta}, b); atualizar(); }
+};
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-pasta]"); if (!b) return;
+  const i = b.dataset.pasta;
+  api("/api/pasta", {pasta: i === "" ? "" : estado.sites[i].pasta}, b).then(() => aviso("A pasta abriu no seu computador."));
+});
+
+const EXEMPLOS = ["padaria artesanal com encomendas", "clínica odontológica com agendamento", "escritório de advocacia trabalhista", "loja de roupas femininas com promoções", "pousada na praia com quartos e reservas", "academia com planos e aulas"];
+$("#exemplos").innerHTML = EXEMPLOS.map(x => `<button type="button">${esc(x)}</button>`).join("");
+$("#exemplos").onclick = e => { if (e.target.tagName === "BUTTON") { $("#desc").value = e.target.textContent; $("#desc").focus(); } };
+
+async function criarEAbrir(caminho, dados, botao, msg) {
+  const w = window.open("about:blank", "_blank");
+  try {
+    const r = await api(caminho, dados, botao);
+    if (w) w.location = r.url; else location.href = r.url;
+    aviso(msg);
+    await atualizar();
+    return r;
+  } catch { if (w) w.close(); }
+}
+$("#f-criar").onsubmit = e => { e.preventDefault(); criarEAbrir("/api/criar", {descricao: $("#desc").value, visual: $("#visual").value}, e.submitter, "Site criado. Ele aparece em Meus sites."); };
+$("#f-assist").onsubmit = e => { e.preventDefault(); criarEAbrir("/api/assistente", {nome: $("#nome-assist").value}, e.submitter, "O assistente abriu numa aba nova."); };
+$("#modelos").onclick = e => { const b = e.target.closest("button"); if (b) criarEAbrir("/api/modelo", {modelo: b.dataset.m}, b, "Site criado a partir do modelo."); };
+
+function desenharIA() {
+  const ia = estado.ia;
+  $("#ia-nome").textContent = ia.modelo || "IA local";
+  const txt = {ausente: "Ainda não baixada (uns 2 GB, uma vez só).", baixando: "Baixando…", pronto: "Pronta para usar.", ligando: "Ligando…", ligado: "Ligada.", erro: "Não disponível: " + (ia.erro || "")};
+  $("#ia-estado").textContent = txt[ia.fase] || ia.fase;
+  $("#ia-baixar").hidden = ia.fase !== "ausente";
+  const bar = $("#ia-barra");
+  bar.hidden = ia.fase !== "baixando";
+  if (ia.total) bar.firstElementChild.style.width = (100 * ia.baixado / ia.total) + "%";
+}
+$("#ia-baixar").onclick = e => api("/api/ia/baixar", {}, e.target).then(() => { aviso("Baixando a IA. Pode continuar usando."); atualizar(); });
+
+// ---- Nepenthes DB ----
+function desenharDB() {
+  const db = estado.db, on = db.fase === "ligado";
+  $("#db-ponto").className = "ponto" + (on ? " on" : "");
+  $("#db-titulo").textContent = {desligado: "Desligado", ligando: "Ligando…", ligado: "Ligado", erro: "Não ligou"}[db.fase] || db.fase;
+  $("#db-texto").textContent = db.fase === "erro" ? db.erro : db.fase === "ligando" ? "Na primeira vez ele baixa o PostgreSQL (uns 30 MB); depois liga em segundos." : on ? "PostgreSQL 16 rodando neste computador. Os dados ficam na pasta do Nepenthes." : "Na primeira vez ele baixa o PostgreSQL (uns 30 MB). Depois liga em segundos.";
+  $("#db-barra").hidden = db.fase !== "ligando";
+  $("#db-ligar").hidden = on || db.fase === "ligando";
+  $("#db-ligar").textContent = db.fase === "erro" ? "Tentar de novo" : "Ligar o banco";
+  $("#db-parar").hidden = !on;
+  $("#db-conexao").hidden = !on;
+  if (on) {
+    $("#db-porta").textContent = db.porta; $("#db-banco").textContent = db.banco; $("#db-usuario").textContent = db.usuario;
+    if (!$("#db-senha").classList.contains("oculto")) $("#db-senha").textContent = db.senha;
+  }
+  $("#an-desligado").hidden = on; 
+  const antes = !$("#an-ligado").hidden;
+  $("#an-ligado").hidden = !on;
+  if (on && !antes) carregarPaineis();
+}
+$("#db-ligar").onclick = e => api("/api/db/ligar", {}, e.target).then(atualizar);
+$("#db-parar").onclick = e => api("/api/db/parar", {}, e.target).then(atualizar);
+$("#db-pasta").onclick = e => api("/api/db/pasta", {}, e.target);
+$("#db-ver").onclick = () => { const o = $("#db-senha"); o.classList.toggle("oculto"); o.textContent = o.classList.contains("oculto") ? "••••••••" : estado.db.senha; $("#db-ver").textContent = o.classList.contains("oculto") ? "mostrar" : "esconder"; };
+$("#db-copiar").onclick = () => navigator.clipboard.writeText(estado.db.url).then(() => aviso("Endereço copiado."), () => aviso(estado.db.url));
+
+// ---- Análises ----
+const graficos = new Map();
+function cores() { const cs = getComputedStyle(document.documentElement); return {ink: cs.getPropertyValue("--ink").trim(), mut: cs.getPropertyValue("--mut").trim(), line: cs.getPropertyValue("--line").trim()}; }
+function desenharGrafico(el, res, tipo, x, y) {
+  if (graficos.has(el)) { graficos.get(el).dispose(); graficos.delete(el); }
+  if (tipo === "tabela" || !window.echarts) { el.hidden = true; return; }
+  el.hidden = false;
+  const ix = res.colunas.indexOf(x), iy = res.colunas.indexOf(y);
+  if (ix < 0 || iy < 0) { el.hidden = true; return; }
+  const c = cores(), xs = res.linhas.map(l => String(l[ix])), ys = res.linhas.map(l => Number(l[iy]));
+  const g = echarts.init(el, null, {renderer: "svg"});
+  const base = {color: ["#2f7d5b", "#d08a3c", "#4f7cc2", "#b4547a", "#7a8f3a", "#6b5fb5"], textStyle: {fontFamily: "system-ui,Segoe UI,sans-serif", color: c.ink}, tooltip: {trigger: tipo === "pizza" ? "item" : "axis"}, grid: {left: 8, right: 16, top: 16, bottom: 8, containLabel: true}};
+  if (tipo === "pizza") g.setOption({...base, legend: {bottom: 0, type: "scroll", textStyle: {color: c.mut}}, series: [{type: "pie", radius: ["38%", "64%"], center: ["50%", "44%"], data: xs.map((n, i) => ({name: n, value: ys[i]})), label: {show: false}}]});
+  else g.setOption({...base, xAxis: {type: "category", data: xs, axisLine: {lineStyle: {color: c.line}}, axisLabel: {color: c.mut, interval: tipo === "barra" && xs.length <= 12 ? 0 : "auto", width: Math.max(50, el.clientWidth / Math.max(1, xs.length) - 8), overflow: "truncate"}}, yAxis: {type: "value", splitLine: {lineStyle: {color: c.line}}, axisLabel: {color: c.mut}}, series: [{type: tipo === "linha" ? "line" : "bar", data: ys, smooth: tipo === "linha", areaStyle: tipo === "linha" ? {opacity: .12} : undefined, barMaxWidth: 40}]});
+  graficos.set(el, g);
+}
+function desenharTabela(el, res) {
+  el.innerHTML = `<table><thead><tr>${res.colunas.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${res.linhas.slice(0, 200).map(l => `<tr>${l.map(v => `<td>${esc(v === null ? "" : v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+window.addEventListener("resize", () => graficos.forEach(g => g.resize()));
+
+let ultimo = null;
+function escolherEixos(res) {
+  const num = res.colunas.filter((c, i) => res.linhas.length && res.linhas.every(l => l[i] === null || !isNaN(Number(l[i]))));
+  const op = res.colunas.map(c => `<option>${esc(c)}</option>`).join("");
+  $("#g-x").innerHTML = op; $("#g-y").innerHTML = op;
+  $("#g-x").value = res.colunas.find(c => !num.includes(c)) || res.colunas[0];
+  $("#g-y").value = num.find(c => c !== $("#g-x").value) || res.colunas[res.colunas.length - 1];
+}
+function verResultado() {
+  if (!ultimo) return;
+  desenharGrafico($("#g-ver"), ultimo, $("#g-tipo").value, $("#g-x").value, $("#g-y").value);
+}
+["#g-tipo", "#g-x", "#g-y"].forEach(s => $(s).onchange = verResultado);
+$("#f-consulta").onsubmit = async e => {
+  e.preventDefault();
+  $("#resultado").hidden = true;
+  const velho = $("#f-consulta .erro-sql"); if (velho) velho.remove();
+  try {
+    const op = {method: "POST", headers: {"X-Central": TOKEN, "Content-Type": "application/json"}, body: JSON.stringify({sql: $("#sql").value, escrever: $("#escrever").checked})};
+    const r = await fetch("/api/db/consulta", op), j = await r.json();
+    if (!r.ok) throw new Error(j.erro);
+    ultimo = j;
+    $("#resultado").hidden = false;
+    escolherEixos(j);
+    desenharTabela($("#g-tabela"), j);
+    if (!j.colunas.length) { $("#g-tabela").innerHTML = `<p class="dica" style="padding:10px">Pronto.</p>`; $("#g-ver").hidden = true; return; }
+    verResultado();
+  } catch (err) {
+    const d = document.createElement("div"); d.className = "erro-sql"; d.textContent = err.message;
+    e.submitter.closest(".acoes").after(d);
+  }
+};
+$("#g-salvar").onclick = async e => {
+  const p = {titulo: $("#g-titulo").value || $("#g-y").value, sql: $("#sql").value, tipo: $("#g-tipo").value, x: $("#g-x").value, y: $("#g-y").value};
+  await api("/api/db/paineis", {painel: p}, e.target);
+  aviso("Gráfico salvo no painel."); carregarPaineis();
+};
+$("#exemplo").onclick = async e => {
+  await api("/api/db/exemplo", {}, e.target);
+  aviso("Tabela vendas_exemplo criada, com dois gráficos no painel.");
+  $("#sql").value = "SELECT produto, sum(valor) AS total\nFROM vendas_exemplo\nGROUP BY 1 ORDER BY 2 DESC";
+  carregarPaineis();
+};
+async function carregarPaineis() {
+  const ps = await (await fetch("/api/db/paineis")).json();
+  const el = $("#paineis");
+  graficos.forEach((g, k) => { if (k.closest && k.closest("#paineis")) { g.dispose(); graficos.delete(k); } });
+  el.innerHTML = ps.map(p => `<article class="card painel"><h2>${esc(p.titulo)}<button class="link" data-apagar="${esc(p.id)}">remover</button></h2><div class="grafico"></div><div class="tabela" hidden></div></article>`).join("");
+  $("#sem-dados").hidden = ps.length > 0;
+  ps.forEach(async (p, i) => {
+    const card = el.children[i];
+    try {
+      const r = await fetch("/api/db/consulta", {method: "POST", headers: {"X-Central": TOKEN, "Content-Type": "application/json"}, body: JSON.stringify({sql: p.sql})});
+      const j = await r.json(); if (!r.ok) throw new Error(j.erro);
+      if (p.tipo === "tabela") { const t = card.querySelector(".tabela"); t.hidden = false; desenharTabela(t, j); card.querySelector(".grafico").hidden = true; }
+      else desenharGrafico(card.querySelector(".grafico"), j, p.tipo, p.x, p.y);
+    } catch (err) { card.querySelector(".grafico").outerHTML = `<p class="erro-sql">${esc(err.message)}</p>`; }
+  });
+}
+$("#paineis").onclick = async e => {
+  const b = e.target.closest("[data-apagar]"); if (!b) return;
+  await api("/api/db/paineis", {id: b.dataset.apagar}, b); carregarPaineis();
+};
+
+let primeira = true;
+async function atualizar() {
+  try { estado = await (await fetch("/api/estado")).json(); } catch { return; }
+  $("#versao").textContent = "v" + estado.versao;
+  $("#base").textContent = estado.base;
+  desenharSites(); desenharIA(); desenharDB();
+  if (primeira) {
+    primeira = false;
+    $("#visual").innerHTML += estado.visuais.map(v => `<option value="${esc(v.id)}">${esc(v.nome)}</option>`).join("");
+    $("#modelos").innerHTML = estado.modelos.map(m => `<button class="btn" data-m="${esc(m)}">${esc(m[0].toUpperCase() + m.slice(1))}</button>`).join("");
+  }
+}
+atualizar();
+setInterval(() => { if (!document.hidden) atualizar(); }, 1500);
+</script>
+</body>
+</html>

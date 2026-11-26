@@ -56,10 +56,10 @@ func (g *ger) html() string {
 		}
 		w(`</span></if>`)
 	}
-	w(`<a href="tel:+5500000000000" editavel="topo.fone">(00) 0000-0000</a></span>
+	w(`<a href="tel:+` + g.foneDigitos() + `" editavel="topo.fone">` + ouExemplo(g.p.Telefone, "(00) 0000-0000") + `</a></span>
   </div>
   <header>
-    <a class="marca" href="{{ url('/') }}"><span>«emoji»</span><b editavel="marca">«nome»</b></a>
+    <a class="marca" href="{{ url('/') }}">«marcaIco»<b editavel="marca">«nome»</b></a>
     <nav menu-editavel="principal">
       <a href="{{ url('/') }}">Início</a>
 `)
@@ -85,15 +85,33 @@ func (g *ger) html() string {
 	w(g.paginasFixas())
 	w("  </main>\n")
 	w(g.rodape())
+	if !g.tirou("atendente") {
+		// o atendente vai em todo site: responde com a IA que houver, ou sem IA
+		w("\n  {{ lowii() }}")
+	}
 	w(`
-  <if test="ia_ligada()">{{ lowii() }}</if>
 </body>
 </html>
 `)
 	return b.String()
 }
 
+// foneDigitos: o número para o link tel: (com o 55 do Brasil).
+func (g *ger) foneDigitos() string {
+	if d := strings.TrimPrefix(g.p.WhatsApp, "https://wa.me/"); g.p.Telefone != "" && d != g.p.WhatsApp {
+		return d
+	}
+	return "5500000000000"
+}
+
 func (g *ger) faixa() string {
+	if g.p.Horario != "" {
+		h := ouExemplo(g.p.Horario, "")
+		if g.p.Cidade != "" {
+			return "Atendimento em " + esc(g.p.Cidade) + " e região · " + h
+		}
+		return h
+	}
 	if g.p.Cidade != "" {
 		return "Atendimento em " + esc(g.p.Cidade) + " e região · Segunda a sábado"
 	}
@@ -119,7 +137,7 @@ func (g *ger) inicio() string {
               <a class="botao secundario" href="{{ url('«cta2U»') }}">«cta2»</a>
             </div>
           </div>
-          <div class="ilustracao" nep-inclinar="8" aria-hidden="true"><span>«emoji»</span></div>
+          ` + g.capaImagem() + `
         </div>
       </section>
 `)
@@ -134,7 +152,7 @@ func (g *ger) inicio() string {
         <div class="grade` + quatro(len(s.Servicos)) + `">
           <each s in="servicos |> take(6)">
             <a class="cartao servico" href="{{ url('«servU»/' + s.slug) }}">
-              <div class="icone">{{ default(s.icone, "✦") }}</div>
+              <div class="icone">{{ icone(default(s.icone, "✦")) }}</div>
               <h3>{{ tr(s.titulo) }}</h3>
               <p>{{ tr(default(s.resumo, "")) }}</p>
               <if test="s.preco"><span class="preco">a partir de {{ money(s.preco) }}</span></if>
@@ -251,7 +269,7 @@ func (g *ger) inicio() string {
 `)
 		if g.tem("wiki") {
 			w(`          <div class="cartao">
-            <div class="icone">📖</div>
+            <div class="icone">«ic:📖»</div>
             <h3>Wiki</h3>
             <p>Atualizadas há pouco:</p>
             <ul class="lista-simples">
@@ -263,7 +281,7 @@ func (g *ger) inicio() string {
 		}
 		if g.tem("forum") {
 			w(`          <div class="cartao">
-            <div class="icone">💬</div>
+            <div class="icone">«ic:💬»</div>
             <h3>Fórum</h3>
             <p>Conversas recentes:</p>
             <ul class="lista-simples">
@@ -303,7 +321,7 @@ func (g *ger) inicio() string {
 const produtoCartao = `
             <div class="cartao produto">
               <a class="foto-produto" href="{{ url('«lojaU»/' + p.slug) }}">
-                <if test="p.foto"><img src="{{ p.foto.url }}" alt="{{ p.titulo }}" loading="lazy"><else><span>{{ default(p.icone, "🛍️") }}</span></if>
+                <if test="p.foto"><img src="{{ p.foto.url }}" alt="{{ p.titulo }}" loading="lazy"><else><span>{{ icone(default(p.icone, "🛍️")) }}</span></if>
               </a>
               <span class="meta">{{ p.categoria }}</span>
               <h3><a href="{{ url('«lojaU»/' + p.slug) }}">{{ tr(p.titulo) }}</a></h3>
@@ -337,7 +355,7 @@ const pessoaCartao = `
 const fotoCartao = `
             <figure class="foto-item">
               <if test="f.foto"><a href="{{ f.foto.url }}"><img src="{{ f.foto.url }}" alt="{{ f.titulo }}" loading="lazy"></a><else><div class="sem-foto">«emoji»</div></if>
-              <figcaption>{{ f.titulo }}</figcaption>
+              <figcaption>{{ f.titulo }}<if test="f.link"> · <a href="{{ f.link }}" rel="noopener" target="_blank">ver no Instagram</a></if></figcaption>
             </figure>`
 
 const postCartao = `
@@ -386,4 +404,21 @@ func quatro(n int) string {
 		return " quatro"
 	}
 	return ""
+}
+
+// capaImagem: a primeira foto de verdade (Instagram) ou a ilustração do ramo.
+func (g *ger) capaImagem() string {
+	if len(g.p.Fotos) > 0 {
+		return `<div class="ilustracao foto" nep-inclinar="8"><img src="{{ url(` + lit(g.p.Fotos[0].URL) + `) }}" alt="` + esc(g.p.Fotos[0].Legenda) + `"></div>`
+	}
+	return `<div class="ilustracao" nep-inclinar="8" aria-hidden="true"><span>«emoji»</span></div>`
+}
+
+func (g *ger) tirou(m string) bool {
+	for _, t := range g.p.Tirados {
+		if t == m {
+			return true
+		}
+	}
+	return false
 }

@@ -56,3 +56,37 @@ func TestSoContato(t *testing.T) {
 		t.Errorf("só contato virou %v", p.Modulos)
 	}
 }
+
+func TestDadosDigitados(t *testing.T) {
+	d := Dados{Tipo: "portal", Nome: "Folha do Sertão", Cidade: "Juazeiro", WhatsApp: "(74) 98888-7777", Email: "redacao@folha.com.br", Endereco: "Rua das Flores, 10 {{ x }}", Horario: "Todos os dias"}
+	desc := DescricaoComDados("", d)
+	if !strings.Contains(desc, `chamado "Folha do Sertão"`) || !strings.Contains(desc, "em Juazeiro") || !strings.Contains(desc, "portal") {
+		t.Fatal(desc)
+	}
+	p := Entender(desc)
+	UsarDados(p, d)
+	if p.Setor.ID != "portal" || p.Nome != "Folha do Sertão" || p.WhatsApp != "https://wa.me/5574988887777" || p.Email != "redacao@folha.com.br" {
+		t.Fatalf("%+v", p)
+	}
+	src := Montar(p)
+	for _, s := range []string{"Folha do Sertão", "(74) 98888-7777", "redacao@folha.com.br", "Rua das Flores, 10 &#123;&#123; x }}", "Notícias"} {
+		if !strings.Contains(src, s) {
+			t.Errorf("faltou %q", s)
+		}
+	}
+	if strings.Contains(src, "{{ x }}") {
+		t.Error("texto digitado não pode virar código")
+	}
+	// e-mail inválido e tipo desconhecido são ignorados
+	p2 := Entender("padaria")
+	UsarDados(p2, Dados{Email: "não é e-mail", Tipo: "xyz"})
+	if p2.Email != "" || p2.Setor.ID != "restaurante" {
+		t.Fatalf("%+v", p2.Setor.ID)
+	}
+	if ps := TirarPerguntasRespondidas([]string{"Qual é o nome do seu negócio?", "Em que cidade?", "Que cores?"}, Dados{Nome: "X", Cidade: "Y"}); len(ps) != 1 {
+		t.Fatal(ps)
+	}
+	if !strings.Contains(Entender("portal de notícias da cidade").Setor.ID, "portal") {
+		t.Fatal("portal")
+	}
+}

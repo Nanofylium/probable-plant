@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nepenthes · criar o site</title>
+<style>
+:root{--cor:#2f6b4f;--escuro:#1d4532;--fundo:#f5f7f4;--cartao:#fff;--texto:#1c2420;--suave:#5d6b63;--linha:#dde5df;--raio:16px}
+@media (prefers-color-scheme:dark){:root{--fundo:#121815;--cartao:#1a221e;--texto:#e8eee9;--suave:#9fb0a6;--linha:#2c3832;--cor:#5fae86;--escuro:#8fd0ad}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--texto);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:40px 16px 80px}
+.marca{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--cor);letter-spacing:.02em}
+.marca svg{width:30px;height:30px}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);line-height:1.15;margin:18px 0 8px;letter-spacing:-.02em}
+.sub{color:var(--suave);margin:0 0 26px}
+.cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.05);margin-bottom:18px}
+label.campo{display:block;font-weight:600;margin:0 0 8px}
+textarea,input[type=text]{width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--linha);border-radius:12px;padding:12px 14px}
+textarea{min-height:120px;resize:vertical}
+.dados-site{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+label.dado{display:flex;flex-direction:column;gap:6px;font-size:.9rem;font-weight:500;min-width:0}
+label.dado>input,label.dado>select{flex:none;min-height:46px}
+label.dado select{width:100%;font:inherit;color:inherit;background:var(--cartao);border:1px solid var(--linha);border-radius:12px;padding:11px 12px}
+@media (max-width:600px){.dados-site{grid-template-columns:1fr}}
+textarea:focus,input:focus{outline:3px solid color-mix(in srgb,var(--cor) 30%,transparent);border-color:var(--cor)}
+.motores{display:grid;gap:10px;margin-top:6px}
+.motor{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--linha);border-radius:12px;padding:12px 14px;cursor:pointer}
+.motor:has(input:checked){border-color:var(--cor);background:color-mix(in srgb,var(--cor) 7%,transparent)}
+.motor.off{opacity:.5;cursor:not-allowed}
+.motor b{display:block}.motor small{color:var(--suave)}
+.motores{grid-template-columns:minmax(0,1fr)}.motor{min-width:0}.motor>span{min-width:0;overflow-wrap:anywhere}.motor select{max-width:100%}
+.motor select{margin-top:6px;font:inherit;font-size:.9rem;padding:4px 6px;border-radius:8px;border:1px solid var(--linha);background:var(--cartao);color:inherit}
+.acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:12px 22px;cursor:pointer;background:var(--cor);color:#fff}
+button.sec{background:transparent;color:var(--texto);border:1px solid var(--linha)}
+button:disabled{opacity:.55;cursor:wait}
+.pergunta{margin-bottom:16px}
+.status{display:flex;gap:12px;align-items:center;color:var(--suave)}
+.giro{width:20px;height:20px;border-radius:50%;border:3px solid var(--linha);border-top-color:var(--cor);animation:g 1s linear infinite;flex:none}
+@keyframes g{to{transform:rotate(360deg)}}
+.barra{height:8px;background:var(--linha);border-radius:99px;overflow:hidden;margin-top:10px}
+.barra i{display:block;height:100%;width:0;background:var(--cor);transition:width .3s}
+.erro{color:#b42318;background:#fef3f2;border:1px solid #fecdca;border-radius:12px;padding:10px 14px;margin-top:12px}
+@media (prefers-color-scheme:dark){.erro{background:#3a1512;border-color:#7a271a;color:#fda29b}}
+ul.notas{color:var(--suave);font-size:.92rem;padding-left:20px}
+code{font-size:.88em;background:color-mix(in srgb,var(--cor) 10%,transparent);padding:1px 6px;border-radius:6px;word-break:break-all}
+[hidden]{display:none!important}
+.insta-linha{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.insta-linha input[type=text]{flex:1;min-width:180px}
+.arquivo-btn{display:inline-block;font-weight:700;border:1px solid var(--linha);border-radius:999px;padding:11px 18px;cursor:pointer}
+.arquivo-btn input{display:none}
+a.arquivo-btn{text-decoration:none;color:inherit}
+#insta-entrar{background:linear-gradient(45deg,#f09433,#dc2743 55%,#bc1888);color:#fff;border:0}
+details.dica{margin-top:12px;color:var(--suave);font-size:.93rem}
+details.dica summary{cursor:pointer;color:var(--cor);font-weight:600}
+details.dica ol{padding-left:20px;margin:8px 0 0}
+.visuais{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.visual{position:relative;display:grid;align-content:start;gap:6px;border:1px solid var(--linha);border-radius:12px;padding:8px 8px 10px;cursor:pointer;font-size:.86rem}
+.visual input{position:absolute;opacity:0;pointer-events:none}
+.visual:has(input:checked){border-color:var(--cor);box-shadow:0 0 0 2px var(--cor)}
+.visual:has(input:focus-visible){outline:3px solid color-mix(in srgb,var(--cor) 40%,transparent)}
+.visual small{color:var(--suave);line-height:1.3}
+.mini{height:64px;border-radius:8px;overflow:hidden;display:grid;align-content:center;padding:0 10px;gap:5px}
+.mini b{font-size:1.05rem;line-height:1}.mini i{display:block;height:6px;width:60%;border-radius:3px;opacity:.5;background:currentColor}
+.insta-prints{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:.92rem;color:var(--suave)}
+.insta-prints span{flex:1;min-width:220px}
+#insta-avisa{font-size:.92rem;color:var(--suave);margin:8px 0 0}
+.insta-ok{display:grid;gap:10px;margin-top:14px}
+.insta-ok p{margin:0}
+.insta-fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
+.insta-fotos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
+.envios{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:start}
+.envio-logo{display:grid;gap:8px;justify-items:start}
+.logo-caixa{width:140px;height:96px;border:1px dashed var(--linha);border-radius:12px;display:grid;place-items:center;color:var(--suave);font-size:.85rem;overflow:hidden;background:color-mix(in srgb,var(--cor) 4%,transparent)}
+.logo-caixa img{max-width:88%;max-height:80%;object-fit:contain}
+.fotos-env{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-top:10px}
+.fotos-env figure{position:relative;margin:0}
+.fotos-env img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.fotos-env button{position:absolute;top:4px;right:4px;width:26px;height:26px;min-width:0;min-height:0;padding:0;display:grid;place-items:center;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:15px;line-height:1;cursor:pointer}
+.fotos-env figure:first-child:after{content:"capa";position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.62);color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:99px}
+.envios small{color:var(--suave);font-size:.86rem}
+.solta{outline:3px dashed var(--cor);outline-offset:4px}
+@media (max-width:600px){.envios{grid-template-columns:1fr}}
+.link{background:none;border:0;padding:0;color:var(--suave);text-decoration:underline;font-weight:400;font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+  <div class="marca"><svg viewBox="0 0 150 150" aria-hidden="true"><g fill="currentColor"><path d="M50 14c14-10 40-10 56 2 6 5 9 11 9 17-16-8-40-10-62-4-4-5-5-10-3-15z"/><path d="M43 46c6-7 18-10 32-10s26 3 32 10c-3 6-7 10-8 17 0 8 6 14 12 24 7 12 7 28-3 39-9 10-21 14-33 14s-24-4-33-14c-10-11-10-27-3-39 6-10 12-16 12-24-1-7-5-11-8-17zm14 2c4 3 10 5 18 5s14-2 18-5c-4-3-10-5-18-5s-14 2-18 5z"/></g></svg>Nepenthes</div>
+
+  <!-- 1. o pedido -->
+  <section id="passo1">
+    <h1>Como você quer o seu site?</h1>
+    <p class="sub">Preencha os dados e conte do seu jeito o que você quer: um site de empresa, uma loja, um portal de notícias, uma comunidade… O Nepenthes pergunta o que faltar e escreve o site inteiro, com banco de dados, formulários e painel.</p>
+    <div class="cartao">
+      <label class="campo">Dados do site <small style="font-weight:400;color:var(--suave)">(o que ficar em branco, o Nepenthes completa)</small></label>
+      <div class="dados-site">
+        <label class="dado" style="grid-column:1/-1">Que tipo de site?
+          <select id="d-tipo"><option value="">Deixar o Nepenthes descobrir pela descrição</option></select></label>
+        <label class="dado">Nome do negócio ou projeto<input type="text" id="d-nome" maxlength="60" autocomplete="organization"></label>
+        <label class="dado">Cidade<input type="text" id="d-cidade" maxlength="40" autocomplete="address-level2"></label>
+        <label class="dado">WhatsApp<input type="text" id="d-whatsapp" maxlength="30" inputmode="tel" placeholder="(71) 99999-9999" autocomplete="tel"></label>
+        <label class="dado">E-mail<input type="text" id="d-email" maxlength="120" inputmode="email" autocomplete="email"></label>
+        <label class="dado">Endereço<input type="text" id="d-endereco" maxlength="120" autocomplete="street-address"></label>
+        <label class="dado">Horário de atendimento<input type="text" id="d-horario" maxlength="120" placeholder="Seg. a sex., 8h às 18h"></label>
+      </div>
+    </div>
+    <div class="cartao" id="envios-cartao">
+      <label class="campo">Logo e fotos <small style="font-weight:400;color:var(--suave)">(opcional: sem fotos, o Nepenthes usa ilustrações)</small></label>
+      <div class="envios">
+        <div class="envio-logo">
+          <div class="logo-caixa" id="logo-caixa">sem logo</div>
+          <label class="arquivo-btn">Enviar logo<input type="file" id="env-logo" accept="image/png,image/jpeg,image/gif"></label>
+          <button type="button" class="link" id="logo-tirar" hidden>Tirar o logo</button>
+        </div>
+        <div>
+          <label class="arquivo-btn">Enviar fotos<input type="file" id="env-fotos" accept="image/png,image/jpeg,image/gif" multiple></label>
+          <small style="display:block;margin-top:8px">Até 12 fotos do seu espaço, produtos ou trabalhos. A primeira vira a capa e, com 3 ou mais, o site ganha uma galeria. Pode arrastar as imagens para cá. O Nepenthes reduz as fotos e tira os dados do celular (como a localização).</small>
+          <div class="fotos-env" id="fotos-env"></div>
+        </div>
+      </div>
+      <div class="barra" id="env-barra" hidden><i></i></div>
+      <div id="env-erro" class="erro" hidden></div>
+    </div>
+    <div class="cartao">
+      <label class="campo">Redes sociais <small style="font-weight:400;color:var(--suave)">(o @ ou o link do perfil; aparecem no rodapé do site)</small></label>
+      <div class="dados-site">
+        <label class="dado">Facebook<input type="text" id="d-facebook" maxlength="200" placeholder="facebook.com/seunegocio" autocomplete="off"></label>
+        <label class="dado">TikTok<input type="text" id="d-tiktok" maxlength="200" placeholder="@seunegocio" autocomplete="off"></label>
+        <label class="dado">YouTube<input type="text" id="d-youtube" maxlength="200" placeholder="@seucanal" autocomplete="off"></label>
+        <label class="dado">LinkedIn<input type="text" id="d-linkedin" maxlength="200" placeholder="linkedin.com/company/seunegocio" autocomplete="off"></label>
+        <label class="dado">X (Twitter)<input type="text" id="d-x" maxlength="200" placeholder="@seunegocio" autocomplete="off"></label>
+      </div>
+      <small style="display:block;margin-top:10px;color:var(--suave)">O Instagram fica no quadro abaixo, porque dele o Nepenthes também puxa fotos e textos.</small>
+    </div>
+    <div class="cartao">
+      <label class="campo" for="insta-usuario">Instagram do negócio <small style="font-weight:400;color:var(--suave)">(opcional, mas ajuda muito)</small></label>
+      <div class="insta-linha">
+        <input type="text" id="insta-usuario" placeholder="@seunegocio" autocomplete="off" maxlength="60">
+        <a class="arquivo-btn" id="insta-entrar" href="#" hidden>Entrar com Instagram</a>
+      </div>
+      <div class="insta-prints">
+        <label class="arquivo-btn" id="insta-prints-btn">Enviar prints do Instagram<input type="file" id="insta-prints" accept="image/png,image/jpeg" multiple></label>
+        <span>Tire prints do seu perfil (a grade de fotos) ou dos seus posts, no celular ou no computador. O Nepenthes acha as fotos dentro de cada print, recorta e usa no site.</span>
+      </div>
+      <p id="insta-explica" style="font-size:.92rem;color:var(--suave);margin:10px 0 0">Entrando com o Instagram uma vez, o Nepenthes puxa sozinho as fotos, as legendas, os links e o perfil (contas comerciais e de criador). Ele não vê nem guarda sua senha.</p>
+      <details class="dica" id="insta-ligar"><summary>Ligar o app do Instagram (uma vez só, para quem instala o Nepenthes)</summary>
+        <ol>
+          <li>Em <b>developers.facebook.com</b>, crie um app do tipo empresa e acrescente o produto <b>Instagram</b> (API setup with Instagram login).</li>
+          <li>Em <b>Business login settings</b>, cole este endereço em <i>OAuth redirect URIs</i>: <code id="insta-volta"></code></li>
+          <li>Copie o <b>Instagram App ID</b> e a <b>Instagram App Secret</b> para cá:</li>
+        </ol>
+        <div class="insta-linha" style="margin-top:8px"><input type="text" id="insta-appid" placeholder="Instagram App ID" autocomplete="off"><input type="text" id="insta-segredo" placeholder="Instagram App Secret" autocomplete="off"><button type="button" class="sec" id="insta-salvar">Salvar</button></div>
+        <p style="margin:10px 0 0">Enquanto o app não passa pela revisão da Meta, só entram as contas adicionadas a ele no painel. Para essas, dá também para gerar o token no painel do app (<b>Generate token</b>) e colar aqui:</p>
+        <div class="insta-linha" style="margin-top:8px"><input type="text" id="insta-token" placeholder="Token de acesso do Instagram" autocomplete="off"><button type="button" class="sec" id="insta-usar-token">Usar token</button></div>
+      </details>
+      <details class="dica"><summary>Conta pessoal? Envie o arquivo de dados do Instagram</summary>
+        <ol>
+          <li>No Instagram, abra <b>Configurações</b> e entre em <b>Central de Contas</b>.</li>
+          <li>Toque em <b>Suas informações e permissões</b> e depois em <b>Baixar suas informações</b>.</li>
+          <li>Escolha a conta, <b>Algumas das suas informações</b>, marque <b>Conteúdo</b> e <b>Informações pessoais</b>.</li>
+          <li>Em formato, escolha <b>JSON</b>; em qualidade da mídia, <b>Média</b>; em período, <b>Último ano</b>.</li>
+          <li>O Instagram avisa por e-mail quando o arquivo fica pronto. Baixe o .zip e envie aqui.</li>
+        </ol>
+        <label class="arquivo-btn" style="margin-top:8px">Enviar o .zip do Instagram<input type="file" id="insta-zip" accept=".zip,application/zip"></label>
+      </details>
+      <div class="barra" id="insta-barra" hidden><i></i></div>
+      <div id="insta-erro" class="erro" hidden></div>
+      <p id="insta-avisa" hidden></p>
+      <div class="insta-ok" id="insta-ok" hidden>
+        <p id="insta-resumo"></p>
+        <div class="insta-fotos" id="insta-fotos"></div>
+        <p><button type="button" class="link" id="insta-tirar">Não usar o Instagram</button></p>
+      </div>
+    </div>
+    <div class="cartao">
+      <label class="campo" for="desc">Como é o site? O que não pode faltar?</label>
+      <textarea id="desc" placeholder="Ex.: Uma doceria artesanal em Salvador chamada Cacau & Coco, com cardápio, encomendas pelo WhatsApp e um jeito alegre"></textarea>
+    </div>
+    <div class="cartao">
+      <label class="campo">Visual do site</label>
+      <div class="visuais" id="visuais"></div>
+    </div>
+    <div class="cartao">
+      <label class="campo">Quem escreve o site</label>
+      <div class="motores">
+        <label class="motor" id="m-servidor" hidden><input type="radio" name="motor" value="servidor"><span><b>Qwen no servidor</b><small id="m-servidor-nome"></small></span></label>
+        <label class="motor" id="m-local"><input type="radio" name="motor" value="local"><span><b>IA do Nepenthes</b>
+          <small id="m-local-txt">O Granite 3.3 2B roda neste computador pelo llama.cpp: sem placa de vídeo, sem chave e sem internet depois de baixado. Baixa uma vez (1,5 GB). Leva de 1 a 3 minutos para escrever.</small></span></label>
+        <label class="motor" id="m-navegador"><input type="radio" name="motor" value="navegador"><span><b>Qwen aqui no navegador</b>
+          <small id="m-navegador-txt">Nada para instalar e sem chave: o modelo é baixado uma vez e fica guardado neste navegador. Precisa de um navegador com WebGPU (Chrome ou Edge recentes).</small>
+          <br><select id="modelo" aria-label="Tamanho do modelo">
+            <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Mínimo: Qwen 2.5 0.5B (cerca de 400 MB, mais simples)</option>
+            <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC" selected>Leve: Qwen 2.5 1.5B (cerca de 1 GB)</option>
+            <option value="Qwen2.5-3B-Instruct-q4f16_1-MLC">Melhor: Qwen 2.5 3B (cerca de 2 GB)</option>
+          </select></span></label>
+        <label class="motor"><input type="radio" name="motor" value="regras"><span><b>Sem IA</b><small>As regras do Nepenthes montam na hora, com textos prontos do ramo.</small></span></label>
+      </div>
+    </div>
+    <div class="acoes"><button id="ir1">Continuar</button></div>
+    <div id="erro1" class="erro" hidden></div>
+  </section>
+
+  <!-- 2. perguntas -->
+  <section id="passo2" hidden>
+    <h1>Só mais umas perguntas</h1>
+    <p class="sub">Responda o que quiser. O que ficar em branco, o Nepenthes decide.</p>
+    <div class="cartao" id="perguntas"></div>
+    <div class="acoes"><button id="ir2">Criar meu site</button><button class="sec" id="voltar2">Voltar</button></div>
+  </section>
+
+  <!-- 3. trabalhando -->
+  <section id="passo3" hidden>
+    <h1>Criando o seu site…</h1>
+    <div class="cartao">
+      <div class="status"><span class="giro"></span><span id="status">Começando</span></div>
+      <div class="barra" id="barra" hidden><i></i></div>
+    </div>
+    <div id="erro3" class="erro" hidden></div>
+    <div class="acoes" id="acoes3" hidden><button class="sec" id="voltar3">Voltar</button></div>
+  </section>
+
+  <!-- 4. pronto -->
+  <section id="passo4" hidden>
+    <h1 id="pronto-titulo">Pronto!</h1>
+    <div class="cartao">
+      <p id="pronto-motor"></p>
+      <ul class="notas" id="pronto-notas"></ul>
+      <p style="font-size:.9rem;color:var(--suave)">Arquivos gravados: <span id="pronto-arquivos"></span><br>O anterior ficou guardado em <code id="pronto-copia"></code>.</p>
+      <div id="pronto-aviso" class="erro" hidden></div>
+    </div>
+    <div class="acoes"><button id="abrir">Abrir o site</button></div>
+  </section>
+</main>
+
+<script type="module">
+const BASE = "{{BASE}}";
+const WEBLLM = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm";
+const $ = s => document.querySelector(s);
+const mostra = id => ["passo1","passo2","passo3","passo4"].forEach(p => $("#"+p).hidden = p !== id);
+let estado = {}, perguntas = [], motor = "regras", engine = null, f16 = true;
+
+async function post(rota, dados) {
+  const r = await fetch(BASE + "/_nep/assistente/" + rota, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(dados)});
+  if (!r.ok) throw new Error((await r.text()).trim() || ("erro " + r.status));
+  return r.json();
+}
+function status(t, pct) {
+  $("#status").textContent = t;
+  $("#barra").hidden = pct == null;
+  if (pct != null) $("#barra i").style.width = Math.round(pct * 100) + "%";
+}
+function erro(onde, e) { const el = $(onde); el.textContent = e.message || String(e); el.hidden = false; }
+
+// ---- Qwen no navegador (WebLLM) ----
+async function carregaQwen() {
+  if (engine) return engine;
+  // placas sem números de 16 bits (shader-f16) usam a versão de 32 bits do mesmo modelo
+  const modelo = f16 ? $("#modelo").value : $("#modelo").value.replace("q4f16_1", "q4f32_1");
+  status("Baixando o Qwen para este navegador (só na primeira vez)…", 0);
+  const webllm = await import(WEBLLM);
+  engine = await webllm.CreateMLCEngine(modelo, {initProgressCallback: p => status(p.text || "Preparando o Qwen…", p.progress ?? null)});
+  return engine;
+}
+async function qwen(sistema, usuario, maxTokens, temp) {
+  const e = await carregaQwen();
+  status("O Qwen está escrevendo…");
+  const r = await e.chat.completions.create({
+    messages: [{role: "system", content: sistema}, {role: "user", content: usuario}],
+    temperature: temp, max_tokens: maxTokens, response_format: {type: "json_object"},
+  });
+  return r.choices[0].message.content || "";
+}
+// ---- IA do Nepenthes (llama.cpp + Granite, no computador que roda o nep) ----
+const espera = ms => new Promise(r => setTimeout(r, ms));
+async function preparaLocal() {
+  let e = await post("local", {});
+  while (e.fase === "baixando") {
+    const mb = n => Math.round(n / 1048576);
+    status(`Baixando a IA do Nepenthes (só na primeira vez): ${mb(e.baixado)} de ${mb(e.total)} MB`, e.total ? e.baixado / e.total : 0);
+    await espera(1000);
+    e = await (await fetch(BASE + "/_nep/assistente/local")).json();
+  }
+  if (e.fase === "erro") throw new Error("A IA do Nepenthes não ficou pronta: " + e.erro);
+}
+function relogio(texto) {
+  const t0 = Date.now();
+  const tick = () => { const s = Math.round((Date.now() - t0) / 1000); status(`${texto} ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`); };
+  tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
+}
+function lerJSON(t) { const m = t.match(/\{[\s\S]*\}/); try { return m ? JSON.parse(m[0]) : null } catch { return null } }
+
+// ---- visual ----
+const MINI = {
+  surpresa: "background:conic-gradient(from 90deg,#f4d35e,#ee964b,#f95738,#0d3b66,#3a86ff,#f4d35e);color:#fff;font-family:system-ui;font-weight:800",
+  nepenthes: "background:linear-gradient(135deg,#eef4f0,#cfe3d7);color:#1d4532;font-family:Georgia,serif",
+  editorial: "background:#faf7f2;color:#1c1a17;font-family:Georgia,serif;font-style:italic;border-top:3px double #1c1a17",
+  noturno: "background:radial-gradient(circle at 80% 0,#3a3f8f,#0b0e13 70%);color:#fff;font-family:system-ui",
+  vitrine: "background:linear-gradient(90deg,#000c,#0004),linear-gradient(135deg,#c2410c,#7c2d12);color:#fff;font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase",
+  brutal: "background:#ffd23f;color:#0a0a0a;font-family:Impact,sans-serif;border:3px solid #0a0a0a;box-shadow:4px 4px 0 #0a0a0a",
+  suave: "background:radial-gradient(circle at 15% 30%,#fbcfe8 0 22px,transparent 23px),#fff1f6;color:#9d174d;font-family:system-ui;font-weight:900;border-radius:18px",
+  minimo: "background:#fff;color:#0a0a0a;font-family:system-ui;font-weight:600;letter-spacing:-.04em;border:1px solid #0a0a0a",
+  luxo: "background:#15130f;color:#d8c39a;font-family:Georgia,serif;letter-spacing:.12em;text-transform:uppercase;outline:1px solid #b08d57;outline-offset:-6px",
+};
+function mostraVisuais(lista) {
+  const box = $("#visuais"); box.innerHTML = "";
+  [{ID: "surpresa", Nome: "Surpresa", Descricao: "o Nepenthes escolhe um que combina com o ramo (muda a cada pedido)"}].concat(lista || []).forEach((v, i) => {
+    const l = document.createElement("label"); l.className = "visual";
+    l.innerHTML = '<input type="radio" name="visual"><span class="mini"><b></b><i></i></span><strong></strong><small></small>';
+    l.querySelector("input").value = v.ID; l.querySelector("input").checked = i === 0;
+    l.querySelector(".mini").setAttribute("style", MINI[v.ID] || "");
+    l.querySelector(".mini b").textContent = "Aa"; l.querySelector("strong").textContent = v.Nome; l.querySelector("small").textContent = v.Descricao;
+    box.appendChild(l);
+  });
+}
+function visualEscolhido() { const v = document.querySelector("input[name=visual]:checked"); return v && v.value !== "surpresa" ? v.value : ""; }
+
+// ---- Instagram ----
+function mostraInsta(d) {
+  $("#insta-ok").hidden = !d;
+  if (!d) return;
+  if (d.usuario) $("#insta-usuario").value = "@" + d.usuario;
+  const partes = [];
+  if (d.nome || d.usuario) partes.push("<b></b>");
+  $("#insta-resumo").innerHTML = partes.join("");
+  const b = $("#insta-resumo b"); if (b) b.textContent = (d.nome ? d.nome + " " : "") + (d.usuario ? "@" + d.usuario : "");
+  const extra = [];
+  if (d.posts) extra.push(d.posts + " posts lidos");
+  if (d.fotos && d.fotos.length) extra.push(d.fotos.length + " fotos para o site");
+  if (d.bio) extra.push("bio: “" + d.bio + "”");
+  if (extra.length) $("#insta-resumo").append(document.createTextNode((b ? " · " : "") + extra.join(" · ")));
+  const box = $("#insta-fotos"); box.innerHTML = "";
+  (d.fotos || []).forEach(u => { const i = document.createElement("img"); i.src = u; i.alt = ""; i.loading = "lazy"; box.appendChild(i); });
+  if (!$("#desc").value.trim() && (d.nome || d.bio)) $("#desc").value = [d.nome, d.bio].filter(Boolean).join(": ");
+}
+function enviaInsta(form, comBarra) {
+  return new Promise((ok, falha) => {
+    const x = new XMLHttpRequest();
+    x.open("POST", BASE + "/_nep/assistente/instagram");
+    if (comBarra) { $("#insta-barra").hidden = false; x.upload.onprogress = e => { if (e.lengthComputable) $("#insta-barra i").style.width = Math.round(e.loaded / e.total * 100) + "%"; }; }
+    x.onload = () => { $("#insta-barra").hidden = true; if (x.status === 200) { const r = JSON.parse(x.responseText); avisaPrints(r.prints); ok(r.instagram); } else falha(new Error(x.responseText.trim() || "erro " + x.status)); };
+    x.onerror = () => { $("#insta-barra").hidden = true; falha(new Error("O envio foi interrompido.")); };
+    x.send(form);
+  });
+}
+function avisaPrints(p) {
+  const el = $("#insta-avisa"); el.hidden = !p; if (!p) return;
+  const um = p.enviados === 1;
+  if (p.sem_foto === p.enviados) el.textContent = um ? "Não achei fotos nesse print. Tente um print da grade do perfil ou de um post com a foto inteira na tela." : "Não achei fotos nesses prints. Tente prints da grade do perfil ou de posts com a foto inteira na tela.";
+  else if (p.sem_foto) el.textContent = "Em " + p.sem_foto + " dos " + p.enviados + " prints não achei fotos inteiras; os outros foram aproveitados.";
+  else el.textContent = "";
+  el.hidden = !el.textContent;
+}
+$("#insta-prints").onchange = async e => {
+  const fs = [...e.target.files]; if (!fs.length) return;
+  $("#insta-erro").hidden = true;
+  const form = new FormData(); form.append("usuario", $("#insta-usuario").value);
+  fs.forEach(f => form.append("print", f));
+  $("#ir1").disabled = true;
+  try { mostraInsta(await enviaInsta(form, true)); } catch (err) { erro("#insta-erro", err); }
+  $("#ir1").disabled = false; e.target.value = "";
+};
+$("#insta-zip").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  $("#insta-erro").hidden = true;
+  const form = new FormData(); form.append("usuario", $("#insta-usuario").value); form.append("zip", f);
+  $("#ir1").disabled = true;
+  try { mostraInsta(await enviaInsta(form, true)); } catch (err) { erro("#insta-erro", err); }
+  $("#ir1").disabled = false; e.target.value = "";
+};
+$("#insta-tirar").onclick = async () => {
+  await fetch(BASE + "/_nep/assistente/instagram", {method: "DELETE"});
+  $("#insta-usuario").value = ""; $("#insta-avisa").hidden = true; mostraInsta(null);
+};
+function mostraApp(a) {
+  a = a || {};
+  $("#insta-volta").textContent = a.volta || "";
+  $("#insta-entrar").hidden = !a.ligado;
+  $("#insta-entrar").href = BASE + "/_nep/assistente/instagram/entrar";
+  if (a.app_id) $("#insta-appid").value = a.app_id;
+  $("#insta-explica").hidden = !a.ligado;
+}
+$("#insta-salvar").onclick = async () => {
+  $("#insta-erro").hidden = true;
+  try { mostraApp(await post("instagram/app", {app_id: $("#insta-appid").value, segredo: $("#insta-segredo").value})); $("#insta-segredo").value = ""; $("#insta-ligar").open = false; }
+  catch (e) { erro("#insta-erro", e); }
+};
+$("#insta-usar-token").onclick = async () => {
+  const t = $("#insta-token").value.trim(); if (!t) return;
+  $("#insta-erro").hidden = true;
+  const form = new FormData(); form.append("token", t);
+  $("#ir1").disabled = true;
+  try { mostraInsta(await enviaInsta(form, false)); $("#insta-token").value = ""; } catch (e) { erro("#insta-erro", e); }
+  $("#ir1").disabled = false;
+};
+async function guardaUsuario() {
+  const u = $("#insta-usuario").value.trim();
+  if (!u) return;
+  const form = new FormData(); form.append("usuario", u);
+  try { mostraInsta(await enviaInsta(form, false)); } catch {}
+}
+
+// ---- passo 1 ----
+async function inicio() {
+  estado = await (await fetch(BASE + "/_nep/assistente/estado")).json();
+  if (estado.ideia) $("#desc").value = estado.ideia;
+  mostraInsta(estado.instagram);
+  mostraEnvios(estado.envios);
+  mostraVisuais(estado.visuais);
+  (estado.tipos || []).forEach(t => { const o = document.createElement("option"); o.value = t[0]; o.textContent = t[1][0].toUpperCase() + t[1].slice(1); $("#d-tipo").appendChild(o); });
+  mostraApp(estado.instagram_app);
+  const q = new URLSearchParams(location.search);
+  if (q.get("instagram_erro")) erro("#insta-erro", new Error(q.get("instagram_erro")));
+  if (q.has("instagram") || q.has("instagram_erro")) history.replaceState(null, "", location.pathname);
+  if (estado.servidor) { $("#m-servidor").hidden = false; $("#m-servidor-nome").textContent = "Modelo " + estado.servidor + ", configurado no painel. Escreve rápido e não pesa no seu computador."; }
+  let temGPU = false;
+  try { const a = navigator.gpu && await navigator.gpu.requestAdapter(); temGPU = !!a; f16 = !!a && a.features.has("shader-f16"); } catch {}
+  if (!temGPU) { $("#m-navegador").classList.add("off"); $("#m-navegador input").disabled = true; $("#m-navegador-txt").textContent = "Este navegador não tem WebGPU. Abra no Chrome ou Edge recentes para usar o Qwen aqui, sem instalar nada."; }
+  const local = estado.local || {};
+  if (local.fase === "erro") { $("#m-local").classList.add("off"); $("#m-local input").disabled = true; $("#m-local-txt").textContent = local.erro; }
+  else if (local.fase !== "ausente") $("#m-local-txt").textContent = "O Granite 3.3 2B roda neste computador pelo llama.cpp, já baixado: sem placa de vídeo, sem chave e sem internet. Leva de 1 a 3 minutos para escrever.";
+  const pref = estado.servidor ? "servidor" : local.fase !== "erro" ? "local" : temGPU ? "navegador" : "regras";
+  document.querySelector(`input[name=motor][value=${pref}]`).checked = true;
+}
+function dados() {
+  const v = id => $("#d-" + id).value.trim();
+  return {tipo: v("tipo"), nome: v("nome"), cidade: v("cidade"), whatsapp: v("whatsapp"), email: v("email"), endereco: v("endereco"), horario: v("horario"),
+    instagram: $("#insta-usuario").value.trim(), facebook: v("facebook"), tiktok: v("tiktok"), youtube: v("youtube"), linkedin: v("linkedin"), x: v("x")};
+}
+// ---- logo e fotos ----
+function mostraEnvios(e) {
+  e = e || {};
+  const cx = $("#logo-caixa"); cx.textContent = "";
+  if (e.logo) { const i = document.createElement("img"); i.src = e.logo.url; i.alt = "Logo"; cx.appendChild(i); } else cx.textContent = "sem logo";
+  $("#logo-tirar").hidden = !e.logo;
+  $("#logo-tirar").dataset.id = e.logo ? e.logo.id : "";
+  const box = $("#fotos-env"); box.textContent = "";
+  (e.fotos || []).forEach(f => {
+    const fig = document.createElement("figure"), i = document.createElement("img"), b = document.createElement("button");
+    i.src = f.url; i.alt = ""; i.loading = "lazy"; b.type = "button"; b.textContent = "×"; b.title = "Tirar esta foto"; b.setAttribute("aria-label", "Tirar esta foto");
+    b.onclick = () => tiraEnvio(f.id);
+    fig.append(i, b); box.appendChild(fig);
+  });
+}
+function enviaImagens(campo, files) {
+  const imgs = [...files].filter(f => /^image\/(png|jpeg|gif)$/.test(f.type));
+  if (!imgs.length) return;
+  const form = new FormData();
+  imgs.forEach(f => form.append(campo, f, f.name));
+  $("#env-erro").hidden = true;
+  const x = new XMLHttpRequest();
+  x.open("POST", BASE + "/_nep/assistente/fotos");
+  $("#env-barra").hidden = false; $("#env-barra i").style.width = "0";
+  x.upload.onprogress = e => { if (e.lengthComputable) $("#env-barra i").style.width = Math.round(e.loaded / e.total * 100) + "%"; };
+  x.onload = () => {
+    $("#env-barra").hidden = true;
+    if (x.status !== 200) { erro("#env-erro", new Error(x.responseText.trim() || "erro " + x.status)); return; }
+    const r = JSON.parse(x.responseText); mostraEnvios(r);
+    if (r.avisos) erro("#env-erro", new Error(r.avisos.join(" · ")));
+  };
+  x.onerror = () => { $("#env-barra").hidden = true; erro("#env-erro", new Error("O envio foi interrompido.")); };
+  x.send(form);
+}
+async function tiraEnvio(id) {
+  const r = await fetch(BASE + "/_nep/assistente/fotos?id=" + encodeURIComponent(id), {method: "DELETE"});
+  if (r.ok) mostraEnvios(await r.json());
+}
+$("#env-logo").onchange = e => { enviaImagens("logo", e.target.files); e.target.value = ""; };
+$("#env-fotos").onchange = e => { enviaImagens("fotos", e.target.files); e.target.value = ""; };
+$("#logo-tirar").onclick = e => tiraEnvio(e.target.dataset.id);
+{
+  const c = $("#envios-cartao");
+  c.addEventListener("dragover", e => { e.preventDefault(); c.classList.add("solta"); });
+  c.addEventListener("dragleave", () => c.classList.remove("solta"));
+  c.addEventListener("drop", e => { e.preventDefault(); c.classList.remove("solta"); enviaImagens("fotos", e.dataTransfer.files); });
+}
+// a descrição com os dados digitados (para a IA do navegador, que lê texto)
+function descCompleta() {
+  const d = dados(), partes = [$("#desc").value.trim()];
+  const t = (estado.tipos || []).find(t => t[0] === d.tipo); if (t) partes.push(t[1]);
+  if (d.nome) partes.push(`chamado "${d.nome}"`);
+  if (d.cidade) partes.push("em " + d.cidade);
+  return partes.filter(Boolean).join(", ");
+}
+$("#ir1").onclick = async () => {
+  const desc = $("#desc").value.trim(), d = dados();
+  $("#erro1").hidden = true;
+  if (!desc && !d.tipo && !d.nome) { erro("#erro1", new Error("Escolha o tipo de site, dê um nome ou escreva como você quer o site.")); return; }
+  motor = document.querySelector("input[name=motor]:checked").value;
+  $("#ir1").disabled = true;
+  try {
+    await guardaUsuario();
+    if (motor === "navegador") {
+      mostra("passo3");
+      const r = lerJSON(await qwen(estado.prompt_perguntas, descCompleta(), 300, 0.7));
+      perguntas = (r && Array.isArray(r.perguntas) ? r.perguntas : []).filter(p => typeof p === "string" && p.trim()).slice(0, 4);
+      if (!perguntas.length) perguntas = (await post("perguntas", {descricao: desc, motor: "regras", dados: d})).perguntas;
+    } else if (motor === "local") {
+      mostra("passo3");
+      await preparaLocal();
+      const para = relogio("A IA do Nepenthes está lendo o seu pedido…");
+      try { perguntas = (await post("perguntas", {descricao: desc, motor, dados: d})).perguntas; } finally { para(); }
+    } else {
+      perguntas = (await post("perguntas", {descricao: desc, motor, dados: d})).perguntas;
+    }
+    const box = $("#perguntas"); box.innerHTML = "";
+    perguntas.forEach((p, i) => {
+      const d = document.createElement("div"); d.className = "pergunta";
+      d.innerHTML = `<label class="campo" for="r${i}"></label><input type="text" id="r${i}">`;
+      d.querySelector("label").textContent = p; box.appendChild(d);
+    });
+    mostra("passo2"); $("#r0")?.focus();
+  } catch (e) { mostra("passo1"); erro("#erro1", e); }
+  $("#ir1").disabled = false;
+};
+
+// ---- passo 2 e 3 ----
+$("#voltar2").onclick = () => mostra("passo1");
+$("#voltar3").onclick = () => { $("#erro3").hidden = true; $("#acoes3").hidden = true; mostra("passo2"); };
+$("#ir2").onclick = async () => {
+  const desc = $("#desc").value.trim();
+  const respostas = perguntas.map((p, i) => [p, $("#r" + i).value]);
+  mostra("passo3"); $("#erro3").hidden = true; $("#acoes3").hidden = true;
+  try {
+    let conteudo = "";
+    if (motor === "navegador") {
+      let msg = "Pedido: " + descCompleta() + "\n";
+      respostas.forEach(([p, r]) => { if (r.trim()) msg += "Pergunta: " + p + "\nResposta: " + r.trim() + "\n"; });
+      conteudo = await qwen(estado.prompt_site, msg, 2500, 0.9);
+    }
+    let para = () => {};
+    if (motor === "local") { await preparaLocal(); para = relogio("A IA do Nepenthes está escrevendo o site, sem placa de vídeo (leva de 1 a 3 minutos)…"); }
+    else status(motor === "servidor" ? "O Qwen do servidor está escrevendo e o Nepenthes está montando…" : "O Nepenthes está montando as páginas…");
+    let r;
+    try { r = await post("criar", {descricao: desc, respostas, conteudo, motor, visual: visualEscolhido(), dados: dados()}); } finally { para(); }
+    $("#pronto-titulo").textContent = (r.nome ? r.nome + " está pronto!" : "Pronto!");
+    $("#pronto-motor").textContent = {servidor: "Escrito pelo Qwen do servidor e montado pelo Nepenthes.", local: "Escrito pela IA do Nepenthes (Granite, neste computador) e montado pelo Nepenthes.", navegador: "Escrito pelo Qwen no seu navegador e montado pelo Nepenthes.", regras: "Montado pelas regras do Nepenthes."}[r.motor] || "";
+    $("#pronto-notas").innerHTML = ""; (r.notas || []).forEach(n => { const li = document.createElement("li"); li.textContent = n; $("#pronto-notas").appendChild(li); });
+    $("#pronto-arquivos").textContent = (r.arquivos || []).map(a => a.split(/[\\/]/).pop()).join(", ");
+    $("#pronto-copia").textContent = (r.copia || "").split(/[\\/]/).pop();
+    if (r.aviso) { $("#pronto-aviso").textContent = r.aviso; $("#pronto-aviso").hidden = false; }
+    $("#abrir").onclick = () => location.href = r.ir || (BASE + "/");
+    mostra("passo4");
+  } catch (e) { erro("#erro3", e); $("#acoes3").hidden = false; }
+};
+inicio().catch(e => erro("#erro1", e));
+</script>
+</body>
+</html>

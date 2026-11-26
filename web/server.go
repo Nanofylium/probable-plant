@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/Nanofylium/probable-plant/moldes"
 	"html"
 	"io"
 	"mime"
@@ -40,6 +41,9 @@ type Options struct {
 	CGI      bool   // rodando como CGI (hospedagem compartilhada)
 	Base     string // prefixo de URL quando o site fica numa subpasta
 	Log      io.Writer
+	// AposCriar roda depois que o assistente (<nepenthes>) grava o site;
+	// devolve os arquivos extras que criou (o nep usa para a prévia).
+	AposCriar func(site string) []string
 }
 
 type Server struct {
@@ -50,6 +54,7 @@ type Server struct {
 	site    *Site
 	siteErr error
 	mtime   time.Time
+	fonte   string // o texto do site como foi lido (moldes e páginas visuais aplicados)
 	Store   *Store
 	secret  string
 }
@@ -102,8 +107,46 @@ func (s *Server) load() (*Site, error) {
 		return nil, err
 	}
 	s.mtime = st.ModTime()
-	s.site, s.siteErr = ParseSite(filepath.Base(s.file), strings.ReplaceAll(string(src), "\r\n", "\n"))
+	txt, err := expandirMolde(src)
+	if err != nil {
+		s.site, s.siteErr = nil, err
+		return nil, err
+	}
+	comTipos := s.aplicarTipos(txt) // tipos criados em /_admin/tipos
+	comVisual := s.aplicarPaginasVisuais(comTipos)
+	s.site, s.siteErr = ParseSite(filepath.Base(s.file), comVisual)
+	s.fonte = comVisual
+	if s.siteErr != nil && comVisual != comTipos { // uma página visual quebrou o site: segue sem elas
+		fmt.Fprintf(s.opt.Log, "páginas visuais ignoradas: %v\n", s.siteErr)
+		s.site, s.siteErr = ParseSite(filepath.Base(s.file), comTipos)
+		s.fonte = comTipos
+	}
+	if s.siteErr != nil && comTipos != txt { // idem para os tipos do painel
+		fmt.Fprintf(s.opt.Log, "tipos do painel ignorados: %v\n", s.siteErr)
+		s.site, s.siteErr = ParseSite(filepath.Base(s.file), txt)
+		s.fonte = txt
+	}
 	return s.site, s.siteErr
+}
+
+// recarregar faz o site ser lido de novo no próximo pedido.
+func (s *Server) recarregar() {
+	s.mu.Lock()
+	s.site, s.siteErr = nil, nil
+	s.mu.Unlock()
+}
+
+// expandirMolde: um index.html com <nepenthes tipo="blog|portal|wiki|estatico" ...>
+// vira o site inteiro do molde (na memória; o arquivo não muda). Sem a tag com
+// atributos, o texto segue como está.
+func expandirMolde(src []byte) (string, error) {
+	if out, ok, err := moldes.Expandir(src); ok {
+		if err != nil {
+			return "", fmt.Errorf("<nepenthes>: %w", err)
+		}
+		return out, nil
+	}
+	return strings.ReplaceAll(string(src), "\r\n", "\n"), nil
 }
 
 // Check lê o site e compila todo o código, sem rodar nada. Usado por `nep check`.
@@ -112,7 +155,11 @@ func Check(file string) (*Site, error) {
 	if err != nil {
 		return nil, err
 	}
-	site, err := ParseSite(filepath.Base(file), strings.ReplaceAll(string(src), "\r\n", "\n"))
+	txt, err := expandirMolde(src)
+	if err != nil {
+		return nil, err
+	}
+	site, err := ParseSite(filepath.Base(file), txt)
 	if err != nil {
 		return nil, err
 	}
@@ -218,6 +265,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/_nep/tema.css":
 		serveTema(w, r)
 		return
+	case "/_nep/echarts.js":
+		serveAssetJS(w, r, echartsJS, false)
+		return
+	case "/_nep/grafico.js":
+		serveAssetJS(w, r, graficoJS, false)
+		return
+	case "/_nep/hilo.js":
+		serveAssetJS(w, r, hiloJS, false)
+		return
+	case "/_nep/jogos.js":
+		serveAssetJS(w, r, jogosJS, false)
+		return
+	case "/_nep/mundo.js":
+		serveAssetJS(w, r, mundoJS, false)
+		return
 	case "/_nep/versao":
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
@@ -225,6 +287,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	case "/_nep/eventos":
 		s.events(w, r)
+		return
+	}
+	if strings.HasPrefix(rq.path, "/_nep/visual/") || strings.HasPrefix(rq.path, "/_nep/fontes/") {
+		s.serveVisual(w, r, rq.path)
+		return
+	}
+	if strings.HasPrefix(rq.path, "/_nep/molde/") {
+		moldes.Servir(w, r, strings.TrimPrefix(rq.path, "/_nep/molde/"))
 		return
 	}
 	if strings.HasPrefix(rq.path, "/_nep/construtor/") {
@@ -247,6 +317,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	if ok, ideia := s.pedeAssistente(); ok {
+		s.assistente(rq, ideia)
+		return
+	}
 
 	site, err := s.load()
 	if err != nil {
@@ -254,6 +328,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rq.site = site
+	if rq.path == "/_nep/whatsapp" { // mensagens do dono pelo WhatsApp oficial
+		s.zapWebhook(rq)
+		return
+	}
 	if rq.r.Method == "GET" || rq.r.Method == "HEAD" {
 		switch rq.path {
 		case "/sitemap.xml":
@@ -279,6 +357,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if rq.path == "/_nep/lowii" {
 		s.lowii(rq)
+		return
+	}
+	if rq.path == "/_nep/jogo" {
+		s.jogoAPI(rq)
 		return
 	}
 	if err := s.route(rq); err != nil {
@@ -407,6 +489,9 @@ func (s *Server) route(rq *request) error {
 			}
 			return s.api(rq, a, m[1:])
 		}
+	}
+	if ok, err := s.restAPI(rq); ok || err != nil { // /api/<colecao> de cada <conteudo>
+		return err
 	}
 	var params []string
 	for _, p := range site.Pages {
@@ -540,6 +625,8 @@ func (s *Server) inject(rq *request, out string) string {
 	cfg := rq.site.Config
 	inicio, _ := s.temaTags(cfg, out)
 	out = noComecoDoHead(out, inicio)
+	out = noFimDoHead(out, s.visualTag(cfg))
+	out = s.comAviso(out) // aviso mandado pelo WhatsApp
 	tags := s.seoTags(rq, out)
 	mv := strings.ToLower(strings.TrimSpace(cfg["movimento"]))
 	if mv != "" && mv != "false" && mv != "0" && mv != "nao" && mv != "não" {
