@@ -626,6 +626,64 @@ Em `/_admin/paginas`, o dono abre qualquer página de endereço fixo (e a 404) n
 - Ao salvar, o HTML passa pela limpeza do construtor (sem scripts nem eventos; aceita também `aria-*`, `data-*`, `role`, `editavel`, `nep-*`), as chaves viram `&#123;` (o texto digitado nunca vira código) e os links do próprio site voltam a ser `{{ url('...') }}`. O CSS da página fica sem regras de `body`, `html` e `*`. A página é conferida (compila) antes de ser guardada.
 - A página montada fica no banco do site (`visual:pagina:/rota`) e substitui o miolo da `<page>` quando o site é lido: o arquivo `.nep.html` não muda, então funciona no CGI e nos moldes. "Voltar ao original" apaga o registro. Se uma página visual impedir o site de compilar, o site segue sem as páginas visuais e o erro vai para o log.
 
+### 10.23 Tipos, API, relações, ganchos e globais (ideias do Payload CMS)
+
+Ideias do Payload CMS (MIT), escritas de novo em Go e na linguagem Nepenthes. Nenhum código do Payload é usado.
+
+**API automática.** Todo `<conteudo nome="x">` responde em `/api/x`, a não ser que tenha `api="nao"`. Rotas `<api>` do próprio site vêm antes.
+
+- `GET /api/x` lista os itens. Parâmetros:
+  - `limit` (até 100) e `page`;
+  - `sort=campo` ou `sort=-campo`;
+  - `where[campo]=valor`, ou `where[campo][op]=valor` com `op` igual a `igual`, `diferente`, `contem`, `em`, `existe`, `maior`, `menor`, `maior_igual` ou `menor_igual` (os nomes do Payload também valem: `equals`, `contains`, `greater_than`…).
+  - A resposta tem `docs`, `totalDocs`, `limit`, `page`, `totalPages`, `hasPrevPage`, `hasNextPage`, `prevPage` e `nextPage`.
+- `GET /api/x/<id ou endereço>` devolve um item. `depth=0..3` controla quantos níveis de relações vêm junto (padrão 1).
+- `POST /api/x`, `PATCH /api/x/<id>` e `DELETE /api/x/<id>` pedem `Authorization: Bearer <chave>` com escrita e corpo JSON.
+  - Os dados passam pelas mesmas regras do formulário (`required`, `type`, opções, `maxlength`).
+  - `PATCH` muda só os campos enviados e guarda a versão anterior.
+  - `DELETE` manda o item para a lixeira.
+  - Campos de arquivo só se enviam pelo painel.
+- Sem chave, só aparece o que está publicado, e arquivos sem `data-publico` ficam de fora.
+- `GET /api` descreve todos os tipos e globais.
+- As chaves são criadas e revogadas em `/_admin/api` (só o dono). Ficam guardadas só como hash e aparecem uma única vez.
+
+**Relações.** `<select name="corretor" data-relacao="corretores">` guarda o número de um item de outro `<conteudo>`.
+
+- O painel lista os itens do outro tipo como opções.
+- O servidor confere se o item existe. A API também aceita o endereço (slug) do item.
+- Na página do item (`<page conteudo=...>`) e na API, o campo traz o item inteiro: `{{ item.corretor.nome }}`.
+- `select multiple` com `name="x[]"` guarda vários itens.
+
+**Ganchos.** `<conteudo antes="fn" depois="fn">` chama funções do código do site:
+
+- quando o item é criado, editado ou apagado, tanto no painel quanto na API;
+- a função recebe `(dados, info)`, com `info.operacao` (`criar`, `editar` ou `apagar`), `info.id` e `info.anterior`;
+- em `antes`, a tabela devolvida (ou a própria tabela recebida, alterada) é o que se salva, e `recusar("motivo")` cancela;
+- `depois` serve para avisos e registros; um erro ali só vai para o `erros.log`.
+
+**Globais.** `<global nome="contato" titulo="Contato">` com campos de formulário é um conjunto único de dados do site inteiro (rodapé, contatos, horário).
+
+- É editado em `/_admin/global?g=contato`, e editores também podem editar.
+- No código: `global("contato").telefone`.
+- Para outros programas: `GET /api/globais/contato`.
+
+**Tipos criados por uma frase.** Em `/_admin/tipos` a pessoa escreve, por exemplo, "imóveis com preço, bairro, quartos, foto, situação (à venda, vendido) e corretor".
+
+- Quem desenha o tipo é uma destas opções:
+  - as regras do Nepenthes (na hora);
+  - a IA do servidor;
+  - a IA local (Granite, com esquema JSON; cerca de 20 s).
+- O desenho é sempre limpo pelo servidor:
+  - nomes seguros e sem palavras reservadas;
+  - tipos de campo conhecidos;
+  - relação só com tipos que existem;
+  - o título sempre vem primeiro.
+- Tipos de campo: `texto`, `texto_longo`, `numero`, `dinheiro`, `data`, `email`, `telefone`, `link`, `imagem`, `arquivo`, `sim_nao`, `escolha` e `relacao`.
+- O Nepenthes escreve o `<conteudo>`, a página de lista (`/nome`) e a página do item (`/nome/:slug`). Mostra o código antes de criar.
+- O tipo fica nos dados do site (meta `tipos:lista`) e é somado ao arquivo quando ele é lido, como as páginas visuais.
+- Se o arquivo já declara um tipo com o mesmo nome, vale o do arquivo.
+- Tirar o tipo não apaga os itens.
+
 ## 11. Lua 5.4 na mesma máquina virtual
 
 O `nep` roda programas Lua 5.4: `nep jogo.lua [args]`. O código Lua é lido por um leitor próprio e compilado para o mesmo bytecode do Nepenthes, então os dois se misturam:

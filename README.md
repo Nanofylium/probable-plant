@@ -88,6 +88,8 @@ go build -o nep ./cmd/nep
 | Mac (Apple Silicon) | `nep-macos-arm64` |
 | Mac (Intel) | `nep-macos-amd64` |
 
+**Tipos, API e globais (ideias do Payload CMS):** em `/_admin/tipos` uma frase vira um tipo de conteúdo completo: formulário, páginas e API. Todo `<conteudo>` ganha `/api/<nome>` com filtros, ordem e páginas, e escrita com chave feita em `/_admin/api`. Também há relações entre tipos (`data-relacao`), ganchos `antes`/`depois` e `<global>` para dados do site inteiro. Detalhes em SPEC 10.23.
+
 **Construtor de páginas:** no painel (`/_admin/paginas`), qualquer página do site pode ser montada arrastando blocos, como no Wix, sem perder o código do Nepenthes (GrapesJS, BSD).
 
 **Dois cliques** no executável do Windows perguntam, a cada uso, se você quer **criar um site** (a IA pergunta sobre o negócio e recebe logo, fotos e redes sociais) ou **programar** (editor de Nepenthes e Lua com botão Rodar e a IA local que escreve e conserta o código). A **Central do Nepenthes** fica a um clique: meus sites (com painel e banco de dados), criar site descrevendo o negócio, assistente com IA, modelos prontos, **Nepenthes DB** (PostgreSQL 16 sem Docker, um botão), **Análises** (SQL e gráficos) e a IA local, tudo num arquivo só. O Nepenthes fica num ícone perto do relógio, pode abrir junto com o Windows e cria um atalho na área de trabalho. Em outros sistemas: `nep central`.

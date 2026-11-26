@@ -112,11 +112,17 @@ func (s *Server) load() (*Site, error) {
 		s.site, s.siteErr = nil, err
 		return nil, err
 	}
-	comVisual := s.aplicarPaginasVisuais(txt)
+	comTipos := s.aplicarTipos(txt) // tipos criados em /_admin/tipos
+	comVisual := s.aplicarPaginasVisuais(comTipos)
 	s.site, s.siteErr = ParseSite(filepath.Base(s.file), comVisual)
 	s.fonte = comVisual
-	if s.siteErr != nil && comVisual != txt { // uma página visual quebrou o site: segue sem elas
+	if s.siteErr != nil && comVisual != comTipos { // uma página visual quebrou o site: segue sem elas
 		fmt.Fprintf(s.opt.Log, "páginas visuais ignoradas: %v\n", s.siteErr)
+		s.site, s.siteErr = ParseSite(filepath.Base(s.file), comTipos)
+		s.fonte = comTipos
+	}
+	if s.siteErr != nil && comTipos != txt { // idem para os tipos do painel
+		fmt.Fprintf(s.opt.Log, "tipos do painel ignorados: %v\n", s.siteErr)
 		s.site, s.siteErr = ParseSite(filepath.Base(s.file), txt)
 		s.fonte = txt
 	}
@@ -479,6 +485,9 @@ func (s *Server) route(rq *request) error {
 			}
 			return s.api(rq, a, m[1:])
 		}
+	}
+	if ok, err := s.restAPI(rq); ok || err != nil { // /api/<colecao> de cada <conteudo>
+		return err
 	}
 	var params []string
 	for _, p := range site.Pages {

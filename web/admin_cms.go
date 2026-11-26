@@ -35,6 +35,9 @@ func (a *adminPage) navCMS() string {
 	for _, c := range site.Contents {
 		n += `<a href="` + a.base + `/conteudo?c=` + url.QueryEscape(c.Name) + `">` + esc(c.Title) + `</a>`
 	}
+	for _, g := range site.Globals {
+		n += `<a href="` + a.base + `/global?g=` + url.QueryEscape(g.Name) + `">` + esc(g.Title) + `</a>`
+	}
 	if len(site.Editables) > 0 {
 		n += `<a href="` + a.base + `/textos">Textos e menus</a>`
 	}
@@ -201,6 +204,23 @@ func (a *adminPage) contentEdit(post bool) error {
 		data, verrs := validate(fields, r.PostForm)
 		files, ferrs := checkFiles(fields, r)
 		errs = append(verrs, ferrs...)
+		if len(errs) == 0 {
+			errs = a.s.conferirRelacoes(a.site(), fields, data)
+		}
+		op := "criar"
+		if cur != nil {
+			op = "editar"
+		}
+		if len(errs) == 0 && c.Antes != "" { // gancho antes="fn": pode mudar os dados ou recusar
+			nd, err := a.s.gancho(a.rq, a.site(), c.Antes, data, infoGancho(op, id, cur))
+			if msg, ok := recusado(err); ok {
+				errs = append(errs, msg)
+			} else if err != nil {
+				return err
+			} else {
+				data = nd
+			}
+		}
 		for _, f := range c.Fields {
 			old[f.Name] = r.PostForm[f.Name+map[bool]string{true: "[]", false: ""}[f.Multi]]
 			if f.Type == "checkbox" && r.PostForm.Get(f.Name) != "" {
@@ -257,9 +277,14 @@ func (a *adminPage) contentEdit(post bool) error {
 					}
 					a.s.Store.removeFiles(gone) // arquivo trocado ou removido não fica para trás
 				}
-			} else if _, err := a.s.Store.Insert(c.Name, data); err != nil {
+			} else if nid, err := a.s.Store.Insert(c.Name, data); err != nil {
 				a.s.Store.removeFiles(saved)
 				return err
+			} else {
+				id = nid
+			}
+			if now := a.s.Store.Find(c.Name, id); now != nil {
+				a.s.depois(a.rq, a.site(), c, op, id, now.ToValue())
 			}
 			a.s.redirect(a.rq, a.base+"/conteudo?c="+url.QueryEscape(c.Name)+"&ok=1", http.StatusSeeOther)
 			return nil
@@ -279,7 +304,7 @@ func (a *adminPage) contentEdit(post bool) error {
 		q += "&id=" + strconv.FormatInt(id, 10)
 	}
 	b.WriteString(`<form class="cms" method="post" enctype="multipart/form-data" action="` + a.base + `/conteudo/editar?` + esc(q) + `">` + a.tok())
-	b.WriteString(refill(c.HTML, old))
+	b.WriteString(refill(a.s.comOpcoesRelacao(a.site(), c.HTML), old))
 	hasText := false
 	for _, f := range c.Fields {
 		if f.Type == "textarea" {

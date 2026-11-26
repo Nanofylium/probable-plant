@@ -295,6 +295,13 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 		}
 		return "", nil
 	})
+	def("global", func(a []lang.Value) (lang.Value, error) { // global("rodape").telefone
+		g := site.Global(lang.Str(argv(a, 0)))
+		if g == nil {
+			return nil, fmt.Errorf("global: não existe <global nome=%q> neste site", lang.Str(argv(a, 0)))
+		}
+		return s.globalValor(g, false), nil
+	})
 	def("texto", func(a []lang.Value) (lang.Value, error) { // texto("chave", "padrão") no código
 		if v, ok := s.edGet(lang.Str(argv(a, 0))); ok {
 			return v, nil
@@ -375,7 +382,7 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 			if it == nil || (!published(it) && !rq.sess.isAdmin()) {
 				return stop(halt{kind: "not_found"})
 			}
-			mod.Define("item", it)
+			mod.Define("item", s.itemSaida(site, c, it, 1, rq.sess.isAdmin())) // relações já vêm com o item
 			rq.item, rq.itemCol = it, c.Name
 			if pg.Title == "" {
 				pv.SetStr("title", itemTitle(c, it))
