@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{{ default(page.description, ⟦s .Resumo⟧) }}">
   <title>{{ page.title }} · ⟦h .Nome⟧</title>
-  <link rel="stylesheet" href="⟦arq (printf "%s.css" .Molde.ID)⟧">
+  <link rel="stylesheet" href="⟦arq (printf "%s.css" (maior .Molde.CSS .Molde.ID))⟧">
   <style>
     :root { --bs-primary: ⟦.Cor⟧; --bs-primary-rgb: ⟦.Rgb⟧; --bs-link-color: ⟦.Cor⟧; --bs-link-hover-color: color-mix(in srgb, ⟦.Cor⟧ 78%, #000); --nep-cor: ⟦.Cor⟧; }
     .btn-primary { --bs-btn-bg: ⟦.Cor⟧; --bs-btn-border-color: ⟦.Cor⟧; --bs-btn-hover-bg: color-mix(in srgb, ⟦.Cor⟧ 85%, #000); --bs-btn-hover-border-color: color-mix(in srgb, ⟦.Cor⟧ 85%, #000);

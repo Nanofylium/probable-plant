@@ -1,0 +1,622 @@
+⟦template "aviso" .⟧
+<nep-config nome="⟦h .Nome⟧" lang="pt-BR"
+  lowii="Você atende a ⟦h .Nome⟧⟦if .Cidade⟧, de ⟦h .Cidade⟧⟦end⟧. Explique como se associar, a mensalidade, as assembleias e os avisos. Nunca peça dados de pagamento.">
+
+<!-- ================= o que a diretoria edita no painel ================= -->
+<conteudo nome="socios" titulo="Sócios" item="sócio">
+  <label>Nome <input name="nome" required maxlength="120"></label>
+  <label>E-mail <input name="email" type="email" maxlength="120"></label>
+  <label>Telefone / WhatsApp <input name="telefone" maxlength="30"></label>
+  <label>Situação
+    <select name="status"><option>Pendente</option><option>Ativo</option><option>Suspenso</option><option>Desligado</option></select>
+  </label>
+  <label>Sócio desde (as mensalidades contam a partir deste mês) <input type="date" name="desde"></label>
+  <label>Número da carteirinha <input name="numero" maxlength="12"></label>
+  <label>Código do link privado (deixe em branco para gerar) <input name="codigo" maxlength="20"></label>
+  <label>Observações da diretoria (não aparecem no site) <textarea name="obs" rows="2" maxlength="2000"></textarea></label>
+</conteudo>
+
+<conteudo nome="mensalidades" titulo="Mensalidades" item="mensalidade">
+  <label>Código do sócio <input name="socio" required maxlength="20"></label>
+  <label>Nome do sócio <input name="nome" maxlength="120"></label>
+  <label>Mês de referência (AAAA-MM) <input name="referencia" required pattern="\d{4}-\d{2}" maxlength="7"></label>
+  <label>Valor <input type="number" name="valor" min="0" step="0.01"></label>
+  <label>Vencimento <input type="date" name="vencimento"></label>
+  <label>Situação
+    <select name="status"><option>Aberta</option><option>Informada</option><option>Paga</option><option>Isenta</option></select>
+  </label>
+  <label>Pago em <input type="date" name="pago_em"></label>
+</conteudo>
+
+<conteudo nome="avisos" titulo="Avisos" item="aviso">
+  <label>Título <input name="titulo" required maxlength="160"></label>
+  <label>Categoria <select name="categoria"><option>Avisos</option><option>Assembleias</option><option>Transparência</option><option>Eventos</option><option>Conquistas</option></select></label>
+  <label>Texto <textarea name="corpo" data-editor required maxlength="60000"></textarea></label>
+  <label>Foto <input type="file" name="capa" accept="image/*" data-max-mb="6" data-publico></label>
+</conteudo>
+
+<conteudo nome="assembleias" titulo="Assembleias" item="assembleia">
+  <label>Título <input name="titulo" required maxlength="140"></label>
+  <label>Data e hora <input type="datetime-local" name="data" required></label>
+  <label>Local <input name="local" maxlength="160"></label>
+  <label>Pauta <textarea name="pauta" rows="5" maxlength="6000"></textarea></label>
+  <label>Ata (depois da assembleia) <textarea name="ata" data-editor maxlength="60000"></textarea></label>
+  <label>Arquivo da ata assinada (PDF) <input type="file" name="arquivo" accept="application/pdf,image/*" data-max-mb="10" data-publico></label>
+</conteudo>
+
+<conteudo nome="documentos" titulo="Documentos" item="documento">
+  <label>Título <input name="titulo" required maxlength="140"></label>
+  <label>Tipo <select name="tipo"><option>Estatuto</option><option>Balancete</option><option>Regimento</option><option>Ata</option><option>Outro</option></select></label>
+  <label>Arquivo <input type="file" name="arquivo" required accept="application/pdf,image/*" data-max-mb="10" data-publico></label>
+</conteudo>
+
+<nep>
+⟦template "nep-comum" .⟧
+  let MENSALIDADE = ⟦.Valor⟧
+  let CHAVE_PIX = ⟦s .Pix⟧
+  let RECEBEDOR = ⟦s .Nome⟧
+  let CIDADE_PIX = ⟦s (maior .Cidade "Brasil")⟧
+
+  # Conteúdo de exemplo na primeira vez.
+  if db.count("avisos") == 0 do
+⟦range .Avisos⟧    db.insert("avisos", {titulo: ⟦s .Titulo⟧, slug: slug(⟦s .Titulo⟧), categoria: ⟦s .Cat⟧, corpo: ⟦s .Corpo⟧, publicar_em: ⟦s .Data⟧, publicado: true})
+⟦end⟧  end
+  if db.count("assembleias") == 0 do
+⟦range .Assembleias⟧    db.insert("assembleias", {titulo: ⟦s .Titulo⟧, slug: slug(⟦s .Titulo⟧), data: ⟦s .Data⟧, local: ⟦s .Local⟧, pauta: ⟦s .Pauta⟧, ata: ⟦s .Ata⟧, publicado: true})
+⟦end⟧  end
+
+  # Sócio cadastrado pelo painel sem código: ganha um agora.
+  for s in db.all("socios") do
+    if not s.codigo or s.codigo == "" do db.update("socios", s.id, {codigo: token(10)}) end
+  end
+
+  fn ref(ano, mes) do
+    if mes < 10 do return str(ano) + "-0" + str(mes) end
+    return str(ano) + "-" + str(mes)
+  end
+  fn nome_mes(r) do
+    let m = match(default(r, ""), "^(%d%d%d%d)%-(%d%d)")
+    if not m do return r end
+    return capitalize(MESES[int(m[1]) - 1]) + " de " + m[0]
+  end
+
+  # Mensalidades: criadas mês a mês, do "desde" até o mês atual (até 24 de uma vez).
+  fn gerar_mensalidades(s) do
+    if s.status != "Ativo" do return nil end
+    let m = match(default(s.desde, ""), "^(%d%d%d%d)%-(%d%d)")
+    if not m do return nil end
+    let ano = int(m[0])
+    let mes = int(m[1])
+    let hoje = date(now(), "Y-m")
+    let existentes = db.where("mensalidades", "socio", s.codigo) |> pluck("referencia")
+    let n = 0
+    while ref(ano, mes) <= hoje and n < 24 do
+      let r = ref(ano, mes)
+      if not contains(existentes, r) do
+        db.insert("mensalidades", {socio: s.codigo, nome: s.nome, referencia: r, valor: MENSALIDADE, vencimento: r + "-10", status: "Aberta", publicado: true})
+      end
+      mes = mes + 1
+      if mes > 12 do
+        mes = 1
+        ano = ano + 1
+      end
+      n = n + 1
+    end
+  end
+
+  fn socio_por_codigo(c) do
+    if not c or len(c) < 6 do return nil end
+    return first(db.where("socios", "codigo", c))
+  end
+  fn mensalidades_de(s) do
+    return db.where("mensalidades", "socio", s.codigo) |> sort_by("referencia") |> reverse
+  end
+  fn pix_de(m) do
+    if CHAVE_PIX == "" do return "" end
+    return pix(CHAVE_PIX, RECEBEDOR, CIDADE_PIX, float(default(m.valor, MENSALIDADE)), "M" + str(m.id) + m.socio)
+  end
+
+  # Pedido de associação (formulário público)
+  fn novo_socio(d) do
+    d.email = lower(trim(d.email))
+    if len(db.where("socios", "email", d.email)) > 0 do
+      recusar("Esse e-mail já está cadastrado. Use “Já sou sócio” para receber o link da sua área.")
+    end
+    d.codigo = token(10)
+    d.numero = str(1000 + db.count("socios") + 1)
+    d.status = "Pendente"
+    d.desde = date(now(), "Y-m-d")
+    return "/socio/" + d.codigo + "?novo=1"
+  end
+
+  # "Já paguei": o sócio avisa; a tesouraria confere e dá baixa.
+  fn informar(d) do
+    let s = socio_por_codigo(d.codigo)
+    let m = db.find("mensalidades", int(default(d.mensalidade, "0")))
+    if not s or not m or m.socio != s.codigo do recusar("Mensalidade não encontrada.") end
+    if m.status == "Aberta" do db.update("mensalidades", m.id, {status: "Informada"}) end
+    return "/socio/" + s.codigo + "?informado=1"
+  end
+
+  # Tesouraria: confirmar pagamento (só quem está logado no painel)
+  fn confirmar(d) do
+    if not admin do recusar("Só a diretoria pode confirmar pagamentos.") end
+    let m = db.find("mensalidades", int(default(d.mensalidade, "0")))
+    if not m do recusar("Mensalidade não encontrada.") end
+    db.update("mensalidades", m.id, {status: "Paga", pago_em: date(now(), "Y-m-d")})
+    return "/tesouraria?ok=1"
+  end
+
+  # Esqueceu o link: manda por e-mail (sem dizer se o e-mail existe)
+  fn enviar_link(d) do
+    let s = first(db.where("socios", "email", lower(trim(default(d.email, "")))))
+    if s and s.codigo do
+      enviar_email(s.email, "Sua área de sócio · " + RECEBEDOR,
+        "Olá, " + s.nome + "!\n\nEste é o link da sua área de sócio, com a carteirinha e as mensalidades:\n" +
+        default(request.site, "") + "/socio/" + s.codigo + "\n\nGuarde este link: ele é só seu.")
+    end
+  end
+
+  fn confirmar_presenca(d) do
+    let s = socio_por_codigo(trim(default(d.codigo, "")))
+    if not s do recusar("Código de sócio não encontrado. Ele está no link da sua área: /socio/CÓDIGO") end
+    if len(db.where("presencas", "chave", d.assembleia + ":" + s.codigo)) > 0 do recusar("Sua presença já estava confirmada.") end
+    d.chave = d.assembleia + ":" + s.codigo
+    d.nome = s.nome
+  end
+
+  let agora = date(now(), "Y-m-d H:i")
+  fn preparar_assembleia(a) do
+    a.quando = ler_data(a.data)
+    a.futura = a.quando.chave >= agora
+    return a
+  end
+  let assembleias = db.all("assembleias") |> map(preparar_assembleia) |> sort_by(fn(a) do a.quando.chave end)
+  let proximas = assembleias |> filter(fn(a) do a.futura end)
+  let anteriores = assembleias |> filter(fn(a) do not a.futura end) |> reverse
+  let avisos = db.all("avisos") |> map(preparar) |> sort_by(fn(p) do p.data.chave end) |> reverse
+  let ativos = len(db.where("socios", "status", "Ativo"))
+  let pagas = db.where("mensalidades", "status", "Paga")
+  let mes_atual = date(now(), "Y-m")
+  fn soma(l) do
+    let t = 0
+    for x in l do t = t + float(default(x.valor, 0)) end
+    return t
+  end
+  fn ativo(r) do
+    if r == "/" do return (request.path == "/" and " active") or "" end
+    return (starts_with(request.path, r) and " active") or ""
+  end
+</nep>
+
+<html lang="pt-BR" class="h-100">
+<head>
+⟦template "cabeca" .⟧
+  <style>
+    body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .navbar-brand { font-weight: 800; white-space: normal; min-width: 0; flex: 1 1 0; display: flex; align-items: center; line-height: 1.2; }
+    .navbar-brand .marca { flex: none; }
+    .navbar .nav-link { white-space: nowrap; }
+    @media (min-width: 1200px) { .navbar-brand { flex: 0 1 auto; max-width: 24rem; } }
+    @media (max-width: 575.98px) { .carteirinha { aspect-ratio: auto; min-height: 15rem; } }
+    .carteirinha > :not(.qr) { padding-right: 6rem; }
+    .carteirinha .rotulo:first-child { padding-right: 0; }
+    .navbar-brand .marca { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: .5rem; background: var(--nep-cor); margin-right: .5rem; }
+    .hero { background: linear-gradient(120deg, rgba(10, 20, 18, .88), rgba(⟦.Rgb⟧, .72)), url('⟦img "mapa.jpg"⟧') center/cover; }
+    .min-w-0 { min-width: 0; }
+    .data-box { min-width: 4.25rem; border-radius: .75rem; background: rgba(⟦.Rgb⟧, .1); color: var(--nep-cor); text-align: center; padding: .5rem .25rem; line-height: 1.1; }
+    .data-box b { display: block; font-size: 1.6rem; }
+    .data-box small { text-transform: uppercase; font-weight: 700; font-size: .72rem; letter-spacing: .08em; }
+    .carteirinha { position: relative; width: 100%; max-width: 26rem; aspect-ratio: 1.586; border-radius: 1.1rem; padding: 1.4rem 1.5rem; color: #fff; overflow: hidden;
+      background: radial-gradient(circle at 85% 0%, rgba(255,255,255,.22), transparent 45%), linear-gradient(135deg, color-mix(in srgb, ⟦.Cor⟧ 70%, #000), ⟦.Cor⟧); box-shadow: 0 20px 40px rgba(⟦.Rgb⟧, .35); }
+    .carteirinha .rotulo { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+    .carteirinha .nome { font-size: 1.35rem; font-weight: 800; line-height: 1.15; }
+    .carteirinha .qr { position: absolute; right: 1.2rem; bottom: 1.2rem; width: 5.2rem; height: 5.2rem; background: #fff; border-radius: .5rem; padding: .2rem; }
+    .carteirinha .qr svg, .pix-qr svg { width: 100%; height: 100%; display: block; }
+    .pix-qr { width: 11rem; height: 11rem; }
+    .copia { font: .78rem/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; background: #f8f9fa; border: 1px dashed #ced4da; border-radius: .5rem; padding: .6rem .75rem; }
+    .selo { display: inline-block; padding: .2rem .65rem; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+    .selo.Aberta { background: #fff3cd; color: #7a5b00; } .selo.Informada { background: #cfe2ff; color: #0a3d91; }
+    .selo.Paga, .selo.Ativo { background: #d1e7dd; color: #0f5132; } .selo.Isenta { background: #e2e3e5; color: #41464b; }
+    .selo.Pendente { background: #fff3cd; color: #7a5b00; } .selo.Suspenso, .selo.Desligado { background: #f8d7da; color: #842029; }
+    details.pix > summary { cursor: pointer; font-weight: 700; color: var(--nep-cor); }
+    footer a { color: #dee2e6; }
+    .barra { height: .6rem; border-radius: 999px; background: #e9ecef; overflow: hidden; }
+    .barra > span { display: block; height: 100%; background: var(--nep-cor); }
+  </style>
+</head>
+<body class="d-flex flex-column h-100">
+<main class="flex-shrink-0">
+  <nav class="navbar navbar-expand-xl navbar-dark bg-dark">
+    <div class="container px-4 px-lg-5">
+      <a class="navbar-brand" href="{{ url('/') }}"><span class="marca">⟦icone "people"⟧</span><span editavel="tema.nome">⟦h .Nome⟧</span></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu" aria-controls="menu" aria-expanded="false" aria-label="Abrir o menu"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="menu">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-xl-center" menu-editavel="principal">
+          <li class="nav-item"><a class="nav-link{{ ativo('/') }}" href="{{ url('/') }}">Início</a></li>
+          <li class="nav-item"><a class="nav-link{{ ativo('/avisos') }}" href="{{ url('/avisos') }}">Avisos</a></li>
+          <li class="nav-item"><a class="nav-link{{ ativo('/assembleias') }}" href="{{ url('/assembleias') }}">Assembleias</a></li>
+          <li class="nav-item"><a class="nav-link{{ ativo('/transparencia') }}" href="{{ url('/transparencia') }}">Transparência</a></li>
+          <li class="nav-item"><a class="nav-link{{ ativo('/contato') }}" href="{{ url('/contato') }}">Contato</a></li>
+          <li class="nav-item"><a class="nav-link{{ ativo('/entrar') }}" href="{{ url('/entrar') }}">Já sou sócio</a></li>
+          <if test="admin"><li class="nav-item"><a class="nav-link{{ ativo('/tesouraria') }}" href="{{ url('/tesouraria') }}">Tesouraria</a></li></if>
+          <li class="nav-item ms-xl-2"><a class="btn btn-primary btn-sm px-3 text-nowrap" href="{{ url('/associe-se') }}">Associe-se</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ================= Início ================= -->
+  <page route="/" title="Início" description="⟦h (maior .Resumo .Setor.Texto)⟧">
+    <header class="hero py-5">
+      <div class="container px-4 px-lg-5">
+        <div class="row gx-5 align-items-center">
+          <div class="col-lg-7">
+            <div class="my-5 text-center text-lg-start">
+              <div class="badge bg-light text-dark rounded-pill mb-3" editavel="home.chapeu">⟦h .Setor.Chapeu⟧</div>
+              <h1 class="display-5 fw-bolder text-white mb-3" editavel="home.titulo">⟦h (maior .Slogan .Setor.Titulo)⟧</h1>
+              <p class="lead fw-normal text-white-50 mb-4" editavel="home.texto">⟦h (maior .Resumo .Setor.Texto)⟧</p>
+              <div class="d-grid gap-3 d-sm-flex justify-content-sm-center justify-content-lg-start">
+                <a class="btn btn-primary btn-lg px-4" href="{{ url('/associe-se') }}">Quero me associar</a>
+                <a class="btn btn-outline-light btn-lg px-4" href="{{ url('/entrar') }}">Já sou sócio</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="bg-white rounded-4 shadow p-4 my-3">
+              <div class="text-muted small text-uppercase fw-bold mb-2">Mensalidade</div>
+              <div class="display-6 fw-bolder">{{ money(MENSALIDADE) }}<span class="fs-6 text-muted fw-normal"> por mês</span></div>
+              <ul class="list-unstyled mt-3 mb-0">
+                <li class="mb-2">⟦icone "check2-circle"⟧ Carteirinha digital com QR Code</li>
+                <li class="mb-2">⟦icone "check2-circle"⟧ Pagamento por Pix, sem boleto</li>
+                <li class="mb-2">⟦icone "check2-circle"⟧ Voto nas assembleias</li>
+                <li>⟦icone "check2-circle"⟧ Prestação de contas aberta</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="py-5">
+      <div class="container px-4 px-lg-5 my-4">
+        <div class="row gx-5">
+          <div class="col-lg-4 mb-5 mb-lg-0"><h2 class="fw-bolder mb-3" editavel="home.frentes">⟦h .Setor.ServRotulo⟧</h2><p class="text-muted" editavel="home.frentes.texto">⟦h .Setor.ServIntro⟧</p></div>
+          <div class="col-lg-8"><div class="row gx-5 row-cols-1 row-cols-md-2">
+⟦range $i, $s := .Setor.Servicos⟧⟦if lt $i 4⟧            <div class="col mb-5 h-100">
+              <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3">⟦icone (pega (list "heart" "book" "shield-check" "people") $i)⟧</div>
+              <h3 class="h5">⟦h $s.Titulo⟧</h3><p class="mb-0">⟦h $s.Texto⟧</p>
+            </div>
+⟦end⟧⟦end⟧          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="py-5 bg-light">
+      <div class="container px-4 px-lg-5">
+        <div class="row gx-5 text-center">
+          <div class="col-md-4 mb-4 mb-md-0"><div class="display-5 fw-bolder text-primary">{{ ativos }}</div><div class="text-muted">sócios em dia com a associação</div></div>
+          <div class="col-md-4 mb-4 mb-md-0"><div class="display-5 fw-bolder text-primary">{{ len(assembleias) }}</div><div class="text-muted">assembleias registradas</div></div>
+          <div class="col-md-4"><div class="display-5 fw-bolder text-primary">{{ money(soma(pagas)) }}</div><div class="text-muted">arrecadados com transparência</div></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="py-5">
+      <div class="container px-4 px-lg-5 my-4">
+        <div class="row gx-5">
+          <div class="col-lg-6 mb-5">
+            <h2 class="fw-bolder mb-4">Próximas assembleias</h2>
+            <each a in="proximas |> take(3)">
+              <a class="d-flex gap-3 align-items-start text-decoration-none link-dark mb-4" href="{{ url('/assembleias/' + a.slug) }}">
+                <div class="data-box"><b>{{ a.quando.dia }}</b><small>{{ a.quando.m3 }}</small></div>
+                <div class="min-w-0"><h3 class="h5 mb-1">{{ a.titulo }}</h3><div class="text-muted small">{{ a.quando.hora }} · {{ default(a.local, '') }}</div></div>
+              </a>
+            <else><p class="text-muted">Nenhuma assembleia marcada.</p></each>
+            <a class="btn btn-outline-primary" href="{{ url('/assembleias') }}">Todas as assembleias</a>
+          </div>
+          <div class="col-lg-6 mb-5">
+            <h2 class="fw-bolder mb-4">Avisos</h2>
+            <each p in="avisos |> take(3)">
+              <a class="d-block text-decoration-none link-dark mb-4" href="{{ url('/avisos/' + p.slug) }}">
+                <span class="badge bg-primary bg-gradient rounded-pill mb-1">{{ p.categoria }}</span>
+                <h3 class="h5 mb-1">{{ p.titulo }}</h3><p class="text-muted mb-0 small">{{ p.data.txt }} · {{ p.excerto }}</p>
+              </a>
+            </each>
+          </div>
+        </div>
+      </div>
+    </section>
+  </page>
+
+  <!-- ================= Associe-se ================= -->
+  <page route="/associe-se" title="Associe-se">
+    <section class="py-5"><div class="container px-4 px-lg-5">
+      <div class="bg-light rounded-3 py-5 px-4 px-md-5">
+        <div class="text-center mb-5">
+          <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3">⟦icone "people"⟧</div>
+          <h1 class="fw-bolder" editavel="associe.titulo">Faça parte da ⟦h .Nome⟧</h1>
+          <p class="lead fw-normal text-muted mb-0" editavel="associe.texto">Preencha a ficha. A diretoria confere e você recebe a carteirinha digital e o Pix da mensalidade ({{ money(MENSALIDADE) }}).</p>
+        </div>
+        <div class="row gx-5 justify-content-center"><div class="col-lg-8 col-xl-6">
+          <form save="socios" run="novo_socio" limit="3">
+            <div class="form-floating mb-3"><input class="form-control" id="a-nome" name="nome" required maxlength="120" placeholder="Nome completo"><label for="a-nome">Nome completo</label></div>
+            <div class="form-floating mb-3"><input class="form-control" id="a-email" name="email" type="email" required maxlength="120" placeholder="nome@exemplo.com"><label for="a-email">E-mail</label></div>
+            <div class="form-floating mb-3"><input class="form-control" id="a-fone" name="telefone" type="tel" maxlength="30" placeholder="(00) 00000-0000"><label for="a-fone">Telefone ou WhatsApp</label></div>
+            <div class="form-check mb-4"><input class="form-check-input" type="checkbox" id="a-ok" name="aceite" required><label class="form-check-label" for="a-ok">Li e aceito o estatuto e autorizo o uso dos meus dados só para a gestão da associação (LGPD).</label></div>
+            <button class="btn btn-primary btn-lg w-100" type="submit">Enviar minha ficha</button>
+          </form>
+        </div></div>
+      </div>
+    </div></section>
+  </page>
+
+  <!-- ================= Área do sócio ================= -->
+  <page route="/socio/:codigo" title="Área do sócio" noindex>
+    <nep>
+      let s = socio_por_codigo(params.codigo)
+      if not s do not_found() end
+      gerar_mensalidades(s)
+      let ms = mensalidades_de(s)
+      let abertas = ms |> filter(fn(m) do m.status == "Aberta" end)
+      let verificar = default(request.site, "") + "/verificar/" + s.codigo
+    </nep>
+    <section class="py-5"><div class="container px-4 px-lg-5">
+      <if test="request.query.novo"><div class="nep-ok">Ficha recebida! <b>Guarde este link</b>: é a sua área de sócio. Quando a diretoria aprovar, a carteirinha e o Pix aparecem aqui.</div></if>
+      <if test="request.query.informado"><div class="nep-ok">Obrigado! A tesouraria vai conferir o Pix e dar baixa.</div></if>
+      <div class="row gx-5">
+        <div class="col-lg-5 mb-5">
+          <h1 class="fw-bolder h2 mb-1">Olá, {{ first(split(s.nome, ' ')) }}!</h1>
+          <p class="text-muted">Situação: <span class="selo {{ s.status }}">{{ s.status }}</span></p>
+          <div class="carteirinha mt-4">
+            <div class="rotulo">⟦h .Nome⟧</div>
+            <div class="rotulo mt-3">Sócio</div>
+            <div class="nome">{{ s.nome }}</div>
+            <div class="mt-3 small">Nº {{ default(s.numero, s.id) }} · desde {{ ler_data(default(s.desde, '') + ' 00:00').txt }}</div>
+            <div class="small mt-1"><b>{{ upper(s.status) }}</b></div>
+            <div class="qr">{{ qrcode(verificar) }}</div>
+          </div>
+          <p class="small text-muted mt-3">O QR Code abre a página de verificação: quem ler vê se a carteirinha é válida.</p>
+        </div>
+        <div class="col-lg-7 min-w-0">
+          <h2 class="fw-bolder h4 mb-3">Mensalidades</h2>
+          <if test="s.status == 'Pendente'"><p class="text-muted">Sua ficha está em análise. As mensalidades começam depois da aprovação.</p></if>
+          <each m in="ms">
+            <div class="card border-0 shadow-sm mb-3"><div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <div><b>{{ nome_mes(m.referencia) }}</b><div class="text-muted small">Vence em {{ ler_data(default(m.vencimento, '') + ' 00:00').txt }}</div></div>
+                <div class="text-end"><div class="fw-bold">{{ money(float(default(m.valor, MENSALIDADE))) }}</div><span class="selo {{ m.status }}">{{ m.status }}</span></div>
+              </div>
+              <if test="m.status == 'Aberta'">
+                <if test="CHAVE_PIX != ''">
+                  <details class="pix mt-3"{{ (m.id == first(abertas).id and ' open') or '' }}>
+                    <summary>⟦icone "lightning"⟧ Pagar com Pix</summary>
+                    <div class="d-flex gap-4 flex-wrap mt-3 align-items-start">
+                      <div class="pix-qr">{{ qrcode(pix_de(m)) }}</div>
+                      <div class="min-w-0 flex-grow-1" style="flex-basis:14rem">
+                        <div class="small fw-bold mb-1">Pix copia e cola</div>
+                        <div class="copia mb-2">{{ pix_de(m) }}</div>
+                        <button class="btn btn-sm btn-outline-primary mb-3" type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent.trim());this.textContent='Copiado!'">Copiar código</button>
+                        <form save="pagamentos_informados" run="informar" limit="10">
+                          <input type="hidden" name="codigo" value="{{ s.codigo }}"><input type="hidden" name="mensalidade" value="{{ m.id }}">
+                          <button class="btn btn-primary" type="submit">Já paguei</button>
+                        </form>
+                      </div>
+                    </div>
+                  </details>
+                <else>
+                  <p class="small text-muted mt-3 mb-0">Combine o pagamento com a tesouraria pelo <a href="{{ url('/contato') }}">contato</a>.</p>
+                </if>
+              </if>
+            </div></div>
+          </each>
+        </div>
+      </div>
+    </div></section>
+  </page>
+
+  <page route="/verificar/:codigo" title="Verificar carteirinha" noindex>
+    <nep>let s = socio_por_codigo(params.codigo)</nep>
+    <section class="py-5"><div class="container px-4 px-lg-5 my-4 text-center">
+      <if test="s and s.status == 'Ativo'">
+        <div class="display-1 text-success">⟦icone "shield-check"⟧</div>
+        <h1 class="fw-bolder">Carteirinha válida</h1>
+        <p class="lead">{{ first(split(s.nome, ' ')) }} é sócio(a) ativo(a) da ⟦h .Nome⟧ (nº {{ default(s.numero, s.id) }}).</p>
+      <else>
+        <h1 class="fw-bolder">Carteirinha não está ativa</h1>
+        <p class="lead text-muted">Este código não corresponde a um sócio ativo. Em caso de dúvida, fale com a diretoria.</p>
+      </if>
+      <p class="small text-muted">Consultado em {{ ler_data(agora).txt }}, às {{ ler_data(agora).hora }}.</p>
+    </div></section>
+  </page>
+
+  <page route="/entrar" title="Já sou sócio">
+    <section class="py-5"><div class="container px-4 px-lg-5 my-4"><div class="row justify-content-center"><div class="col-lg-6">
+      <h1 class="fw-bolder">Já sou sócio</h1>
+      <p class="lead text-muted">Digite o e-mail da sua ficha. Se ele estiver cadastrado, mandamos o link da sua área (carteirinha e mensalidades).</p>
+      <form save="pedidos_de_link" run="enviar_link" limit="3" success="Se o e-mail estiver cadastrado, o link chega em instantes. Confira também o spam.">
+        <div class="input-group input-group-lg"><input class="form-control" name="email" type="email" required placeholder="seu@email.com" aria-label="E-mail"><button class="btn btn-primary" type="submit">Enviar link</button></div>
+      </form>
+    </div></div></div></section>
+  </page>
+
+  <!-- ================= Assembleias ================= -->
+  <page route="/assembleias" title="Assembleias">
+    <section class="py-5"><div class="container px-4 px-lg-5 my-3">
+      <h1 class="fw-bolder mb-4">Assembleias</h1>
+      <h2 class="h5 fw-bold text-muted mb-3">Próximas</h2>
+      <each a in="proximas">
+        <a class="card border-0 shadow-sm mb-3 text-decoration-none link-dark" href="{{ url('/assembleias/' + a.slug) }}"><div class="card-body p-4 d-flex gap-4 align-items-start">
+          <div class="data-box"><b>{{ a.quando.dia }}</b><small>{{ a.quando.m3 }}</small></div>
+          <div class="min-w-0"><h3 class="h5 fw-bolder mb-1">{{ a.titulo }}</h3><div class="text-muted">{{ a.quando.hora }} · {{ default(a.local, '') }}</div></div>
+        </div></a>
+      <else><p class="text-muted">Nenhuma marcada.</p></each>
+      <h2 class="h5 fw-bold text-muted mt-5 mb-3">Anteriores e atas</h2>
+      <ul class="list-unstyled">
+        <each a in="anteriores"><li class="mb-2"><a href="{{ url('/assembleias/' + a.slug) }}">{{ a.titulo }}</a> <span class="text-muted small">· {{ a.quando.txt }}<if test="a.ata"> · ata disponível</if></span></li></each>
+      </ul>
+    </div></section>
+  </page>
+
+  <page route="/assembleias/:slug" conteudo="assembleias">
+    <nep>
+      let a = preparar_assembleia(item)
+      let confirmados = len(db.where("presencas", "assembleia", a.slug))
+    </nep>
+    <section class="py-5"><div class="container px-4 px-lg-5 my-3"><div class="row justify-content-center"><div class="col-lg-8">
+      <a class="small text-decoration-none" href="{{ url('/assembleias') }}">← Assembleias</a>
+      <h1 class="fw-bolder mt-2">{{ a.titulo }}</h1>
+      <p class="lead text-muted">{{ a.quando.txt }}, às {{ a.quando.hora }}<if test="a.local"> · {{ a.local }}</if></p>
+      <if test="a.pauta"><h2 class="h5 fw-bold mt-4">Pauta</h2><div class="corpo">{{ nl2br(a.pauta) }}</div></if>
+      <if test="a.ata"><h2 class="h5 fw-bold mt-4">Ata</h2><div class="corpo">{{ markdown(a.ata) }}</div></if>
+      <if test="a.arquivo"><p><a class="btn btn-outline-primary" href="{{ a.arquivo.url }}" target="_blank">Baixar a ata assinada</a></p></if>
+      <if test="a.futura">
+        <div class="card border-0 shadow-sm mt-4"><div class="card-body p-4">
+          <h2 class="h5 fw-bolder">Confirmar presença</h2>
+          <p class="text-muted small">{{ confirmados }} presença(s) confirmada(s). Use o código que está no link da sua área de sócio.</p>
+          <form save="presencas" run="confirmar_presenca" limit="5" success="Presença confirmada. Até lá!">
+            <input type="hidden" name="assembleia" value="{{ a.slug }}">
+            <div class="input-group"><input class="form-control" name="codigo" required maxlength="20" placeholder="Seu código de sócio" aria-label="Código de sócio"><button class="btn btn-primary" type="submit">Confirmar</button></div>
+          </form>
+        </div></div>
+      </if>
+    </div></div></div></section>
+  </page>
+
+  <!-- ================= Avisos ================= -->
+  <page route="/avisos" title="Avisos">
+    <section class="py-5"><div class="container px-4 px-lg-5 my-3"><div class="row justify-content-center"><div class="col-lg-8">
+      <h1 class="fw-bolder mb-4">Avisos</h1>
+      <each p in="avisos">
+        <a class="card border-0 shadow-sm mb-3 text-decoration-none link-dark" href="{{ url('/avisos/' + p.slug) }}"><div class="card-body p-4">
+          <span class="badge bg-primary bg-gradient rounded-pill mb-2">{{ p.categoria }}</span>
+          <h2 class="h5 fw-bolder">{{ p.titulo }}</h2><p class="text-muted mb-0">{{ p.data.txt }} · {{ p.excerto }}</p>
+        </div></a>
+      </each>
+    </div></div></div></section>
+  </page>
+  <page route="/avisos/:slug" conteudo="avisos">
+    <nep>let p = preparar(item)</nep>
+    <section class="py-5"><div class="container px-4 px-lg-5 my-3"><div class="row justify-content-center"><div class="col-lg-8">
+      <a class="small text-decoration-none" href="{{ url('/avisos') }}">← Avisos</a>
+      <h1 class="fw-bolder mt-2">{{ p.titulo }}</h1>
+      <p class="text-muted">{{ p.data.txt }}</p>
+      <div class="corpo fs-5">{{ markdown(p.corpo) }}</div>
+    </div></div></div></section>
+  </page>
+
+  <!-- ================= Transparência ================= -->
+  <page route="/transparencia" title="Transparência">
+    <nep>
+      let meses = []
+      let ano = int(date(now(), "Y"))
+      let mes = int(date(now(), "m"))
+      for i in range(6) do
+        let r = ref(ano, mes)
+        push(meses, {ref: r, nome: nome_mes(r), total: soma(pagas |> filter(fn(m) do m.referencia == r end))})
+        mes = mes - 1
+        if mes < 1 do
+          mes = 12
+          ano = ano - 1
+        end
+      end
+      let maior = 1
+      for m in meses do maior = max(maior, m.total) end
+      let docs = db.all("documentos")
+    </nep>
+    <section class="py-5"><div class="container px-4 px-lg-5 my-3">
+      <h1 class="fw-bolder">Transparência</h1>
+      <p class="lead text-muted" editavel="transparencia.texto">O que a associação arrecada com as mensalidades, mês a mês, e os documentos oficiais.</p>
+      <div class="row gx-5 mt-4">
+        <div class="col-lg-7 mb-5">
+          <div class="card border-0 shadow-sm"><div class="card-body p-4">
+            <h2 class="h5 fw-bolder mb-3">Mensalidades recebidas</h2>
+            <each m in="meses">
+              <div class="mb-3"><div class="d-flex justify-content-between small"><span>{{ m.nome }}</span><b>{{ money(m.total) }}</b></div>
+              <div class="barra"><span style="width: {{ round(100 * m.total / maior) }}%"></span></div></div>
+            </each>
+            <p class="small text-muted mb-0">{{ ativos }} sócio(s) ativo(s).</p>
+          </div></div>
+        </div>
+        <div class="col-lg-5 mb-5">
+          <h2 class="h5 fw-bolder mb-3">Documentos</h2>
+          <ul class="list-unstyled">
+            <each d in="docs"><li class="mb-2">⟦icone "journal-text"⟧ <a href="{{ d.arquivo.url }}" target="_blank">{{ d.titulo }}</a> <span class="text-muted small">· {{ d.tipo }}</span></li>
+            <else><li class="text-muted">O estatuto e os balancetes aparecem aqui quando a diretoria publicar no painel.</li></each>
+          </ul>
+        </div>
+      </div>
+    </div></section>
+  </page>
+
+  <!-- ================= Tesouraria (só diretoria) ================= -->
+  <page route="/tesouraria" title="Tesouraria" noindex>
+    <nep>
+      if not admin do redirect(url("/_admin/login")) end
+      let socios = db.all("socios") |> sort_by("nome")
+      let informadas = db.where("mensalidades", "status", "Informada")
+      let pendentes = db.where("socios", "status", "Pendente")
+      for s in socios do gerar_mensalidades(s) end
+      let em_aberto = db.where("mensalidades", "status", "Aberta")
+    </nep>
+    <section class="py-5"><div class="container px-4 px-lg-5">
+      <h1 class="fw-bolder">Tesouraria</h1>
+      <p class="text-muted">Só quem está logado no painel vê esta página. Para aprovar sócios e editar valores, use o <a href="{{ url('/_admin') }}">painel</a>.</p>
+      <if test="request.query.ok"><div class="nep-ok">Pagamento confirmado.</div></if>
+      <div class="row g-4 my-2 text-center">
+        <div class="col-6 col-md-3"><div class="bg-light rounded-3 p-3"><div class="h3 fw-bolder mb-0">{{ ativos }}</div><small class="text-muted">ativos</small></div></div>
+        <div class="col-6 col-md-3"><div class="bg-light rounded-3 p-3"><div class="h3 fw-bolder mb-0">{{ len(pendentes) }}</div><small class="text-muted">fichas para aprovar</small></div></div>
+        <div class="col-6 col-md-3"><div class="bg-light rounded-3 p-3"><div class="h3 fw-bolder mb-0">{{ len(informadas) }}</div><small class="text-muted">Pix para conferir</small></div></div>
+        <div class="col-6 col-md-3"><div class="bg-light rounded-3 p-3"><div class="h3 fw-bolder mb-0">{{ money(soma(em_aberto)) }}</div><small class="text-muted">em aberto</small></div></div>
+      </div>
+      <h2 class="h5 fw-bolder mt-4">Pix informados pelos sócios</h2>
+      <div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th>Sócio</th><th>Mês</th><th>Valor</th><th></th></tr></thead><tbody>
+        <each m in="informadas"><tr><td>{{ m.nome }}</td><td>{{ nome_mes(m.referencia) }}</td><td>{{ money(float(default(m.valor, 0))) }}</td>
+          <td class="text-end"><form save="baixas" run="confirmar"><input type="hidden" name="mensalidade" value="{{ m.id }}"><button class="btn btn-sm btn-primary">Confirmar recebimento</button></form></td></tr>
+        <else><tr><td colspan="4" class="text-muted">Nenhum por enquanto.</td></tr></each>
+      </tbody></table></div>
+      <h2 class="h5 fw-bolder mt-4">Sócios</h2>
+      <div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th>Nº</th><th>Nome</th><th>Situação</th><th>Em aberto</th><th>Área do sócio</th></tr></thead><tbody>
+        <each s in="socios"><tr><td>{{ default(s.numero, s.id) }}</td><td>{{ s.nome }}<div class="small text-muted">{{ default(s.email, '') }}</div></td><td><span class="selo {{ s.status }}">{{ s.status }}</span></td>
+          <td>{{ len(em_aberto |> filter(fn(m) do m.socio == s.codigo end)) }}</td><td><a href="{{ url('/socio/' + s.codigo) }}" target="_blank">abrir</a></td></tr>
+        <else><tr><td colspan="5" class="text-muted">Nenhum sócio ainda.</td></tr></each>
+      </tbody></table></div>
+    </div></section>
+  </page>
+
+  <page route="/contato" title="Contato">
+    <section class="py-5"><div class="container px-4 px-lg-5">
+      <div class="bg-light rounded-3 py-5 px-4 px-md-5">
+        <div class="text-center mb-5"><h1 class="fw-bolder" editavel="contato.titulo">Fale com a diretoria</h1><p class="lead fw-normal text-muted mb-0" editavel="contato.texto">⟦h .Setor.Chamada⟧</p></div>
+        <div class="row gx-5 justify-content-center"><div class="col-lg-8 col-xl-6">⟦template "form-contato" .⟧<ul class="list-unstyled mt-4 text-muted">⟦template "contatos" .⟧</ul></div></div>
+      </div>
+    </div></section>
+  </page>
+
+  <page route="404" title="Não encontrado">
+    <section class="py-5"><div class="container px-4 px-lg-5 my-5 text-center">
+      <h1 class="display-5 fw-bolder">Página não encontrada</h1>
+      <p class="lead text-muted">Volte para o <a href="{{ url('/') }}">início</a>.</p>
+    </div></section>
+  </page>
+</main>
+
+<footer class="bg-dark py-5 mt-auto">
+  <div class="container px-4 px-lg-5">
+    <div class="row gx-5 text-white-50 small">
+      <div class="col-md-5 mb-4"><div class="h5 text-white fw-bolder" editavel="rodape.nome">⟦h .Nome⟧</div><p editavel="rodape.texto">⟦h (maior .Resumo .Setor.Texto)⟧</p></div>
+      <div class="col-md-3 mb-4"><div class="text-white fw-bold mb-2">Sócios</div><nav class="d-grid gap-1">
+        <a class="text-decoration-none" href="{{ url('/associe-se') }}">Associe-se</a><a class="text-decoration-none" href="{{ url('/entrar') }}">Já sou sócio</a><a class="text-decoration-none" href="{{ url('/transparencia') }}">Transparência</a></nav></div>
+      <div class="col-md-4 mb-4"><div class="text-white fw-bold mb-2">Contato</div><ul class="list-unstyled">⟦template "contatos" .⟧</ul></div>
+    </div>
+    <div class="d-flex flex-wrap justify-content-between gap-2 border-top border-secondary pt-4 small">
+      <span class="text-white">© ⟦h .Nome⟧ ⟦.Ano⟧</span>
+      <span class="text-white-50"><a href="{{ url('/_admin') }}">Painel</a> · Feito com Nepenthes · tema Modern Business (Start Bootstrap, MIT)</span>
+    </div>
+  </div>
+</footer>
+⟦template "scripts" .⟧
+</body>
+</html>

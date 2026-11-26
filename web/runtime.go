@@ -249,6 +249,7 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	def("jogo", s.jogoBuiltin(rq))   // roleta, raspadinha e memória com cupom (ver jogos.go)
 	def("mundo", s.mundoBuiltin)     // passeio vivo gerado com o LingBot-World (ver mundo.go)
 	def("visual", func(a []lang.Value) (lang.Value, error) { return Visual(strOrEmpty(argv(a, 0))), nil })
+	s.pixBuiltins(def) // pix(), qrcode(), token() (ver pix.go)
 	// textos editáveis (editavel="chave")
 	def("__edhas", func(a []lang.Value) (lang.Value, error) {
 		_, ok := s.edGet(lang.Str(argv(a, 0)))
@@ -391,6 +392,9 @@ func (s *Server) setup(rq *request, page int, params []string) error {
 	req := lang.NewTable()
 	req.SetStr("method", rq.r.Method)
 	req.SetStr("path", rq.path)
+	if rq.site != nil {
+		req.SetStr("site", s.siteURL(rq)) // https://dominio/base, para links em e-mails
+	}
 	req.SetStr("live", rq.r.URL.Query().Get("_nep_live") != "")
 	q := lang.NewTable()
 	for k, v := range rq.r.URL.Query() {

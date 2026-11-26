@@ -4,6 +4,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/Nanofylium/probable-plant/lang"
 )
 
 // Um index.html só com a tag <nepenthes tipo=...> vira o site inteiro, sem
@@ -21,6 +24,8 @@ func TestTagComMoldeMontaOSite(t *testing.T) {
 			map[string]string{"/": "Wiki da Horta", "/indice": "Glossário", "/wiki/como-contribuir": "Sugerir edição", "/wiki/nao-existe": "ainda não existe", "/recentes": "Mudanças recentes"}},
 		{`<nepenthes tipo="estatico" nome="Studio Bela" instagram="@bela">Salão de beleza com cortes.</nepenthes>`,
 			map[string]string{"/": "Studio Bela"}},
+		{`<nepenthes tipo="associacao" nome="Amigos do Bairro" pix="tesouraria@exemplo.org" mensalidade="25,50">Associação de moradores.</nepenthes>`,
+			map[string]string{"/": "R$ 25,50", "/associe-se": "Enviar minha ficha", "/assembleias": "Assembleia geral", "/avisos": "Pix", "/transparencia": "Mensalidades recebidas", "/entrar": "Enviar link", "/verificar/NAOEXISTE": "não está ativa"}},
 		{`<nepenthes tipo="auto" nome="Docs do Projeto">Documentação e manual do projeto.</nepenthes>`,
 			map[string]string{"/indice": "Índice A–Z"}},
 	}
@@ -67,7 +72,41 @@ func TestTagComTipoErradoExplica(t *testing.T) {
 	s, _ := assistenteSrv(t, `<nepenthes tipo="loja-virtual">x</nepenthes>`)
 	s.opt.Dev = true
 	w := pedir(s, "GET", "/", "", "127.0.0.1")
-	if !strings.Contains(w.Body.String(), "blog, portal, wiki, estatico") {
+	if !strings.Contains(w.Body.String(), "blog, portal, wiki, associacao, estatico") {
 		t.Fatalf("o erro deveria listar os tipos: %.400s", w.Body.String())
+	}
+}
+
+// Caminho inteiro da associação: ficha, aprovação, Pix, "já paguei", baixa.
+func TestAssociacaoFichaPixEBaixa(t *testing.T) {
+	s, _ := assistenteSrv(t, `<nepenthes tipo="associacao" nome="Amigos do Bairro" cidade="Aveiro" pix="tesouraria@exemplo.org" mensalidade="25">Associação.</nepenthes>`)
+	if w := pedir(s, "GET", "/", "", "203.0.113.7"); w.Code != 200 {
+		t.Fatal(w.Code)
+	}
+	// ficha entra como Pendente, com código do link privado
+	t0 := lang.NewTable()
+	for k, v := range map[string]string{"nome": "Maria Silva", "email": "m@x.org", "status": "Ativo", "desde": time.Now().AddDate(0, -2, 0).Format("2006-01-02"), "codigo": "ABCDEF1234"} {
+		t0.SetStr(k, v)
+	}
+	id, err := s.Store.Insert("socios", t0)
+	if err != nil || id == 0 {
+		t.Fatal(err)
+	}
+	w := pedir(s, "GET", "/socio/ABCDEF1234", "", "203.0.113.7")
+	body := w.Body.String()
+	if w.Code != 200 || !strings.Contains(body, "br.gov.bcb.pix") || !strings.Contains(body, "540525.00") || !strings.Contains(body, "<svg class=\"nep-qr\"") {
+		t.Fatalf("área do sócio sem Pix: %d %.500s", w.Code, body)
+	}
+	if n := s.Store.Count("mensalidades"); n != 3 {
+		t.Fatalf("queria 3 mensalidades (2 meses atrás até agora), veio %d", n)
+	}
+	if w := pedir(s, "GET", "/socio/ERRADO123", "", "203.0.113.7"); w.Code != 404 {
+		t.Fatalf("código errado deveria dar 404: %d", w.Code)
+	}
+	if w := pedir(s, "GET", "/verificar/ABCDEF1234", "", "203.0.113.7"); !strings.Contains(w.Body.String(), "Carteirinha válida") {
+		t.Fatal("verificação")
+	}
+	if w := pedir(s, "GET", "/tesouraria", "", "203.0.113.7"); w.Code != 302 && w.Code != 303 {
+		t.Fatalf("tesouraria sem login deveria redirecionar: %d", w.Code)
 	}
 }

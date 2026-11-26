@@ -130,6 +130,7 @@ func (a *adminPage) sitesPage(post bool) error {
 		`<label>Descrição (o que é o site, para quem, o que tem)<br><textarea name="descricao" rows="3" style="width:100%">` + esc(v("descricao")) + `</textarea></label>` +
 		campo("cidade", "Cidade", "Aveiro") + campo("whatsapp", "WhatsApp", "(93) 90000-0000") + campo("email", "E-mail que recebe as mensagens", "contato@seusite.com.br") +
 		campo("endereco", "Endereço", "Rua das Flores, 120") + campo("horario", "Horário", "Seg a sex, 8h às 18h") + campo("instagram", "Instagram", "@seuperfil") +
+		campo("pix", "Chave Pix (associação: recebe as mensalidades)", "tesouraria@seusite.org.br") + campo("mensalidade", "Mensalidade (associação)", "25,00") +
 		`<button>Criar o site</button></form>`
 	if lista.Len() > 0 {
 		corpo += `<h3>Sites nesta hospedagem</h3><ul>` + lista.String() + `</ul>`
@@ -155,7 +156,7 @@ func (s *Server) criarSiteNaPasta(dest string, v func(string) string) error {
 	}
 	var tag strings.Builder
 	tag.WriteString(`<nepenthes tipo="` + attr(v("tipo")) + `"`)
-	for _, k := range []string{"nome", "cidade", "whatsapp", "email", "endereco", "horario", "instagram"} {
+	for _, k := range []string{"nome", "cidade", "whatsapp", "email", "endereco", "horario", "instagram", "pix", "mensalidade"} {
 		if x := v(k); x != "" {
 			tag.WriteString(` ` + k + `="` + attr(x) + `"`)
 		}

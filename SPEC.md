@@ -600,8 +600,11 @@ Um `index.html` com a tag `<nepenthes>` **com atributos** vira o site inteiro, s
 | `blog` | Start Bootstrap Clean Blog | posts com categorias, tags, comentários, busca, RSS, newsletter, sobre e contato |
 | `portal` | Start Bootstrap Modern Business | notícias com editorias e destaque, agenda com inscrição e vagas, newsletter, sobre com equipe, perguntas, contato |
 | `wiki` | Start Bootstrap Simple Sidebar | páginas com `[[links]]`, índice A–Z, categorias, mudanças recentes, busca, sugestões de edição revisadas no painel |
+| `associacao` | Start Bootstrap Modern Business | ficha de sócio (aprovada no painel), área do sócio por link privado com carteirinha digital e QR de verificação, mensalidades geradas mês a mês com Pix copia e cola e QR (`pix=`, `mensalidade=`), "já paguei" e baixa na tesouraria (`/tesouraria`, só diretoria), assembleias com presença e ata, avisos, documentos e transparência |
 | `estatico` | Start Bootstrap Landing Page | uma página: serviços, quem somos, onde estamos, depoimentos e formulário de contato |
 | `auto` | escolhido pela descrição | wiki, portal, blog ou estático, pelas palavras do texto |
+
+Funções novas para qualquer site: `pix(chave, recebedor, cidade, valor, txid)` devolve o Pix copia e cola (BR Code do Banco Central, com CRC16), `qrcode(texto)` desenha o QR Code em SVG (rsc.io/qr, BSD) e `token(n)` gera um código aleatório. O Pix é o estático com valor: qualquer banco paga; a baixa é manual (o sócio avisa, a tesouraria confirma).
 
 Também aceita `molde=` no lugar de `tipo=` e apelidos (`site`, `landing`, `noticias`, `documentacao`). Sem nenhum atributo (`<nepenthes>ideia</nepenthes>`) continua valendo o assistente da seção 10.17.
 

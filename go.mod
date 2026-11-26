@@ -7,6 +7,7 @@ require (
 	github.com/fergusstrange/embedded-postgres v1.34.0
 	github.com/lib/pq v1.10.9
 	golang.org/x/sys v0.15.0
+	rsc.io/qr v0.2.0
 )
 
 require (

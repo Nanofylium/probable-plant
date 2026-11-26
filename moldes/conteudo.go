@@ -124,3 +124,34 @@ func (d dados) Paginas() []paginaSemente {
 		{"Perguntas comuns", "Ajuda", faq},
 	}
 }
+
+// Associação: assembleias e avisos de partida.
+type assembleiaSemente struct{ Titulo, Data, Local, Pauta, Ata string }
+
+func (d dados) Assembleias() []assembleiaSemente {
+	hoje := time.Now()
+	local := "Sede da associação"
+	if d.Endereco != "" {
+		local = d.Endereco
+	}
+	return []assembleiaSemente{
+		{"Assembleia geral ordinária", hoje.AddDate(0, 0, 18).Format("2006-01-02") + " 19:00", local,
+			"1. Prestação de contas do período\n2. Planejamento das atividades\n3. Assuntos gerais", ""},
+		{"Assembleia de eleição da diretoria", hoje.AddDate(0, -2, 0).Format("2006-01-02") + " 19:00", local,
+			"1. Apresentação das chapas\n2. Votação\n3. Posse da nova diretoria",
+			"Aos presentes foi apresentada a chapa única. Por votação, a chapa foi eleita com ampla maioria e tomou posse na mesma data. Nada mais havendo a tratar, a assembleia foi encerrada.\n\n*Ata de exemplo: troque pelo texto real no painel.*"},
+	}
+}
+
+func (d dados) Avisos() []postSemente {
+	hoje := time.Now()
+	v := "R$ " + strings.Replace(d.Valor, ".", ",", 1)
+	return []postSemente{
+		{Titulo: "Mensalidade agora pode ser paga por Pix", Cat: "Avisos", Data: hoje.AddDate(0, 0, -2).Format("2006-01-02") + "T09:00",
+			Corpo: "A partir deste mês, cada sócio tem uma área própria no site, com a carteirinha digital e o Pix da mensalidade (" + v + ").\n\nÉ só abrir o link que você recebeu, copiar o código ou ler o QR Code no app do banco. Depois, toque em **Já paguei** e a tesouraria confirma."},
+		{Titulo: "Prestação de contas do trimestre", Cat: "Transparência", Data: hoje.AddDate(0, 0, -9).Format("2006-01-02") + "T09:00",
+			Corpo: "O balancete do trimestre está disponível na página de transparência. Dúvidas podem ser enviadas pelo contato ou levadas à próxima assembleia."},
+		{Titulo: "Convite: venha para a próxima assembleia", Cat: "Assembleias", Data: hoje.AddDate(0, 0, -15).Format("2006-01-02") + "T09:00",
+			Corpo: "A participação de todos é o que dá força à associação. Confirme sua presença na página da assembleia."},
+	}
+}

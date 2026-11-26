@@ -45,14 +45,16 @@ var iconesFS embed.FS
 type Molde struct {
 	ID, Nome, Para, Origem, URL string
 	Cor                         string // cor primária do modelo original
+	CSS                         string // folha de estilo (sem ela: a do próprio id)
 }
 
 // Lista dos moldes, na ordem em que aparecem na ajuda.
 var Lista = []Molde{
-	{"blog", "Blog", "textos com categorias, comentários, busca e RSS", "Start Bootstrap Clean Blog", "https://github.com/StartBootstrap/startbootstrap-clean-blog", "#0085A1"},
-	{"portal", "Portal", "notícias, agenda de eventos, guia, newsletter e contato", "Start Bootstrap Modern Business", "https://github.com/StartBootstrap/startbootstrap-modern-business", "#0d6efd"},
-	{"wiki", "Wiki", "páginas ligadas por [[links]], índice A–Z, histórico e sugestões de edição", "Start Bootstrap Simple Sidebar", "https://github.com/StartBootstrap/startbootstrap-simple-sidebar", "#0d6efd"},
-	{"estatico", "Site estático", "uma página de apresentação com serviços, depoimentos e contato", "Start Bootstrap Landing Page", "https://github.com/StartBootstrap/startbootstrap-landing-page", "#0d6efd"},
+	{"blog", "Blog", "textos com categorias, comentários, busca e RSS", "Start Bootstrap Clean Blog", "https://github.com/StartBootstrap/startbootstrap-clean-blog", "#0085A1", ""},
+	{"portal", "Portal", "notícias, agenda de eventos, guia, newsletter e contato", "Start Bootstrap Modern Business", "https://github.com/StartBootstrap/startbootstrap-modern-business", "#0d6efd", ""},
+	{"wiki", "Wiki", "páginas ligadas por [[links]], índice A–Z, histórico e sugestões de edição", "Start Bootstrap Simple Sidebar", "https://github.com/StartBootstrap/startbootstrap-simple-sidebar", "#0d6efd", ""},
+	{"associacao", "Associação", "sócios, mensalidade por Pix, carteirinha digital, assembleias, avisos e transparência", "Start Bootstrap Modern Business", "https://github.com/StartBootstrap/startbootstrap-modern-business", "#0f766e", "portal"},
+	{"estatico", "Site estático", "uma página de apresentação com serviços, depoimentos e contato", "Start Bootstrap Landing Page", "https://github.com/StartBootstrap/startbootstrap-landing-page", "#0d6efd", ""},
 }
 
 // Achar devolve o molde pelo id ou por um apelido (site, landing, noticias...).
@@ -73,6 +75,7 @@ var apelidos = map[string]string{
 	"estático": "estatico", "site": "estatico", "landing": "estatico", "pagina": "estatico", "página": "estatico",
 	"institucional": "estatico", "empresa": "estatico", "noticias": "portal", "notícias": "portal", "revista": "portal",
 	"jornal": "portal", "documentacao": "wiki", "documentação": "wiki", "base": "wiki", "diario": "blog", "diário": "blog",
+	"associação": "associacao", "ong": "associacao", "sindicato": "associacao", "clube": "associacao", "entidade": "associacao",
 	"clean-blog": "blog", "modern-business": "portal", "simple-sidebar": "wiki", "landing-page": "estatico",
 }
 
@@ -81,6 +84,8 @@ type Pedido struct {
 	Tipo                                                                               string // id do molde; "" ou "auto" = deduzir da descrição
 	Descricao                                                                          string // o texto de dentro da tag
 	Nome, Slogan, Cidade, WhatsApp, Telefone, Email, Endereco, Horario, Instagram, Cor string
+	Pix                                                                                string // chave Pix (associação)
+	Mensalidade                                                                        string // valor da mensalidade (associação), ex.: "30" ou "29,90"
 }
 
 var (
@@ -99,6 +104,7 @@ var campos = map[string]string{
 	"telefone": "telefone", "fone": "telefone", "email": "email", "e-mail": "email",
 	"endereco": "endereco", "endereço": "endereco", "horario": "horario", "horário": "horario",
 	"instagram": "instagram", "cor": "cor",
+	"pix": "pix", "chave-pix": "pix", "mensalidade": "mensalidade", "valor": "mensalidade",
 }
 
 // LerTag procura a tag <nepenthes> com atributos. Sem a tag, ou com a tag
@@ -142,6 +148,10 @@ func LerTag(src []byte) (Pedido, bool) {
 			p.Instagram = strings.TrimPrefix(v, "@")
 		case "cor":
 			p.Cor = v
+		case "pix":
+			p.Pix = v
+		case "mensalidade":
+			p.Mensalidade = v
 		}
 	}
 	if !achou {
@@ -164,6 +174,8 @@ func Deduzir(desc string) string {
 		return false
 	}
 	switch {
+	case tem("associac", " ong ", "sindicato", "cooperativa", "clube", "socios", "mensalidade", "entidade", "moradores", "igreja", "paroquia"):
+		return "associacao"
 	case tem("wiki", "documentac", "base de conhecimento", "enciclopedia", "manual", "tutoriais"):
 		return "wiki"
 	case tem("portal", "noticia", "jornal", "revista", "informativo", "agenda cultural", "guia da cidade", "guia de comercio"):
@@ -200,6 +212,7 @@ type dados struct {
 	Zap    string // link wa.me
 	Insta  string // link do Instagram
 	Resumo string // a descrição numa frase curta
+	Valor  string // mensalidade como número Nepenthes ("30.00")
 }
 
 // Montar escreve o .nep.html do pedido.
@@ -217,15 +230,23 @@ func Montar(p Pedido) (string, error) {
 		return "", fmt.Errorf("tipo=%q não existe; use %s ou auto", p.Tipo, strings.Join(ids, ", "))
 	}
 	p.Tipo = m.ID
-	pl := gerador.EntenderComSemente(p.Descricao+" "+p.Nome, 1)
+	texto := p.Descricao + " " + p.Nome
+	if m.ID == "associacao" {
+		texto = "associação " + texto
+	}
+	pl := gerador.EntenderComSemente(texto, 1)
 	d := dados{Pedido: p, Molde: m, Setor: pl.Setor, Ramo: pl.RamoAchado, Ano: time.Now().Year()}
 	if d.Nome == "" {
 		d.Nome = pl.Nome
 		if !pl.NomeAchado {
-			d.Nome = map[string]string{"blog": "Meu Blog", "portal": "Portal da Cidade", "wiki": "Nossa Wiki", "estatico": pl.Setor.Nome}[m.ID]
+			d.Nome = map[string]string{"blog": "Meu Blog", "portal": "Portal da Cidade", "wiki": "Nossa Wiki", "estatico": pl.Setor.Nome, "associacao": "Nossa Associação"}[m.ID]
 		}
 	}
 	d.Resumo = frase(p.Descricao, 150)
+	d.Valor = "30.00"
+	if f, err := strconv.ParseFloat(strings.ReplaceAll(strings.TrimPrefix(strings.TrimSpace(strings.TrimPrefix(p.Mensalidade, "R$")), " "), ",", "."), 64); err == nil && f > 0 && f < 100000 {
+		d.Valor = strconv.FormatFloat(f, 'f', 2, 64)
+	}
 	if !reCor.MatchString(d.Cor) {
 		d.Cor = m.Cor
 		if pl.RamoAchado && reCor.MatchString(pl.Setor.Cor) {

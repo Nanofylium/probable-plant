@@ -24,6 +24,7 @@ func TestDeduzir(t *testing.T) {
 	for desc, quer := range map[string]string{
 		"Documentação do nosso software": "wiki", "Jornal de notícias da cidade": "portal",
 		"Meu blog de viagens": "blog", "Padaria artesanal no centro": "estatico",
+		"Associação de moradores do bairro": "associacao",
 	} {
 		if got := Deduzir(desc); got != quer {
 			t.Errorf("%q: %s, queria %s", desc, got, quer)
