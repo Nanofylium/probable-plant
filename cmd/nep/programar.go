@@ -173,8 +173,15 @@ func rodarPrograma(ctx context.Context, arquivo, entrada string) saidaPrograma {
 // promptProgramar ensina a IA a escrever Nepenthes (ou Lua).
 func promptProgramar(lua bool) string {
 	if lua {
-		return "Você é a IA do Nepenthes e escreve programas em Lua 5.4 que rodam no Nepenthes (biblioteca padrão do Lua: string, table, math, os.time/os.date, io.write, io.read). " +
-			"Responda em português do Brasil: uma frase curta explicando e depois o programa inteiro num bloco ```lua. Não use bibliotecas externas."
+		return "Você é a IA do Nepenthes e escreve programas em Lua 5.4, que rodam dentro do Nepenthes. Responda em português do Brasil: uma frase curta explicando e depois o programa INTEIRO num bloco ```lua.\n" +
+			"Regras:\n- Use só a biblioteca padrão do Lua: string, table, math, os.time, os.date, io.write, io.read. Nada de require.\n" +
+			"- Feche todo function, if, for e while com end. Um comando por linha.\n" +
+			"- Para ler um número: local n = tonumber(io.read()). Para sortear: math.random(1, 100).\n" +
+			"- Dinheiro em reais: nep.money(19.9) dá \"R$ 19,90\". Data: os.date(\"%d/%m/%Y\").\n" +
+			"- O programa roda sozinho do começo ao fim: chame as funções que criar.\n\nExemplo:\n```lua\n" +
+			"local function total(itens)\n  local soma = 0\n  for _, item in ipairs(itens) do\n    soma = soma + item.preco * item.qtd\n  end\n  return soma\nend\n\n" +
+			"io.write(\"Quantos pães? \")\nlocal qtd = tonumber(io.read()) or 1\nlocal itens = {{nome = \"Pão\", preco = 0.8, qtd = qtd}, {nome = \"Café\", preco = 18.9, qtd = 1}}\n" +
+			"for i = 1, #itens do\n  print(itens[i].nome, nep.money(itens[i].preco * itens[i].qtd))\nend\nif total(itens) > 20 then\n  print(\"Total com 5% de desconto:\", nep.money(total(itens) * 0.95))\nelse\n  print(\"Total:\", nep.money(total(itens)))\nend\n```"
 	}
 	return `Você é a IA do Nepenthes e escreve programas na linguagem Nepenthes. Responda em português do Brasil: uma frase curta explicando e depois o programa INTEIRO num bloco ` + "```nep" + `.
 
@@ -259,7 +266,13 @@ var reAbreBloco = regexp.MustCompile(`(^|\s)do\s*(#.*)?$`)
 
 // fecharBlocos põe os "end" que faltam, pelo recuo das linhas (a IA costuma
 // recuar certo e esquecer o end).
-func fecharBlocos(codigo string) string {
+var reAbreLua = regexp.MustCompile(`((^|\s)(then|do)|\bfunction\b.*\))\s*(--.*)?$`)
+
+func fecharBlocos(codigo string, lua bool) string {
+	abre := reAbreBloco
+	if lua {
+		abre = reAbreLua
+	}
 	recuo := func(l string) int { return len(l) - len(strings.TrimLeft(l, " \t")) }
 	var out []string
 	var pilha []int
@@ -283,13 +296,13 @@ func fecharBlocos(codigo string) string {
 			if len(pilha) > 0 && pilha[len(pilha)-1] == r {
 				pilha = pilha[:len(pilha)-1]
 			}
-		case palavra == "else" || palavra == "elif" || palavra == "catch":
+		case palavra == "else" || palavra == "elif" || palavra == "elseif" || palavra == "catch":
 			fechar(r+1, false)
 		default:
 			fechar(r, false)
 		}
 		out = append(out, l)
-		if palavra != "end" && reAbreBloco.MatchString(t) && !regexp.MustCompile(`\bend\s*(#.*)?$`).MatchString(t) {
+		if palavra != "end" && palavra != "elseif" && palavra != "elif" && palavra != "else" && palavra != "catch" && abre.MatchString(t) && !regexp.MustCompile(`\bend\s*((#|--).*)?$`).MatchString(t) {
 			pilha = append(pilha, r)
 		}
 	}
@@ -363,8 +376,8 @@ func iaPrograma(ctx context.Context, in pedidoIA) (map[string]any, error) {
 			codigo = consertar(codigo)
 		}
 		_, errC := compileAny(codigo, "programa"+ext)
-		if errC != nil && !in.Lua {
-			for _, c2 := range []string{fecharBlocos(codigo)} {
+		if errC != nil {
+			for _, c2 := range []string{fecharBlocos(codigo, in.Lua)} {
 				if _, e2 := compileAny(c2, "programa"+ext); e2 == nil {
 					codigo, errC = c2, nil
 					break

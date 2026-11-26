@@ -101,7 +101,7 @@ func TestConsertar(t *testing.T) {
 
 func TestFecharBlocos(t *testing.T) {
 	src := "import random\nlet n = random.int(1, 100)\nfn perguntar() do\n  let t = 5\n  if t == n do\n    print(`ganhou ${t}`)\n  else\n    print(\"de novo\")\n    perguntar()\n\nperguntar()\nfor i in range(3) do\n  print({i, n})\nend\n"
-	c := fecharBlocos(consertar(src))
+	c := fecharBlocos(consertar(src), false)
 	if _, err := compileAny(c, "a.nep"); err != nil {
 		t.Fatalf("%v\n%s", err, c)
 	}
@@ -109,7 +109,15 @@ func TestFecharBlocos(t *testing.T) {
 		t.Fatal(c)
 	}
 	ok := "if true do\n  print(1)\nend\n"
-	if fecharBlocos(ok) != ok {
-		t.Fatal(fecharBlocos(ok))
+	if fecharBlocos(ok, false) != ok {
+		t.Fatal(fecharBlocos(ok, false))
+	}
+}
+
+func TestFecharBlocosLua(t *testing.T) {
+	src := "local function f(x)\n  if x > 1 then\n    return 1\n  elseif x < 0 then\n    return -1\n  else\n    return 0\n\nfor i = 1, 3 do\n  print(f(i))\n"
+	c := fecharBlocos(src, true)
+	if _, err := compileAny(c, "a.lua"); err != nil {
+		t.Fatalf("%v\n%s", err, c)
 	}
 }

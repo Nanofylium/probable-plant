@@ -90,7 +90,7 @@ aside p{margin:0 0 10px;color:var(--mut);font-size:.88rem}
     <div class="card">
       <div class="barra-arq">
         <input type="text" id="nome" value="meu-programa" aria-label="Nome do programa" maxlength="56" spellcheck="false">
-        <select id="lingua" aria-label="Linguagem"><option value="nep">Nepenthes</option><option value="lua">Lua</option></select>
+        <select id="lingua" aria-label="Linguagem"><option value="lua">Lua (a IA acerta mais)</option><option value="nep">Nepenthes</option></select>
         <button class="btn" id="novo" type="button" title="Programa novo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Novo</span></button>
         <button class="btn" id="salvar" type="button" title="Salvar (Ctrl+S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7M8 20v-6h8v6"/></svg><span>Salvar</span></button>
         <button class="btn pri" id="rodar" type="button" title="Rodar (Ctrl+Enter)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>Rodar</button>
@@ -132,7 +132,17 @@ aside p{margin:0 0 10px;color:var(--mut);font-size:.88rem}
     </div>
     <div class="card cola">
       <h2>Cola rápida</h2>
-      <ul>
+      <ul id="cola-lua">
+        <li><code>local x = 10</code> cria; <code>x = x + 1</code> muda</li>
+        <li><code>if x &gt; 3 then … elseif … else … end</code></li>
+        <li><code>for i = 1, 10 do … end</code></li>
+        <li><code>for i, v in ipairs(lista) do … end</code></li>
+        <li><code>local function soma(a, b) return a + b end</code></li>
+        <li><code>"Olá, " .. nome</code> junta textos</li>
+        <li><code>tonumber(io.read())</code> lê um número</li>
+        <li><code>nep.money(19.9)</code> → R$ 19,90</li>
+      </ul>
+      <ul id="cola-nep" hidden>
         <li><code>let x = 10</code> cria; <code>x += 1</code> muda</li>
         <li><code>if x &gt; 3 do … else … end</code></li>
         <li><code>for i, v in lista do … end</code></li>
@@ -166,12 +176,24 @@ for c in compras do
 end
 print("Total:", compras |> map(total) |> sum |> money)
 `,
-  lua: `-- Lua 5.4 rodando dentro do Nepenthes
-local frutas = {"maçã", "banana", "uva"}
-for i, f in ipairs(frutas) do
-  print(i, f:upper())
+  lua: `-- Bem-vindo! Lua 5.4 rodando dentro do Nepenthes. Aperte Rodar (Ctrl+Enter).
+io.write("Qual o seu nome? ")
+local nome = io.read() or ""
+if nome == "" then nome = "mundo" end
+print("Olá, " .. nome .. "!")
+
+local compras = {
+  {item = "Pão", preco = 6.5, qtd = 4},
+  {item = "Café", preco = 18.9, qtd = 1},
+  {item = "Queijo", preco = 42, qtd = 0.5},
+}
+local total = 0
+for _, c in ipairs(compras) do
+  local valor = c.preco * c.qtd
+  total = total + valor
+  print(c.item .. ": " .. nep.money(valor))  -- nep.* são as funções do Nepenthes
 end
-print(string.format("Total: %d frutas", #frutas))
+print("Total: " .. nep.money(total))
 `};
 const ed = $("#codigo"), linhas = $("#linhas");
 let ultimoErro = "";
@@ -277,6 +299,8 @@ $("#chips").onclick = e => { if (e.target.tagName === "BUTTON") { $("#pedido").v
 $("#rodar").onclick = rodar;
 $("#salvar").onclick = salvar;
 $("#novo").onclick = () => { $("#nome").value = "meu-programa"; porCodigo(EXEMPLO[ext()]); $("#saida").innerHTML = '<span class="vazio">Aperte Rodar (ou Ctrl+Enter) para ver o resultado aqui.</span>'; $("#estado").hidden = true; $("#ia-consertar").hidden = true; };
+function mostraCola() { $("#cola-lua").hidden = ext() !== "lua"; $("#cola-nep").hidden = ext() !== "nep"; }
+$("#lingua").addEventListener("change", mostraCola);
 $("#lingua").onchange = () => { if (!/\S/.test(ed.value) || Object.values(EXEMPLO).includes(ed.value)) porCodigo(EXEMPLO[ext()]); else guardarRascunho(); };
 $("#abrir-pasta").onclick = () => api("/api/programa/pasta").catch(x => aviso(x.message, true));
 $("#ia-baixar").onclick = async () => { await fetch("/api/ia/baixar", {method: "POST", headers: {"X-Central": TOKEN, "Content-Type": "application/json"}, body: "{}"}); verIA(); };
@@ -286,6 +310,7 @@ async function abrir(nome) {
     const r = await api("/api/programa/abrir", {nome});
     $("#nome").value = nome.replace(/\.(nep|lua)$/, "");
     $("#lingua").value = nome.endsWith(".lua") ? "lua" : "nep";
+    mostraCola();
     porCodigo(r.codigo);
   } catch (x) { aviso(x.message, true); }
 }
@@ -318,8 +343,9 @@ async function verIA() { const r = await listar(); if (r) mostrarIA(r.ia); }
 
 let rasc = null;
 try { rasc = JSON.parse(localStorage.getItem("nep-rascunho") || "null"); } catch (_) {}
-if (rasc && rasc.codigo) { $("#nome").value = rasc.nome || "meu-programa"; $("#lingua").value = rasc.lingua === "lua" ? "lua" : "nep"; ed.value = rasc.codigo; numerar(); }
-else porCodigo(EXEMPLO.nep);
+if (rasc && rasc.codigo) { $("#nome").value = rasc.nome || "meu-programa"; $("#lingua").value = rasc.lingua === "nep" ? "nep" : "lua"; ed.value = rasc.codigo; numerar(); }
+else porCodigo(EXEMPLO.lua);
+mostraCola();
 verIA();
 </script>
 </body>
