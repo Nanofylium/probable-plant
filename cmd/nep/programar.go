@@ -195,7 +195,12 @@ A linguagem Nepenthes (parecida com Python e Lua, palavras em inglês, nomes pod
 - Métodos em listas e textos: lista.sort(), "ana".upper(), (19.9).money()
 - Funções globais: print(...), input(pergunta), str, int, float, len, type, copy, default(v, padrao), format("{} e {}", a, b), upper, lower, trim, replace(s, a, b), split(s, sep), join(lista, sep), contains, starts_with, slug, pad, round(x, casas), floor, ceil, abs, money(x) dá "R$ 19,90", number(x, casas), sum, avg, min, max, range(n) ou range(a, b), map, filter, find, reduce(lista, fn(acc, x), inicial), any, all, sort, sort_by(lista, "campo"), group_by, count_by, where, pluck, take, skip, first, last, reverse, push(lista, v), pop, remove, unique, zip, enumerate, keys, values, has(tabela, chave), merge, now(), date(valor, "d/m/Y"), load_csv(caminho), error(msg), assert(cond, msg).
 - Módulos (import nome no topo): math (pi sqrt pow random random_int(a, b) choice shuffle), fs (read write append lines exists list mkdir), json (encode pretty decode), time (unix sleep(ms) format add_days diff_days), http (get post → {status, ok, body}), os (args env).
+- Uma função devolve UM valor; para devolver dois, devolva uma tabela: return {troco: t, resto: r}.
 - Não existe classe nem ponto e vírgula. Uma instrução por linha. Feche todo do com end.
+- Contar de 1 a 10: for i in range(1, 11) do ... end (range(a, b) vai de a até b-1). NÃO existe 1..10, then, elseif, function, local, += em texto com f"".
+- Texto com valores usa {x} dentro de crases, NUNCA ${x}. Tabela sempre com chave: {notas: notas, media: media}.
+- Número aleatório: import math e math.random_int(1, 100). Não existe módulo random.
+- Ler número digitado: let n = int(input("Número: ")) ou float(input(...)).
 
 Exemplo:
 ` + "```nep" + `
@@ -210,10 +215,94 @@ for p in produtos do
   end
 end
 print(json.encode(em_falta))
+` + "```" + `
+
+Outro exemplo:
+` + "```nep" + `
+let n = int(input("Qual número? "))
+for i in range(1, 11) do
+  print(` + "`{n} x {i} = {n * i}`" + `)
+end
+let notas = [7.5, 6, 9]
+let media = avg(notas)
+if media >= 7 do
+  print("Aprovado com média", round(media, 1))
+else
+  print("Recuperação")
+end
 ` + "```"
 }
 
 var reBlocoCodigo = regexp.MustCompile("(?s)```[a-zA-Z]*[ \t]*\r?\n(.*?)```")
+
+// consertos: enganos comuns de modelos pequenos (vícios de Lua e Python)
+// trocados antes de compilar.
+var consertos = []struct {
+	re  *regexp.Regexp
+	por string
+}{
+	{regexp.MustCompile(`\bin\s+(-?\w+)\s*\.\.\s*(-?\w+)\s+do\b`), "in range($1, ($2) + 1) do"},
+	{regexp.MustCompile(`(?m)\bthen\s*$`), "do"},
+	{regexp.MustCompile(`\belseif\b`), "elif"},
+	{regexp.MustCompile(`(?m)^(\s*)local\s+function\s+`), "${1}fn "},
+	{regexp.MustCompile(`(?m)^(\s*)function\s+(\w+\s*\([^)]*\))\s*$`), "${1}fn $2 do"},
+	{regexp.MustCompile(`(?m)^(\s*)local\s+`), "${1}let "},
+	{regexp.MustCompile(`(?m);\s*$`), ""},
+	{regexp.MustCompile(`\$\{`), "{"},
+	{regexp.MustCompile(`(?m)^import\s+random\s*$`), "import math"},
+	{regexp.MustCompile(`\brandom\.(randint|random_int|int)\(`), "math.random_int("},
+	{regexp.MustCompile(`\brandom\.(choice|shuffle)\(`), "math.$1("},
+	{regexp.MustCompile(`\{(\w+), (\w+)\}`), "{$1: $1, $2: $2}"},
+}
+
+var reAbreBloco = regexp.MustCompile(`(^|\s)do\s*(#.*)?$`)
+
+// fecharBlocos põe os "end" que faltam, pelo recuo das linhas (a IA costuma
+// recuar certo e esquecer o end).
+func fecharBlocos(codigo string) string {
+	recuo := func(l string) int { return len(l) - len(strings.TrimLeft(l, " \t")) }
+	var out []string
+	var pilha []int
+	fechar := func(ate int, final bool) {
+		for len(pilha) > 0 && (final || pilha[len(pilha)-1] >= ate) {
+			out = append(out, strings.Repeat(" ", pilha[len(pilha)-1])+"end")
+			pilha = pilha[:len(pilha)-1]
+		}
+	}
+	for _, l := range strings.Split(strings.TrimRight(codigo, "\n"), "\n") {
+		t := strings.TrimSpace(l)
+		if t == "" || strings.HasPrefix(t, "#") || strings.HasPrefix(t, "--") {
+			out = append(out, l)
+			continue
+		}
+		r := recuo(l)
+		palavra := strings.Fields(t)[0]
+		switch {
+		case palavra == "end":
+			fechar(r+1, false) // fecha os de dentro que ficaram abertos
+			if len(pilha) > 0 && pilha[len(pilha)-1] == r {
+				pilha = pilha[:len(pilha)-1]
+			}
+		case palavra == "else" || palavra == "elif" || palavra == "catch":
+			fechar(r+1, false)
+		default:
+			fechar(r, false)
+		}
+		out = append(out, l)
+		if palavra != "end" && reAbreBloco.MatchString(t) && !regexp.MustCompile(`\bend\s*(#.*)?$`).MatchString(t) {
+			pilha = append(pilha, r)
+		}
+	}
+	fechar(0, true)
+	return strings.Join(out, "\n") + "\n"
+}
+
+func consertar(codigo string) string {
+	for _, c := range consertos {
+		codigo = c.re.ReplaceAllString(codigo, c.por)
+	}
+	return codigo
+}
 
 // separarCodigo tira o programa da resposta da IA (o maior bloco ```).
 func separarCodigo(txt string) (explicacao, codigo string) {
@@ -270,7 +359,18 @@ func iaPrograma(ctx context.Context, in pedidoIA) (map[string]any, error) {
 			return nil, err
 		}
 		explicacao, codigo = separarCodigo(txt)
+		if !in.Lua {
+			codigo = consertar(codigo)
+		}
 		_, errC := compileAny(codigo, "programa"+ext)
+		if errC != nil && !in.Lua {
+			for _, c2 := range []string{fecharBlocos(codigo)} {
+				if _, e2 := compileAny(c2, "programa"+ext); e2 == nil {
+					codigo, errC = c2, nil
+					break
+				}
+			}
+		}
 		if errC == nil {
 			return map[string]any{"codigo": codigo, "explicacao": explicacao, "tentativas": tentativas, "ok": true}, nil
 		}

@@ -67,7 +67,7 @@ func TestProgramarIA(t *testing.T) {
 	velho := iaChat
 	defer func() { iaChat = velho }()
 	var respostas = []string{
-		"Aqui está:\n```nep\nif x do\nprint(x)\n```", // não compila
+		"Aqui está:\n```nep\nlet = 5\nprint(x)\n```", // não compila
 		"Corrigido:\n```nep\nlet x = [1, 2, 3] |> map(fn(v) do v * 2 end)\nprint(x)\n```",
 	}
 	var vistas [][]map[string]string
@@ -86,5 +86,30 @@ func TestProgramarIA(t *testing.T) {
 	}
 	if _, c := separarCodigo("só texto"); c != "só texto" {
 		t.Fatal(c)
+	}
+}
+
+func TestConsertar(t *testing.T) {
+	c := consertar("local x = 1;\nfor i in 1..10 do\n  if i == x then\n    print(i)\n  elseif i > 5 then\n    print(0)\n  end\nend\n")
+	if _, err := compileAny(c, "a.nep"); err != nil {
+		t.Fatalf("%v\n%s", err, c)
+	}
+	if !strings.Contains(c, "range(1, (10) + 1)") {
+		t.Fatal(c)
+	}
+}
+
+func TestFecharBlocos(t *testing.T) {
+	src := "import random\nlet n = random.int(1, 100)\nfn perguntar() do\n  let t = 5\n  if t == n do\n    print(`ganhou ${t}`)\n  else\n    print(\"de novo\")\n    perguntar()\n\nperguntar()\nfor i in range(3) do\n  print({i, n})\nend\n"
+	c := fecharBlocos(consertar(src))
+	if _, err := compileAny(c, "a.nep"); err != nil {
+		t.Fatalf("%v\n%s", err, c)
+	}
+	if strings.Count(c, "end") != 3 || !strings.Contains(c, "math.random_int(") {
+		t.Fatal(c)
+	}
+	ok := "if true do\n  print(1)\nend\n"
+	if fecharBlocos(ok) != ok {
+		t.Fatal(fecharBlocos(ok))
 	}
 }
