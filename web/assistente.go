@@ -25,6 +25,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/Nanofylium/probable-plant/moldes"
 	"html"
 	"net"
 	"net/http"
@@ -51,6 +52,9 @@ func (s *Server) pedeAssistente() (bool, string) {
 	}
 	m := reTagNepenthes.FindSubmatch(b)
 	if m == nil {
+		return false, ""
+	}
+	if _, molde := moldes.LerTag(b); molde { // com tipo/nome/...: o molde monta sozinho
 		return false, ""
 	}
 	ideia := strings.TrimSpace(regexp.MustCompile(`(?s)<[^>]*>`).ReplaceAllString(string(m[1]), " "))

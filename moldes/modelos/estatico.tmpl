@@ -1,0 +1,159 @@
+⟦template "aviso" .⟧
+<nep-config nome="⟦h .Nome⟧" lang="pt-BR"
+  lowii="Você atende o site de ⟦h .Nome⟧⟦if .Cidade⟧, em ⟦h .Cidade⟧⟦end⟧. Responda com base nos textos do site e convide para entrar em contato.">
+
+<nep>
+⟦template "nep-comum" .⟧
+</nep>
+
+<html lang="pt-BR">
+<head>
+⟦template "cabeca" .⟧
+  <style>
+    body { font-family: "Nunito", system-ui, sans-serif; }
+    header.masthead { padding-top: 8rem; padding-bottom: 8rem; }
+    header.masthead:before { opacity: .55 !important; }
+    header.masthead h1 { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 800; }
+    .features-icons .features-icons-item .features-icons-icon { height: 5rem; font-size: 3.5rem; }
+    .showcase .showcase-img { min-height: 22rem; background-size: cover; background-position: center; }
+    .call-to-action { background: linear-gradient(135deg, color-mix(in srgb, ⟦.Cor⟧ 80%, #000), ⟦.Cor⟧) !important; }
+    .call-to-action:before { display: none; }
+    .call-to-action .form-control, .call-to-action .form-floating > label { color: #212529; }
+    .call-to-action .nep-ok { color: #135c2f; }
+    .call-to-action .btn-primary { --bs-btn-bg: #fff; --bs-btn-color: ⟦.Cor⟧; --bs-btn-border-color: #fff; --bs-btn-hover-bg: #f1f3f5; --bs-btn-hover-color: ⟦.Cor⟧; --bs-btn-hover-border-color: #f1f3f5; }
+    .contatos-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1.5rem; padding: 0; margin: 2rem 0 0; list-style: none; }
+    .contatos-cta a { color: #fff; }
+    footer.footer a { text-decoration: none; }
+    .footer .ico, .footer .fs-3 svg { color: var(--nep-cor); }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light static-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{{ url('/') }}" editavel="tema.nome">⟦h .Nome⟧</a>
+      <a class="btn btn-primary" href="#contato">Fale conosco</a>
+    </div>
+  </nav>
+
+  <page route="/" title="Início" description="⟦h (maior .Resumo .Setor.Texto)⟧">
+    <header class="masthead">
+      <div class="container position-relative">
+        <div class="row justify-content-center">
+          <div class="col-xl-7">
+            <div class="text-center text-white">
+              <h1 class="mb-3" editavel="home.titulo">⟦h (maior .Slogan .Setor.Titulo)⟧</h1>
+              <p class="lead mb-5" editavel="home.texto">⟦h (maior .Resumo .Setor.Texto)⟧</p>
+              <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                <a class="btn btn-primary btn-lg px-4" href="#contato">Pedir orçamento</a>
+⟦if .Zap⟧                <a class="btn btn-outline-light btn-lg px-4" href="⟦.Zap⟧" target="_blank" rel="noopener">⟦icone "whatsapp"⟧ WhatsApp</a>
+⟦else⟧                <a class="btn btn-outline-light btn-lg px-4" href="#servicos">Conheça</a>
+⟦end⟧              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="features-icons bg-light text-center" id="servicos">
+      <div class="container">
+        <h2 class="mb-5 fw-bold" editavel="servicos.titulo">⟦h .Setor.ServRotulo⟧</h2>
+        <div class="row">
+⟦range $i, $s := .Setor.Servicos⟧⟦if lt $i 3⟧          <div class="col-lg-4">
+            <div class="features-icons-item mx-auto mb-5 mb-lg-3">
+              <div class="features-icons-icon d-flex"><span class="m-auto text-primary">⟦icone (pega (list "lightning" "bookmark-star" "shield-check" "heart") $i)⟧</span></div>
+              <h3>⟦h $s.Titulo⟧</h3>
+              <p class="lead mb-0">⟦h $s.Texto⟧</p>
+            </div>
+          </div>
+⟦end⟧⟦end⟧        </div>
+      </div>
+    </section>
+
+    <section class="showcase">
+      <div class="container-fluid p-0">
+        <div class="row g-0">
+          <div class="col-lg-6 order-lg-2 text-white showcase-img" style="background-image: url('⟦img "notebook.jpg"⟧')"></div>
+          <div class="col-lg-6 order-lg-1 my-auto showcase-text">
+            <h2 editavel="sobre.titulo">Quem somos</h2>
+            <div class="lead mb-0" editavel="sobre.texto"><p>⟦h (maior .Descricao .Setor.Texto)⟧</p></div>
+          </div>
+        </div>
+        <div class="row g-0">
+          <div class="col-lg-6 text-white showcase-img" style="background-image: url('⟦img "mesa.jpg"⟧')"></div>
+          <div class="col-lg-6 my-auto showcase-text">
+            <h2 editavel="como.titulo">Como trabalhamos</h2>
+            <div class="lead mb-0" editavel="como.texto"><p>⟦h .Setor.ServIntro⟧ ⟦with index .Setor.Servicos 3⟧⟦h .Texto⟧⟦end⟧</p></div>
+          </div>
+        </div>
+        <div class="row g-0">
+          <div class="col-lg-6 order-lg-2 text-white showcase-img" style="background-image: url('⟦img "objetos.jpg"⟧')"></div>
+          <div class="col-lg-6 order-lg-1 my-auto showcase-text">
+            <h2 editavel="onde.titulo">Onde estamos</h2>
+            <ul class="lead list-unstyled mb-0">⟦template "contatos" .⟧</ul>
+            ⟦if not (or .Endereco .Cidade .Telefone .Email .Horario)⟧<p class="lead mb-0" editavel="onde.texto">Atendemos com hora marcada. Fale com a gente pelo formulário abaixo.</p>⟦end⟧
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="testimonials text-center bg-light">
+      <div class="container">
+        <h2 class="mb-5" editavel="depo.titulo">O que dizem sobre nós</h2>
+        <div class="row">
+⟦range $i, $d := .Setor.Depo⟧⟦if lt $i 3⟧          <div class="col-lg-4">
+            <div class="testimonial-item mx-auto mb-5 mb-lg-0">
+              <img class="img-fluid rounded-circle mb-3" src="⟦img (printf "pessoa%d.jpg" (n $i))⟧" alt="" width="190" height="190" loading="lazy">
+              <h5>⟦h (index $d 1)⟧</h5>
+              <p class="font-weight-light mb-0">“⟦h (index $d 0)⟧”</p>
+            </div>
+          </div>
+⟦end⟧⟦end⟧        </div>
+      </div>
+    </section>
+
+    <section class="call-to-action text-white text-center" id="contato">
+      <div class="container position-relative">
+        <div class="row justify-content-center">
+          <div class="col-xl-6">
+            <h2 class="mb-4" editavel="contato.titulo">⟦h .Setor.Chamada⟧</h2>
+            <div class="text-start">⟦template "form-contato" .⟧</div>
+            <ul class="contatos-cta">⟦template "contatos" .⟧</ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </page>
+
+  <page route="404" title="Não encontrado">
+    <section class="py-5 text-center"><div class="container py-5">
+      <h1 class="fw-bold">Página não encontrada</h1>
+      <p class="lead">Volte para o <a href="{{ url('/') }}">início</a>.</p>
+    </div></section>
+  </page>
+
+  <footer class="footer bg-light">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-6 h-100 text-center text-lg-start my-auto">
+          <ul class="list-inline mb-2">
+            <li class="list-inline-item"><a href="#servicos">⟦h .Setor.ServRotulo⟧</a></li>
+            <li class="list-inline-item">⋅</li>
+            <li class="list-inline-item"><a href="#contato">Contato</a></li>
+            <li class="list-inline-item">⋅</li>
+            <li class="list-inline-item"><a href="{{ url('/_admin') }}">Painel</a></li>
+          </ul>
+          <p class="text-muted small mb-4 mb-lg-0">© ⟦h .Nome⟧ ⟦.Ano⟧. Feito com Nepenthes · tema Landing Page (Start Bootstrap, MIT).</p>
+        </div>
+        <div class="col-lg-6 h-100 text-center text-lg-end my-auto">
+          <ul class="list-inline mb-0">
+⟦if .Insta⟧            <li class="list-inline-item me-4"><a href="⟦.Insta⟧" aria-label="Instagram" target="_blank" rel="noopener"><span class="fs-3">⟦icone "instagram"⟧</span></a></li>
+⟦end⟧⟦if .Zap⟧            <li class="list-inline-item me-4"><a href="⟦.Zap⟧" aria-label="WhatsApp" target="_blank" rel="noopener"><span class="fs-3">⟦icone "whatsapp"⟧</span></a></li>
+⟦end⟧⟦if .Email⟧            <li class="list-inline-item"><a href="mailto:⟦h .Email⟧" aria-label="E-mail"><span class="fs-3">⟦icone "envelope"⟧</span></a></li>
+⟦end⟧          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+⟦template "scripts" .⟧
+</body>
+</html>

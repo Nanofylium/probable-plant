@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/Nanofylium/probable-plant/moldes"
 	"html"
 	"io"
 	"mime"
@@ -105,8 +106,26 @@ func (s *Server) load() (*Site, error) {
 		return nil, err
 	}
 	s.mtime = st.ModTime()
-	s.site, s.siteErr = ParseSite(filepath.Base(s.file), strings.ReplaceAll(string(src), "\r\n", "\n"))
+	txt, err := expandirMolde(src)
+	if err != nil {
+		s.site, s.siteErr = nil, err
+		return nil, err
+	}
+	s.site, s.siteErr = ParseSite(filepath.Base(s.file), txt)
 	return s.site, s.siteErr
+}
+
+// expandirMolde: um index.html com <nepenthes tipo="blog|portal|wiki|estatico" ...>
+// vira o site inteiro do molde (na memória; o arquivo não muda). Sem a tag com
+// atributos, o texto segue como está.
+func expandirMolde(src []byte) (string, error) {
+	if out, ok, err := moldes.Expandir(src); ok {
+		if err != nil {
+			return "", fmt.Errorf("<nepenthes>: %w", err)
+		}
+		return out, nil
+	}
+	return strings.ReplaceAll(string(src), "\r\n", "\n"), nil
 }
 
 // Check lê o site e compila todo o código, sem rodar nada. Usado por `nep check`.
@@ -115,7 +134,11 @@ func Check(file string) (*Site, error) {
 	if err != nil {
 		return nil, err
 	}
-	site, err := ParseSite(filepath.Base(file), strings.ReplaceAll(string(src), "\r\n", "\n"))
+	txt, err := expandirMolde(src)
+	if err != nil {
+		return nil, err
+	}
+	site, err := ParseSite(filepath.Base(file), txt)
 	if err != nil {
 		return nil, err
 	}
@@ -247,6 +270,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.HasPrefix(rq.path, "/_nep/visual/") || strings.HasPrefix(rq.path, "/_nep/fontes/") {
 		s.serveVisual(w, r, rq.path)
+		return
+	}
+	if strings.HasPrefix(rq.path, "/_nep/molde/") {
+		moldes.Servir(w, r, strings.TrimPrefix(rq.path, "/_nep/molde/"))
 		return
 	}
 	if strings.HasPrefix(rq.path, "/_nep/construtor/") {

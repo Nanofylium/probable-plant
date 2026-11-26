@@ -97,7 +97,7 @@ func reorder(args []string) []string {
 }
 
 // cgiMode atende um pedido CGI (hospedagem compartilhada com Apache).
-// O site é o arquivo da variável NEP_SITE ou site.nep.html ao lado do executável.
+// O site é o arquivo da variável NEP_SITE ou site.nep.html (ou index.html) ao lado do executável.
 func cgiMode(file string) int {
 	if file == "" {
 		file = os.Getenv("NEP_SITE")
@@ -105,6 +105,11 @@ func cgiMode(file string) int {
 	if file == "" {
 		exe, _ := os.Executable()
 		file = filepath.Join(filepath.Dir(exe), "site.nep.html")
+		if _, err := os.Stat(file); err != nil { // ou o index.html com a tag <nepenthes>
+			if idx := filepath.Join(filepath.Dir(exe), "index.html"); arquivoExiste(idx) {
+				file = idx
+			}
+		}
 	}
 	base := strings.TrimRight(path.Dir(os.Getenv("SCRIPT_NAME")), "/.")
 	dev := os.Getenv("NEP_DEV") == "1"
@@ -192,4 +197,9 @@ func previaAoCriar(site string) []string {
 		return nil
 	}
 	return []string{out}
+}
+
+func arquivoExiste(f string) bool {
+	st, err := os.Stat(f)
+	return err == nil && !st.IsDir()
 }

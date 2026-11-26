@@ -583,6 +583,32 @@ No Windows, a janela preta some e o Nepenthes fica num ícone perto do relógio 
 
 Ações da Central exigem a chave da página (cabeçalho `X-Central`) e o endereço `localhost`. O Analytics em servidor com Lightdash continua só na pilha Docker.
 
+### 10.21 Moldes: site inteiro a partir de uma tag
+
+Um `index.html` com a tag `<nepenthes>` **com atributos** vira o site inteiro, sem tela e sem IA:
+
+```html
+<nepenthes tipo="portal" nome="Folha do Vale" cidade="Aveiro" whatsapp="(93) 90000-0000"
+           email="redacao@exemplo.com.br" endereco="Rua das Flores, 120" horario="Seg a sex, 8h às 18h"
+           instagram="@folhadovale" cor="#1d4ed8">
+  Portal de notícias da cidade, com agenda cultural e newsletter.
+</nepenthes>
+```
+
+| `tipo` | Molde (modelo gratuito do GitHub, MIT) | O que vem pronto |
+|---|---|---|
+| `blog` | Start Bootstrap Clean Blog | posts com categorias, tags, comentários, busca, RSS, newsletter, sobre e contato |
+| `portal` | Start Bootstrap Modern Business | notícias com editorias e destaque, agenda com inscrição e vagas, newsletter, sobre com equipe, perguntas, contato |
+| `wiki` | Start Bootstrap Simple Sidebar | páginas com `[[links]]`, índice A–Z, categorias, mudanças recentes, busca, sugestões de edição revisadas no painel |
+| `estatico` | Start Bootstrap Landing Page | uma página: serviços, quem somos, onde estamos, depoimentos e formulário de contato |
+| `auto` | escolhido pela descrição | wiki, portal, blog ou estático, pelas palavras do texto |
+
+Também aceita `molde=` no lugar de `tipo=` e apelidos (`site`, `landing`, `noticias`, `documentacao`). Sem nenhum atributo (`<nepenthes>ideia</nepenthes>`) continua valendo o assistente da seção 10.17.
+
+Como funciona: o `nep` lê a tag, monta o `.nep.html` do molde **na memória** (de novo só quando o arquivo muda) e serve. O arquivo da pessoa não é reescrito, por isso funciona igual no computador e no CGI da hospedagem compartilhada, onde o site não pode se regravar. Os textos de partida vêm das regras do gerador (ramo reconhecido pela descrição) e entram no banco só na primeira vez; depois, posts, notícias, eventos, páginas da wiki e os trechos com `editavel` se editam no painel (`/_admin`). Mensagens, inscrições, assinantes e sugestões ficam no banco; o contato avisa o `email` da tag. O CSS, o Bootstrap JS, as imagens (reduzidas) e as fontes vêm embutidos no `nep` e saem em `/_nep/molde/...`, sem CDN. `nep previa index.html` gera a prévia com as imagens dentro (cada uma uma vez só). `nep check index.html` mostra as páginas do site montado. Créditos e licenças em `LICENCA-STARTBOOTSTRAP.txt`.
+
+Na hospedagem: `nep.cgi` + `.htaccess` (pasta `hospedagem/`) + o `index.html`. Sem `site.nep.html` na pasta, o CGI usa o `index.html`; o `.htaccess` manda `/index.html` para a página inicial e bloqueia as cópias `.antes-*`.
+
 ## 11. Lua 5.4 na mesma máquina virtual
 
 O `nep` roda programas Lua 5.4: `nep jogo.lua [args]`. O código Lua é lido por um leitor próprio e compilado para o mesmo bytecode do Nepenthes, então os dois se misturam:

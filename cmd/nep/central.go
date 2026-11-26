@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Nanofylium/probable-plant/moldes"
 	"io"
 	"net"
 	"net/http"
@@ -133,7 +134,8 @@ func (c *central) listar() []siteInfo {
 			si.Alterado = st.ModTime().Format("02/01/2006 15:04")
 		}
 		if b, err := os.ReadFile(f); err == nil && reTagNepenthes.Match(b) {
-			si.Novo = true
+			_, molde := moldes.LerTag(b) // com tipo="..." o site já está pronto
+			si.Novo = !molde
 		}
 		prev := strings.TrimSuffix(strings.TrimSuffix(f, ".html"), ".nep") + "-previa.html"
 		if _, err := os.Stat(prev); err == nil {

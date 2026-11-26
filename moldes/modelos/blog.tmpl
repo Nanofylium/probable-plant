@@ -1,0 +1,250 @@
+⟦template "aviso" .⟧
+<nep-config nome="⟦h .Nome⟧" lang="pt-BR"
+  lowii="Você atende o blog ⟦h .Nome⟧. Responda com base nos posts e indique os textos do blog.">
+
+<conteudo nome="posts" titulo="Posts" item="post">
+  <label>Título <input name="titulo" required maxlength="160"></label>
+  <label>Subtítulo (aparece embaixo do título) <textarea name="resumo" maxlength="300" rows="2"></textarea></label>
+  <label>Categoria
+    <select name="categoria" required>
+      <option value="">Escolha…</option>⟦range cats .⟧<option>⟦h .⟧</option>⟦end⟧
+    </select>
+  </label>
+  <label>Texto <textarea name="corpo" data-editor required maxlength="80000"></textarea></label>
+  <label>Imagem do topo <input type="file" name="capa" accept="image/*" data-max-mb="6" data-publico></label>
+  <label>Tags (separe por vírgula) <input name="tags" maxlength="200"></label>
+  <label>Autor <input name="autor" maxlength="60"></label>
+</conteudo>
+
+<conteudo nome="paginas" titulo="Páginas" item="página">
+  <label>Título <input name="titulo" required maxlength="100"></label>
+  <label>Subtítulo <input name="resumo" maxlength="200"></label>
+  <label>Texto <textarea name="corpo" data-editor maxlength="60000"></textarea></label>
+  <label>Posição no menu (0 = fora do menu) <input type="number" name="ordem" min="0" max="99" value="10"></label>
+</conteudo>
+
+<nep>
+⟦template "nep-comum" .⟧
+  if db.count("posts") == 0 do
+⟦range .Posts⟧    db.insert("posts", {titulo: ⟦s .Titulo⟧, slug: slug(⟦s .Titulo⟧), categoria: ⟦s .Cat⟧, resumo: ⟦s .Resumo⟧, tags: ⟦s .Tags⟧, autor: ⟦s .Autor⟧, publicar_em: ⟦s .Data⟧, publicado: true, corpo: ⟦s .Corpo⟧})
+⟦end⟧  end
+
+  let posts = db.all("posts") |> map(preparar) |> sort_by(fn(p) do p.data.chave end) |> reverse
+  let por_categoria = posts |> group_by("categoria")
+  let paginas_menu = db.all("paginas") |> filter(fn(p) do default(p.ordem, 0) > 0 end) |> sort_by("ordem")
+  fn link_post(p) do return url("/post/" + p.slug) end
+  fn link_cat(c) do return url("/categoria/" + slug(c)) end
+
+  # o topo de cada página (imagem, título, subtítulo)
+  let topo = {img: url("/_nep/molde/img/mesa.jpg"), titulo: ⟦s .Nome⟧, sub: ⟦s (maior .Slogan .Resumo)⟧, post: false, meta: ""}
+  let lista = nil
+</nep>
+
+<api route="/api/posts">
+  return posts |> map(fn(p) do {titulo: p.titulo, categoria: p.categoria, data: p.data.chave, url: link_post(p)} end)
+</api>
+
+<html lang="pt-BR">
+<head>
+⟦template "cabeca" .⟧
+  <style>
+    .masthead { background-color: #343a40; }
+    .masthead:before { opacity: .62 !important; }
+    .masthead .site-heading h1 { font-size: clamp(2.6rem, 7vw, 4.5rem); }
+    .post-preview > a > .post-title { font-size: 1.75rem; }
+    .chapeu { font: 800 .75rem "Inter", sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--nep-cor); text-decoration: none; }
+    .categorias a { display: inline-block; margin: 0 .25rem .5rem 0; padding: .25rem .75rem; border: 1px solid #dee2e6; border-radius: 999px; font: 600 .8rem "Inter", sans-serif; text-decoration: none; color: #212529; }
+    .categorias a:hover { border-color: var(--nep-cor); color: var(--nep-cor); }
+    .news { background: #f8f9fa; border-radius: 1rem; padding: 2rem; }
+    footer a { text-decoration: none; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light" id="mainNav">
+    <div class="container px-4 px-lg-5">
+      <a class="navbar-brand" href="{{ url('/') }}" editavel="tema.nome">⟦h .Nome⟧</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu" aria-controls="menu" aria-expanded="false" aria-label="Abrir o menu">Menu ⟦icone "list"⟧</button>
+      <div class="collapse navbar-collapse" id="menu">
+        <ul class="navbar-nav ms-auto py-4 py-lg-0" menu-editavel="principal">
+          <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url('/') }}">Início</a></li>
+          <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url('/sobre') }}">Sobre</a></li>
+          <each pg in="paginas_menu"><li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url('/' + pg.slug) }}">{{ pg.titulo }}</a></li></each>
+          <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url('/busca') }}">Buscar</a></li>
+          <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url('/contato') }}">Contato</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="masthead" style="background-image: url('{{ topo.img }}')">
+    <div class="container position-relative px-4 px-lg-5">
+      <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+          <if test="topo.post">
+            <div class="post-heading">
+              <h1>{{ topo.titulo }}</h1>
+              <if test="topo.sub"><h2 class="subheading">{{ topo.sub }}</h2></if>
+              <span class="meta">{{ topo.meta }}</span>
+            </div>
+          <else>
+            <div class="site-heading">
+              <h1>{{ topo.titulo }}</h1>
+              <if test="topo.sub"><span class="subheading">{{ topo.sub }}</span></if>
+            </div>
+          </if>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="mb-4">
+    <div class="container px-4 px-lg-5">
+      <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+  <!-- as páginas só escolhem o topo e a lista; o desenho vem depois -->
+  <page route="/" title="Início" description="⟦h .Resumo⟧">
+    <nep>lista = {itens: posts, titulo: ""}</nep>
+  </page>
+  <page route="/categoria/:cat" title="Categoria">
+    <nep>
+      let nome = find(keys(por_categoria), fn(c) do slug(c) == params.cat end)
+      if not nome do not_found() end
+      page.title = nome
+      topo.img = url("/_nep/molde/img/notebook.jpg")
+      topo.titulo = nome
+      topo.sub = str(len(por_categoria[nome])) + " posts nesta categoria"
+      lista = {itens: por_categoria[nome], titulo: nome}
+    </nep>
+  </page>
+  <page route="/busca" title="Busca" noindex>
+    <nep>
+      let q = trim(default(request.query.q, ""))
+      let achados = []
+      if q != "" do achados = buscar(q, "posts") |> map(fn(r) do preparar(r.item) end) end
+      topo.img = url("/_nep/molde/img/mapa.jpg")
+      topo.titulo = "Buscar"
+      topo.sub = (q == "" and "Procure um assunto no blog") or str(len(achados)) + " resultado(s) para “" + q + "”"
+      lista = {itens: achados, titulo: "", busca: true}
+    </nep>
+  </page>
+  <page route="/post/:slug" conteudo="posts">
+    <nep>
+      let p = preparar(item)
+      topo = {img: p.img, titulo: p.titulo, sub: default(p.resumo, ""), post: true, meta: "Publicado por " + p.autor + " em " + p.data.txt + " · " + str(p.leitura) + " min de leitura"}
+    </nep>
+              <article class="corpo">{{ markdown(item.corpo) }}</article>
+            <if test="len(preparar(item).tags_l) > 0"><p class="mt-4"><each t in="preparar(item).tags_l"><span class="badge text-bg-light border me-1">#{{ t }}</span></each></p></if>
+            {{ comentarios() }}
+</page>
+  <page route="/sobre" title="Sobre">
+    <nep>
+      topo.img = url("/_nep/molde/img/mapa.jpg")
+      topo.titulo = "Sobre"
+      topo.sub = "Quem escreve e por quê"
+    </nep>
+              <div editavel="sobre.texto">
+              <p>⟦h (maior .Descricao .Setor.Texto)⟧</p>
+              <p>Aqui você encontra textos sobre ⟦range $i, $c := cats .⟧⟦if $i⟧, ⟦end⟧⟦h $c⟧⟦end⟧. Para trocar este texto, entre no painel e clique nele.</p>
+            </div>
+            <ul class="list-unstyled mt-4">⟦template "contatos" .⟧</ul>
+</page>
+  <page route="/contato" title="Contato">
+    <nep>
+      topo.img = url("/_nep/molde/img/telefone.jpg")
+      topo.titulo = "Contato"
+      topo.sub = "Tem uma pergunta ou uma ideia? Escreva."
+    </nep>
+              <p editavel="contato.texto">Preencha o formulário e eu respondo assim que puder.</p>
+            <div class="my-5">⟦template "form-contato" .⟧</div>
+            <ul class="list-unstyled">⟦template "contatos" .⟧</ul>
+</page>
+  <page route="404" title="Não encontrado">
+    <nep>
+      topo.titulo = "Página não encontrada"
+      topo.sub = "O endereço pode ter mudado."
+    </nep>
+              <p>Tente a <a href="{{ url('/busca') }}">busca</a> ou volte para o <a href="{{ url('/') }}">início</a>.</p>
+</page>
+  <page route="/:slug" conteudo="paginas">
+    <nep>
+      topo.img = url("/_nep/molde/img/objetos.jpg")
+      topo.titulo = item.titulo
+      topo.sub = default(item.resumo, "")
+    </nep>
+              <div class="corpo">{{ markdown(default(item.corpo, '')) }}</div>
+</page>
+
+
+          <if test="lista">
+            <nep>
+              let total = len(lista.itens)
+              let paginas = max(1, ceil(total / por_pagina))
+              let itens = lista.itens |> skip((pagina_atual - 1) * por_pagina) |> take(por_pagina)
+            </nep>
+            <if test="lista.busca">
+              <form class="mb-5" method="get" action="{{ url('/busca') }}">
+                <div class="input-group input-group-lg">
+                  <input class="form-control" name="q" value="{{ default(request.query.q, '') }}" placeholder="Digite um assunto…" aria-label="Buscar">
+                  <button class="btn btn-primary" type="submit">⟦icone "search"⟧</button>
+                </div>
+              </form>
+            </if>
+            <if test="not lista.titulo and not lista.busca and len(por_categoria) > 0">
+              <div class="categorias mb-4"><each nome, l in="por_categoria"><a href="{{ link_cat(nome) }}">{{ nome }} · {{ len(l) }}</a></each></div>
+            </if>
+            <each p in="itens">
+              <div class="post-preview">
+                <a class="chapeu" href="{{ link_cat(p.categoria) }}">{{ p.categoria }}</a>
+                <a href="{{ link_post(p) }}">
+                  <h2 class="post-title">{{ p.titulo }}</h2>
+                  <h3 class="post-subtitle">{{ p.excerto }}</h3>
+                </a>
+                <p class="post-meta">Publicado por {{ p.autor }} em {{ p.data.txt }}</p>
+              </div>
+              <hr class="my-4">
+            <else>
+              <p class="text-muted">Nenhum post por aqui ainda.</p>
+            </each>
+            <div class="d-flex justify-content-between mb-4">
+              <if test="pagina_atual > 1"><a class="btn btn-primary text-uppercase" href="?pagina={{ pagina_atual - 1 }}{{ (request.query.q and '&q=' + urlencode(request.query.q)) or '' }}">← Mais novos</a><else><span></span></if>
+              <if test="pagina_atual < paginas"><a class="btn btn-primary text-uppercase" href="?pagina={{ pagina_atual + 1 }}{{ (request.query.q and '&q=' + urlencode(request.query.q)) or '' }}">Mais antigos →</a></if>
+            </div>
+            <if test="not lista.busca">
+              <div class="news my-5">
+                <h2 class="h4 fw-bold" editavel="news.titulo">Receba os posts novos por e-mail</h2>
+                <p class="text-muted" editavel="news.texto">Um e-mail quando sair texto novo. Sem spam.</p>
+                <form save="assinantes" run="assinar" limit="3" success="Pronto! Você vai receber os próximos posts.">
+                  <div class="input-group"><input class="form-control" name="email" type="email" required placeholder="seu@email.com" aria-label="E-mail"><button class="btn btn-primary" type="submit">Assinar</button></div>
+                </form>
+              </div>
+            </if>
+          </if>
+
+
+
+
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-top">
+    <div class="container px-4 px-lg-5">
+      <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+          <ul class="list-inline text-center">
+⟦if .Insta⟧            <li class="list-inline-item"><a href="⟦.Insta⟧" aria-label="Instagram" target="_blank" rel="noopener"><span class="fa-stack fa-lg fs-3">⟦icone "instagram"⟧</span></a></li>
+⟦end⟧⟦if .Zap⟧            <li class="list-inline-item"><a href="⟦.Zap⟧" aria-label="WhatsApp" target="_blank" rel="noopener"><span class="fs-3">⟦icone "whatsapp"⟧</span></a></li>
+⟦end⟧⟦if .Email⟧            <li class="list-inline-item"><a href="mailto:⟦h .Email⟧" aria-label="E-mail"><span class="fs-3">⟦icone "envelope"⟧</span></a></li>
+⟦end⟧            <li class="list-inline-item"><a href="{{ url('/feed.xml') }}" aria-label="RSS"><span class="fs-3">⟦icone "journal-text"⟧</span></a></li>
+          </ul>
+          <div class="small text-center text-muted fst-italic">Copyright © ⟦h .Nome⟧ ⟦.Ano⟧ · <a href="{{ url('/_admin') }}">Painel</a></div>
+          <div class="small text-center text-muted mt-1">Feito com Nepenthes · tema Clean Blog (Start Bootstrap, MIT)</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+⟦template "scripts" .⟧
+</body>
+</html>

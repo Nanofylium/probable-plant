@@ -19,7 +19,9 @@ const ajuda = `Nepenthes %s
 
 Uso:
   nep                      abre o modo interativo (ou, se houver um index.html com
-                           <nepenthes> na pasta, abre a tela de criar o site no navegador)
+                           <nepenthes> na pasta, abre a tela de criar o site no navegador;
+                           com <nepenthes tipo="blog|portal|wiki|estatico" nome=...> o site
+                           sai pronto, sem tela: veja exemplos/folha-do-vale)
   nep repl                 abre o modo interativo
   nep central              abre a Central do Nepenthes no navegador (o mesmo que dois
                            cliques no Windows): sites, criar site, Nepenthes DB
