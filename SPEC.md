@@ -607,6 +607,8 @@ Também aceita `molde=` no lugar de `tipo=` e apelidos (`site`, `landing`, `noti
 
 Como funciona: o `nep` lê a tag, monta o `.nep.html` do molde **na memória** (de novo só quando o arquivo muda) e serve. O arquivo da pessoa não é reescrito, por isso funciona igual no computador e no CGI da hospedagem compartilhada, onde o site não pode se regravar. Os textos de partida vêm das regras do gerador (ramo reconhecido pela descrição) e entram no banco só na primeira vez; depois, posts, notícias, eventos, páginas da wiki e os trechos com `editavel` se editam no painel (`/_admin`). Mensagens, inscrições, assinantes e sugestões ficam no banco; o contato avisa o `email` da tag. O CSS, o Bootstrap JS, as imagens (reduzidas) e as fontes vêm embutidos no `nep` e saem em `/_nep/molde/...`, sem CDN. `nep previa index.html` gera a prévia com as imagens dentro (cada uma uma vez só). `nep check index.html` mostra as páginas do site montado. Créditos e licenças em `LICENCA-STARTBOOTSTRAP.txt`.
 
+**Criar site pelo navegador, na hospedagem:** em `/_admin/sites` (só o dono), o `nep` que já está no ar cria um site novo numa pasta ao lado (na raiz do domínio, `DOCUMENT_ROOT`): copia a si mesmo como `nep.cgi` (755), grava o `.htaccess` e um `index.html` com a tag montada pelo formulário, e o painel do site novo já abre com a mesma senha. Não sobrescreve pasta existente nem usa nomes reservados (`cgi-bin`, `data`...). Sem zip, sem .exe, sem token do cPanel.
+
 Na hospedagem: `nep.cgi` + `.htaccess` (pasta `hospedagem/`) + o `index.html`. Sem `site.nep.html` na pasta, o CGI usa o `index.html`; o `.htaccess` manda `/index.html` para a página inicial e bloqueia as cópias `.antes-*`.
 
 ## 11. Lua 5.4 na mesma máquina virtual

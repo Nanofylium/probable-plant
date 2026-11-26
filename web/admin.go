@@ -164,6 +164,8 @@ func (s *Server) admin(rq *request) error {
 		return a.backupPage(post)
 	case "/ia":
 		return a.iaPage(post)
+	case "/sites":
+		return a.sitesPage(post)
 	case "/ia/rascunho":
 		return a.iaDraft()
 	case "/construtor/arquivo":
@@ -194,7 +196,7 @@ func (a *adminPage) out(title, body string, nav bool) error {
 	if nav {
 		links := a.navCMS()
 		if a.rq.sess.isOwner() {
-			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a><a href="` + a.base + `/email">E-mail</a><a href="` + a.base + `/backup">Cópia</a><a href="` + a.base + `/ia">IA</a>`
+			links = `<a href="` + a.base + `">Coleções</a>` + links + `<a href="` + a.base + `/visitas">Visitas</a><a href="` + a.base + `/lgpd">LGPD</a><a href="` + a.base + `/usuarios">Usuários</a><a href="` + a.base + `/email">E-mail</a><a href="` + a.base + `/backup">Cópia</a><a href="` + a.base + `/ia">IA</a><a href="` + a.base + `/sites">Criar site</a>`
 		}
 		n = `<nav class="row" style="justify-content:space-between;margin-bottom:16px"><div>` + links +
 			`<a href="` + esc(a.s.opt.Base+"/") + `">Ver site</a></div>` +
