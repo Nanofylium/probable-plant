@@ -54,6 +54,7 @@ type Server struct {
 	site    *Site
 	siteErr error
 	mtime   time.Time
+	fonte   string // o texto do site como foi lido (moldes e páginas visuais aplicados)
 	Store   *Store
 	secret  string
 }
@@ -111,8 +112,22 @@ func (s *Server) load() (*Site, error) {
 		s.site, s.siteErr = nil, err
 		return nil, err
 	}
-	s.site, s.siteErr = ParseSite(filepath.Base(s.file), txt)
+	comVisual := s.aplicarPaginasVisuais(txt)
+	s.site, s.siteErr = ParseSite(filepath.Base(s.file), comVisual)
+	s.fonte = comVisual
+	if s.siteErr != nil && comVisual != txt { // uma página visual quebrou o site: segue sem elas
+		fmt.Fprintf(s.opt.Log, "páginas visuais ignoradas: %v\n", s.siteErr)
+		s.site, s.siteErr = ParseSite(filepath.Base(s.file), txt)
+		s.fonte = txt
+	}
 	return s.site, s.siteErr
+}
+
+// recarregar faz o site ser lido de novo no próximo pedido.
+func (s *Server) recarregar() {
+	s.mu.Lock()
+	s.site, s.siteErr = nil, nil
+	s.mu.Unlock()
 }
 
 // expandirMolde: um index.html com <nepenthes tipo="blog|portal|wiki|estatico" ...>

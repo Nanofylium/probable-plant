@@ -340,7 +340,7 @@ Toda página vista é contada em `data/visitas-AAAA-MM.log` com dia, caminho, si
 
 ### 10.11 Site gerenciável: conteúdo e textos editáveis (CMS)
 
-Quem programa escreve o tema à mão, no próprio `.nep.html`. Quem cuida do site (sem saber código) publica e troca conteúdo em `/_admin`. Não há construtor de arrastar e soltar, e o layout continua sendo só o que o programador escreveu.
+Quem programa escreve o tema à mão, no próprio `.nep.html`. Quem cuida do site (sem saber código) publica e troca conteúdo em `/_admin`. Além das áreas `construtor="..."`, o dono pode montar qualquer página inteira arrastando blocos (seção 10.22).
 
 **Tipos de conteúdo.** Os campos são declarados como num formulário comum, com as mesmas regras de validação (10.3) e de upload (10.8):
 
@@ -617,6 +617,14 @@ Como funciona: o `nep` lê a tag, monta o `.nep.html` do molde **na memória** (
 **Criar site pelo navegador, na hospedagem:** em `/_admin/sites` (só o dono), o `nep` que já está no ar cria um site novo numa pasta ao lado (na raiz do domínio, `DOCUMENT_ROOT`): copia a si mesmo como `nep.cgi` (755), grava o `.htaccess` e um `index.html` com a tag montada pelo formulário, e o painel do site novo já abre com a mesma senha. Não sobrescreve pasta existente nem usa nomes reservados (`cgi-bin`, `data`...). Sem zip, sem .exe, sem token do cPanel.
 
 Na hospedagem: `nep.cgi` + `.htaccess` (pasta `hospedagem/`) + o `index.html`. Sem `site.nep.html` na pasta, o CGI usa o `index.html`; o `.htaccess` manda `/index.html` para a página inicial e bloqueia as cópias `.antes-*`.
+
+### 10.22 Páginas visuais: a página inteira no construtor
+
+Em `/_admin/paginas`, o dono abre qualquer página de endereço fixo (e a 404) no construtor visual (GrapesJS, BSD-3-Clause) em tela cheia, como num construtor de sites: arrasta seções prontas (capa, 3 serviços, imagem e texto, depoimento, chamada), blocos básicos (colunas, texto, imagem, vídeo, mapa) e blocos do Nepenthes (formulário de contato, receber novidades), edita textos clicando, muda estilos e vê como fica no computador, tablet e celular. Também cria páginas novas (título e endereço).
+
+- O miolo da `<page>` é dividido em HTML comum, que vira blocos editáveis, e **ilhas**: tudo que é código ou não é HTML simples (`<each>`, `<if>`, `<form>`, `<live>`, `<nep>`, `{{ expressões }}`, SVG, scripts). As ilhas aparecem com a prévia de verdade (a página é renderizada para isso), com borda tracejada, podem ser movidas, duplicadas ou apagadas, e voltam intactas ao salvar.
+- Ao salvar, o HTML passa pela limpeza do construtor (sem scripts nem eventos; aceita também `aria-*`, `data-*`, `role`, `editavel`, `nep-*`), as chaves viram `&#123;` (o texto digitado nunca vira código) e os links do próprio site voltam a ser `{{ url('...') }}`. O CSS da página fica sem regras de `body`, `html` e `*`. A página é conferida (compila) antes de ser guardada.
+- A página montada fica no banco do site (`visual:pagina:/rota`) e substitui o miolo da `<page>` quando o site é lido: o arquivo `.nep.html` não muda, então funciona no CGI e nos moldes. "Voltar ao original" apaga o registro. Se uma página visual impedir o site de compilar, o site segue sem as páginas visuais e o erro vai para o log.
 
 ## 11. Lua 5.4 na mesma máquina virtual
 
