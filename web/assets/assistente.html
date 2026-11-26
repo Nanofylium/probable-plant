@@ -70,6 +70,18 @@ details.dica ol{padding-left:20px;margin:8px 0 0}
 .insta-ok p{margin:0}
 .insta-fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
 .insta-fotos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
+.envios{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:start}
+.envio-logo{display:grid;gap:8px;justify-items:start}
+.logo-caixa{width:140px;height:96px;border:1px dashed var(--linha);border-radius:12px;display:grid;place-items:center;color:var(--suave);font-size:.85rem;overflow:hidden;background:color-mix(in srgb,var(--cor) 4%,transparent)}
+.logo-caixa img{max-width:88%;max-height:80%;object-fit:contain}
+.fotos-env{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-top:10px}
+.fotos-env figure{position:relative;margin:0}
+.fotos-env img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.fotos-env button{position:absolute;top:4px;right:4px;width:26px;height:26px;min-width:0;min-height:0;padding:0;display:grid;place-items:center;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:15px;line-height:1;cursor:pointer}
+.fotos-env figure:first-child:after{content:"capa";position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.62);color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:99px}
+.envios small{color:var(--suave);font-size:.86rem}
+.solta{outline:3px dashed var(--cor);outline-offset:4px}
+@media (max-width:600px){.envios{grid-template-columns:1fr}}
 .link{background:none;border:0;padding:0;color:var(--suave);text-decoration:underline;font-weight:400;font-size:.9rem}
 </style>
 </head>
@@ -93,6 +105,34 @@ details.dica ol{padding-left:20px;margin:8px 0 0}
         <label class="dado">Endereço<input type="text" id="d-endereco" maxlength="120" autocomplete="street-address"></label>
         <label class="dado">Horário de atendimento<input type="text" id="d-horario" maxlength="120" placeholder="Seg. a sex., 8h às 18h"></label>
       </div>
+    </div>
+    <div class="cartao" id="envios-cartao">
+      <label class="campo">Logo e fotos <small style="font-weight:400;color:var(--suave)">(opcional: sem fotos, o Nepenthes usa ilustrações)</small></label>
+      <div class="envios">
+        <div class="envio-logo">
+          <div class="logo-caixa" id="logo-caixa">sem logo</div>
+          <label class="arquivo-btn">Enviar logo<input type="file" id="env-logo" accept="image/png,image/jpeg,image/gif"></label>
+          <button type="button" class="link" id="logo-tirar" hidden>Tirar o logo</button>
+        </div>
+        <div>
+          <label class="arquivo-btn">Enviar fotos<input type="file" id="env-fotos" accept="image/png,image/jpeg,image/gif" multiple></label>
+          <small style="display:block;margin-top:8px">Até 12 fotos do seu espaço, produtos ou trabalhos. A primeira vira a capa e, com 3 ou mais, o site ganha uma galeria. Pode arrastar as imagens para cá. O Nepenthes reduz as fotos e tira os dados do celular (como a localização).</small>
+          <div class="fotos-env" id="fotos-env"></div>
+        </div>
+      </div>
+      <div class="barra" id="env-barra" hidden><i></i></div>
+      <div id="env-erro" class="erro" hidden></div>
+    </div>
+    <div class="cartao">
+      <label class="campo">Redes sociais <small style="font-weight:400;color:var(--suave)">(o @ ou o link do perfil; aparecem no rodapé do site)</small></label>
+      <div class="dados-site">
+        <label class="dado">Facebook<input type="text" id="d-facebook" maxlength="200" placeholder="facebook.com/seunegocio" autocomplete="off"></label>
+        <label class="dado">TikTok<input type="text" id="d-tiktok" maxlength="200" placeholder="@seunegocio" autocomplete="off"></label>
+        <label class="dado">YouTube<input type="text" id="d-youtube" maxlength="200" placeholder="@seucanal" autocomplete="off"></label>
+        <label class="dado">LinkedIn<input type="text" id="d-linkedin" maxlength="200" placeholder="linkedin.com/company/seunegocio" autocomplete="off"></label>
+        <label class="dado">X (Twitter)<input type="text" id="d-x" maxlength="200" placeholder="@seunegocio" autocomplete="off"></label>
+      </div>
+      <small style="display:block;margin-top:10px;color:var(--suave)">O Instagram fica no quadro abaixo, porque dele o Nepenthes também puxa fotos e textos.</small>
     </div>
     <div class="cartao">
       <label class="campo" for="insta-usuario">Instagram do negócio <small style="font-weight:400;color:var(--suave)">(opcional, mas ajuda muito)</small></label>
@@ -366,6 +406,7 @@ async function inicio() {
   estado = await (await fetch(BASE + "/_nep/assistente/estado")).json();
   if (estado.ideia) $("#desc").value = estado.ideia;
   mostraInsta(estado.instagram);
+  mostraEnvios(estado.envios);
   mostraVisuais(estado.visuais);
   (estado.tipos || []).forEach(t => { const o = document.createElement("option"); o.value = t[0]; o.textContent = t[1][0].toUpperCase() + t[1].slice(1); $("#d-tipo").appendChild(o); });
   mostraApp(estado.instagram_app);
@@ -384,7 +425,55 @@ async function inicio() {
 }
 function dados() {
   const v = id => $("#d-" + id).value.trim();
-  return {tipo: v("tipo"), nome: v("nome"), cidade: v("cidade"), whatsapp: v("whatsapp"), email: v("email"), endereco: v("endereco"), horario: v("horario")};
+  return {tipo: v("tipo"), nome: v("nome"), cidade: v("cidade"), whatsapp: v("whatsapp"), email: v("email"), endereco: v("endereco"), horario: v("horario"),
+    instagram: $("#insta-usuario").value.trim(), facebook: v("facebook"), tiktok: v("tiktok"), youtube: v("youtube"), linkedin: v("linkedin"), x: v("x")};
+}
+// ---- logo e fotos ----
+function mostraEnvios(e) {
+  e = e || {};
+  const cx = $("#logo-caixa"); cx.textContent = "";
+  if (e.logo) { const i = document.createElement("img"); i.src = e.logo.url; i.alt = "Logo"; cx.appendChild(i); } else cx.textContent = "sem logo";
+  $("#logo-tirar").hidden = !e.logo;
+  $("#logo-tirar").dataset.id = e.logo ? e.logo.id : "";
+  const box = $("#fotos-env"); box.textContent = "";
+  (e.fotos || []).forEach(f => {
+    const fig = document.createElement("figure"), i = document.createElement("img"), b = document.createElement("button");
+    i.src = f.url; i.alt = ""; i.loading = "lazy"; b.type = "button"; b.textContent = "×"; b.title = "Tirar esta foto"; b.setAttribute("aria-label", "Tirar esta foto");
+    b.onclick = () => tiraEnvio(f.id);
+    fig.append(i, b); box.appendChild(fig);
+  });
+}
+function enviaImagens(campo, files) {
+  const imgs = [...files].filter(f => /^image\/(png|jpeg|gif)$/.test(f.type));
+  if (!imgs.length) return;
+  const form = new FormData();
+  imgs.forEach(f => form.append(campo, f, f.name));
+  $("#env-erro").hidden = true;
+  const x = new XMLHttpRequest();
+  x.open("POST", BASE + "/_nep/assistente/fotos");
+  $("#env-barra").hidden = false; $("#env-barra i").style.width = "0";
+  x.upload.onprogress = e => { if (e.lengthComputable) $("#env-barra i").style.width = Math.round(e.loaded / e.total * 100) + "%"; };
+  x.onload = () => {
+    $("#env-barra").hidden = true;
+    if (x.status !== 200) { erro("#env-erro", new Error(x.responseText.trim() || "erro " + x.status)); return; }
+    const r = JSON.parse(x.responseText); mostraEnvios(r);
+    if (r.avisos) erro("#env-erro", new Error(r.avisos.join(" · ")));
+  };
+  x.onerror = () => { $("#env-barra").hidden = true; erro("#env-erro", new Error("O envio foi interrompido.")); };
+  x.send(form);
+}
+async function tiraEnvio(id) {
+  const r = await fetch(BASE + "/_nep/assistente/fotos?id=" + encodeURIComponent(id), {method: "DELETE"});
+  if (r.ok) mostraEnvios(await r.json());
+}
+$("#env-logo").onchange = e => { enviaImagens("logo", e.target.files); e.target.value = ""; };
+$("#env-fotos").onchange = e => { enviaImagens("fotos", e.target.files); e.target.value = ""; };
+$("#logo-tirar").onclick = e => tiraEnvio(e.target.dataset.id);
+{
+  const c = $("#envios-cartao");
+  c.addEventListener("dragover", e => { e.preventDefault(); c.classList.add("solta"); });
+  c.addEventListener("dragleave", () => c.classList.remove("solta"));
+  c.addEventListener("drop", e => { e.preventDefault(); c.classList.remove("solta"); enviaImagens("fotos", e.dataTransfer.files); });
 }
 // a descrição com os dados digitados (para a IA do navegador, que lê texto)
 function descCompleta() {

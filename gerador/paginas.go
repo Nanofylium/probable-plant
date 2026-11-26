@@ -59,7 +59,7 @@ func (g *ger) html() string {
 	w(`<a href="tel:+` + g.foneDigitos() + `" editavel="topo.fone">` + ouExemplo(g.p.Telefone, "(00) 0000-0000") + `</a></span>
   </div>
   <header>
-    <a class="marca" href="{{ url('/') }}"><span>«emoji»</span><b editavel="marca">«nome»</b></a>
+    <a class="marca" href="{{ url('/') }}">«marcaIco»<b editavel="marca">«nome»</b></a>
     <nav menu-editavel="principal">
       <a href="{{ url('/') }}">Início</a>
 `)

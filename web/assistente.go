@@ -98,10 +98,14 @@ func (s *Server) assistente(rq *request, ideia string) {
 			"prompt_perguntas": gerador.PromptPerguntas(), "prompt_site": gerador.PromptSite(),
 			"local": ialocal.Ver(), "local_pasta": ialocal.Pasta(), "visuais": gerador.Visuais, "tipos": gerador.Tipos(),
 			"instagram": s.instaResposta(s.instaGuardado()), "instagram_app": s.instaAppEstado(rq.r),
+			"envios": s.fotosResposta(s.fotosGuardadas()),
 		})
 		return
 	case "/_nep/assistente/instagram":
 		s.assistenteInstagram(rq)
+		return
+	case "/_nep/assistente/fotos":
+		s.assistenteFotos(rq)
 		return
 	case "/_nep/assistente/instagram/app":
 		s.assistenteInstagramApp(rq)
@@ -249,6 +253,13 @@ func (s *Server) assistenteCriar(rq *request, desc string, resp [][2]string, con
 	}
 	if insta != nil {
 		gerador.UsarInstagram(p, insta.Fotos, insta.Usuario, insta.Nome, insta.Site)
+	}
+	if env := s.fotosGuardadas(); env.Logo != nil || len(env.Fotos) > 0 {
+		gerador.UsarFotos(p, env.Fotos) // as fotos enviadas vêm antes das do Instagram
+		if env.Logo != nil {
+			p.Logo = env.Logo.URL
+		}
+		p.Notas = append(p.Notas, fmt.Sprintf("enviados: %d foto(s)%s", len(env.Fotos), map[bool]string{true: " e o logo"}[env.Logo != nil]))
 	}
 	gerador.UsarDados(p, dados) // o que a pessoa digitou vale mais
 	src := gerador.Montar(p)

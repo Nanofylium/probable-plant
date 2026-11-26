@@ -284,6 +284,9 @@ func (c *central) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "endereço inválido", http.StatusForbidden)
 		return
 	}
+	if c.servirProgramar(w, r) {
+		return
+	}
 	switch {
 	case r.URL.Path == "/":
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -446,36 +449,10 @@ func (c *central) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// paginaInicial: sem nenhum site pronto, os dois cliques abrem direto a tela
-// que pede os dados e cria o site (a tag <nepenthes>); com sites, a Central.
+// paginaInicial: a cada uso, os dois cliques perguntam o que a pessoa quer
+// fazer agora: criar um site ou programar.
 func (c *central) paginaInicial() string {
-	sites := c.listar()
-	for _, s := range sites {
-		if !s.Novo {
-			return "http://localhost:8000/"
-		}
-	}
-	pasta := ""
-	for _, s := range sites {
-		if s.Novo {
-			pasta = s.Pasta
-			break
-		}
-	}
-	if pasta == "" {
-		var err error
-		if pasta, err = c.pastaNova("meu-site"); err != nil {
-			return "http://localhost:8000/"
-		}
-		if os.WriteFile(filepath.Join(pasta, "index.html"), inicioHTML, 0o644) != nil {
-			return "http://localhost:8000/"
-		}
-	}
-	u, err := c.ligar(pasta)
-	if err != nil {
-		return "http://localhost:8000/"
-	}
-	return u
+	return "http://localhost:8000/comecar"
 }
 
 // pararTudo desliga os sites, o banco e a IA local (ao sair).
@@ -500,8 +477,8 @@ func modoCentral(abrir bool) int {
 	if r, err := http.Get("http://127.0.0.1:8000/api/estado"); err == nil {
 		r.Body.Close()
 		if abrir {
-			fmt.Println("O Nepenthes já está aberto: abrindo a Central no navegador.")
-			abrirNavegador("http://localhost:8000/")
+			fmt.Println("O Nepenthes já está aberto: abrindo no navegador.")
+			abrirNavegador("http://localhost:8000/comecar")
 			time.Sleep(2 * time.Second)
 		}
 		return 0

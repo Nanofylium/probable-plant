@@ -118,6 +118,7 @@ func (g *ger) rotas() {
 	}
 	g.vars = map[string]string{
 		"«nome»": esc(p.Nome), "«insta»": esc(p.Instagram), "«whats»": esc(whatsLink(p.WhatsApp)), "«nomeLit»": lit(p.Nome), "«emoji»": icones.HTML(s.Emoji), "«cidade»": esc(cidade),
+		"«marcaIco»": marcaIcone(p), "«redes»": linksRedes(p, "          "),
 		"«servR»": esc(s.ServRotulo), "«servU»": servU, "«servI»": esc(s.ServIntro),
 		"«equipeR»": esc(s.EquipeRotulo), "«equipeU»": equipeU,
 		"«blogR»": esc(s.BlogRotulo), "«blogU»": blogU,
@@ -409,8 +410,8 @@ func (g *ger) codigo() string {
 			if tit == "" {
 				tit = fmt.Sprintf("Foto %d", i+1)
 			}
-			fmt.Fprintf(&b, "    db.insert(\"galeria\", {titulo: %s, slug: %s, publicado: true, categoria: \"Instagram\", resumo: %s, link: %s, foto: {nome: %s, tipo: %s, tamanho: %d, url: url(%s)}})\n",
-				lit(tit), lit(fmt.Sprintf("foto-%d", i+1)), lit(f.Legenda), lit(linkSeguro(f.Link)), lit(f.Nome), lit(f.Tipo), f.Tamanho, lit(f.URL))
+			fmt.Fprintf(&b, "    db.insert(\"galeria\", {titulo: %s, slug: %s, publicado: true, categoria: %s, resumo: %s, link: %s, foto: {nome: %s, tipo: %s, tamanho: %d, url: url(%s)}})\n",
+				lit(tit), lit(fmt.Sprintf("foto-%d", i+1)), lit(default_(f.Album, "Instagram")), lit(f.Legenda), lit(linkSeguro(f.Link)), lit(f.Nome), lit(f.Tipo), f.Tamanho, lit(f.URL))
 		}
 	} else if g.tem("galeria") {
 		for i, t := range s.Galeria {
@@ -884,6 +885,34 @@ func linkSeguro(u string) string {
 		return u
 	}
 	return ""
+}
+
+func default_(s, padrao string) string {
+	if s == "" {
+		return padrao
+	}
+	return s
+}
+
+// marcaIcone: o logo enviado ou o ícone do ramo, ao lado do nome no topo.
+func marcaIcone(p *Plano) string {
+	if p.Logo != "" {
+		return `<img class="logo" src="{{ url(` + lit(p.Logo) + `) }}" alt="">`
+	}
+	return "<span>" + icones.HTML(p.Setor.Emoji) + "</span>"
+}
+
+// linksRedes: os perfis do negócio (rodapé e contato).
+func linksRedes(p *Plano, recuo string) string {
+	var b strings.Builder
+	if p.Instagram != "" {
+		b.WriteString(recuo + `<a href="https://instagram.com/` + esc(p.Instagram) + `" rel="noopener" target="_blank">Instagram</a>` + "\n")
+	}
+	for _, r := range p.Redes {
+		b.WriteString(recuo + `<a href="` + esc(r.URL) + `" rel="noopener" target="_blank">` + esc(r.Nome) + `</a>` + "\n")
+	}
+	b.WriteString(recuo + `<a href="` + esc(whatsLink(p.WhatsApp)) + `">WhatsApp</a>` + "\n")
+	return b.String()
 }
 
 func whatsLink(u string) string {

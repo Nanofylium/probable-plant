@@ -468,12 +468,25 @@ func UsarInstagram(p *Plano, fotos []Foto, usuario, nome, site string) {
 	if len(fotos) == 0 {
 		return
 	}
-	p.Fotos = fotos
+	UsarFotos(p, fotos)
+	p.Notas = append(p.Notas, fmt.Sprintf("fotos: %d do Instagram (capa e galeria)", len(fotos)))
+}
+
+// UsarFotos junta fotos de verdade às que o site já tem (as novas vêm antes:
+// a primeira vira a capa) e liga a galeria a partir de 3 fotos.
+func UsarFotos(p *Plano, fotos []Foto) {
+	if len(fotos) == 0 {
+		return
+	}
+	p.Fotos = append(append([]Foto(nil), fotos...), p.Fotos...)
+	if len(p.Fotos) > 12 {
+		p.Fotos = p.Fotos[:12]
+	}
 	tirado := false
 	for _, m := range p.Tirados {
 		tirado = tirado || m == "galeria"
 	}
-	if len(fotos) >= 3 && !tirado && !p.Tem("galeria") {
+	if len(p.Fotos) >= 3 && !tirado && !p.Tem("galeria") {
 		quer := map[string]bool{"galeria": true}
 		for _, m := range p.Modulos {
 			quer[m] = true
@@ -485,5 +498,4 @@ func UsarInstagram(p *Plano, fotos []Foto, usuario, nome, site string) {
 			}
 		}
 	}
-	p.Notas = append(p.Notas, fmt.Sprintf("fotos: %d do Instagram (capa e galeria)", len(fotos)))
 }

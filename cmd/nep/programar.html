@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Programar · Nepenthes</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3c5 6 9 11 9 17a9 9 0 0 1-18 0c0-6 4-11 9-17z' fill='%232c5d8f'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f5f4ef;--card:#fff;--ink:#1d2420;--mut:#5f6a64;--line:#e2e1da;--acc:#2c5d8f;--acc2:#234b74;--soft:#e7eef6;--ok:#2f7d5b;--warn:#a5552a;--ed:#fbfbf8;--gut:#f0efe8;--con:#15191c;--conink:#d9e2dc;--sh:0 1px 2px rgba(20,30,25,.06),0 4px 16px rgba(20,30,25,.05);--mono:ui-monospace,"Cascadia Code","JetBrains Mono",Consolas,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121714;--card:#1a211d;--ink:#e9eee9;--mut:#9ba69f;--line:#2a332e;--acc:#7fb0e0;--acc2:#a3c7ec;--soft:#1c2834;--ok:#6cc69b;--warn:#e09a6e;--ed:#151b18;--gut:#1a211d;--con:#0c0f0e;--sh:none}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+code,textarea,pre{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--acc)}
+header{background:var(--card);border-bottom:1px solid var(--line)}
+.topo{max-width:1280px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:9px;font-weight:700;text-decoration:none;color:var(--ink)}
+.marca svg{width:26px;height:26px}
+.marca small{font-weight:500;color:var(--mut)}
+.topo nav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+.topo nav a{color:var(--mut);text-decoration:none;font-weight:500;padding:7px 11px;border-radius:9px}
+.topo nav a:hover{background:var(--soft);color:var(--ink)}
+main{max-width:1280px;margin:0 auto;padding:18px 20px 40px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh)}
+.barra-arq{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--line)}
+.barra-arq input[type=text]{flex:1 1 160px;min-width:0}
+input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:500;font-size:.9rem;padding:7px 12px;border-radius:9px;cursor:pointer;min-height:36px;white-space:nowrap}
+.btn:hover{border-color:var(--acc);color:var(--acc2)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.btn.pri:hover{background:var(--acc2);color:#fff}
+@media (prefers-color-scheme:dark){.btn.pri,.btn.pri:hover{color:#0e1418}}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn svg{width:16px;height:16px}
+.editor{display:flex;background:var(--ed);min-height:380px;height:52vh;font:14px/1.6 var(--mono)}
+.linhas{flex:none;padding:12px 10px 12px 12px;text-align:right;color:var(--mut);background:var(--gut);user-select:none;overflow:hidden;min-width:46px;border-right:1px solid var(--line);white-space:pre}
+#codigo{flex:1;border:0;border-radius:0;background:transparent;resize:none;padding:12px 14px;font:inherit;line-height:inherit;white-space:pre;overflow:auto;tab-size:2;outline:none;min-width:0}
+.entrada{border-top:1px solid var(--line);padding:8px 12px;font-size:.88rem;color:var(--mut)}
+.entrada summary{cursor:pointer}
+.entrada textarea{width:100%;margin-top:6px;min-height:60px;font:13px/1.5 var(--mono)}
+.saida{margin-top:14px;overflow:hidden}
+.saida-topo{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);font-weight:600;font-size:.92rem}
+.saida-topo small{color:var(--mut);font-weight:500;margin-left:auto}
+.estado{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--soft);color:var(--acc2)}
+.estado.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.estado.erro{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
+#saida{margin:0;background:var(--con);color:var(--conink);font:13.5px/1.55 var(--mono);padding:14px;min-height:150px;max-height:40vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+#saida .vazio{color:#7d8a83}
+#saida .err{color:#ffb59a}
+aside{display:grid;gap:14px}
+aside .card{padding:16px}
+aside h2{font-size:1.02rem;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+aside h2 svg{width:20px;height:20px;color:var(--acc)}
+aside p{margin:0 0 10px;color:var(--mut);font-size:.88rem}
+#pedido{width:100%;min-height:96px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.chips button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:99px;padding:3px 10px;cursor:pointer}
+.chips button:hover{color:var(--acc2);border-color:var(--acc)}
+.acoes{display:flex;flex-wrap:wrap;gap:8px}
+#ia-msg{font-size:.86rem;color:var(--mut);margin:10px 0 0;min-height:1em}
+#ia-msg.erro{color:var(--warn)}
+.ia-estado{font-size:.84rem;color:var(--mut);display:flex;gap:6px;align-items:center;margin-bottom:10px}
+.ponto{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.ponto.on{background:#3fb37a}
+.progresso{height:6px;background:var(--soft);border-radius:99px;overflow:hidden;margin:6px 0 10px}
+.progresso i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.lista-prog{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:220px;overflow:auto}
+.lista-prog button{width:100%;text-align:left;background:none;border:0;font:inherit;color:var(--ink);padding:6px 8px;border-radius:8px;cursor:pointer;display:flex;gap:8px;justify-content:space-between}
+.lista-prog button:hover{background:var(--soft)}
+.lista-prog small{color:var(--mut)}
+.cola{font-size:.84rem;color:var(--mut)}
+.cola code{font:12.5px var(--mono);background:var(--soft);padding:1px 5px;border-radius:5px}
+.cola ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
+.girando{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:g 0.8s linear infinite;display:inline-block}
+@keyframes g{to{transform:rotate(360deg)}}
+@media (max-width:900px){main{grid-template-columns:1fr}.editor{height:46vh;min-height:300px}}
+@media (max-width:520px){main{padding:12px 12px 30px}.topo{padding:10px 12px}.barra-arq .btn span{display:none}.linhas{min-width:36px;padding-right:6px}#codigo{padding:12px 10px}}
+</style>
+</head>
+<body>
+<header><div class="topo">
+  <a class="marca" href="/comecar"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c5 6 9 11 9 17a9 9 0 0 1-18 0c0-6 4-11 9-17z" fill="#2c5d8f"/><path d="m13 15-3 3 3 3M19 15l3 3-3 3" stroke="#fff" stroke-width="1.7" stroke-linecap="round" fill="none"/></svg>Nepenthes <small>· Programar</small></a>
+  <nav><a href="/comecar">Início</a><a href="/">Central</a></nav>
+</div></header>
+
+<main>
+  <section>
+    <div class="card">
+      <div class="barra-arq">
+        <input type="text" id="nome" value="meu-programa" aria-label="Nome do programa" maxlength="56" spellcheck="false">
+        <select id="lingua" aria-label="Linguagem"><option value="nep">Nepenthes</option><option value="lua">Lua</option></select>
+        <button class="btn" id="novo" type="button" title="Programa novo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Novo</span></button>
+        <button class="btn" id="salvar" type="button" title="Salvar (Ctrl+S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7M8 20v-6h8v6"/></svg><span>Salvar</span></button>
+        <button class="btn pri" id="rodar" type="button" title="Rodar (Ctrl+Enter)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>Rodar</button>
+      </div>
+      <div class="editor"><div class="linhas" id="linhas" aria-hidden="true">1</div><textarea id="codigo" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Código"></textarea></div>
+      <details class="entrada"><summary>Entrada do programa (o que o <code>input()</code> lê, uma linha por pergunta)</summary><textarea id="entrada" spellcheck="false" placeholder="Ana&#10;42"></textarea></details>
+    </div>
+    <div class="card saida">
+      <div class="saida-topo">Saída <span class="estado" id="estado" hidden></span><small id="tempo"></small></div>
+      <pre id="saida"><span class="vazio">Aperte Rodar (ou Ctrl+Enter) para ver o resultado aqui.</span></pre>
+    </div>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>IA do Nepenthes</h2>
+      <div class="ia-estado"><span class="ponto" id="ia-ponto"></span><span id="ia-estado">Vendo a IA…</span></div>
+      <div class="progresso" id="ia-barra" hidden><i></i></div>
+      <button class="btn" id="ia-baixar" type="button" hidden>Baixar a IA (uma vez só)</button>
+      <p>Diga o que o programa deve fazer. A IA escreve, confere se compila e coloca no editor.</p>
+      <textarea id="pedido" placeholder="Ex.: leia o preço e a quantidade e mostre o total com desconto de 10% acima de R$ 100"></textarea>
+      <div class="chips" id="chips">
+        <button type="button">Tabuada de um número</button>
+        <button type="button">Jogo de adivinhar o número</button>
+        <button type="button">Calcular troco em notas e moedas</button>
+        <button type="button">Média das notas e situação do aluno</button>
+      </div>
+      <div class="acoes">
+        <button class="btn pri" id="ia-escrever" type="button">Escrever o programa</button>
+        <button class="btn" id="ia-consertar" type="button" hidden>Consertar o erro</button>
+      </div>
+      <p id="ia-msg" aria-live="polite"></p>
+    </div>
+    <div class="card">
+      <h2>Meus programas</h2>
+      <p id="pasta-txt">Ficam na pasta “Programas do Nepenthes”.</p>
+      <ul class="lista-prog" id="lista"></ul>
+      <div class="acoes" style="margin-top:10px"><button class="btn" id="abrir-pasta" type="button">Abrir a pasta</button></div>
+    </div>
+    <div class="card cola">
+      <h2>Cola rápida</h2>
+      <ul>
+        <li><code>let x = 10</code> cria; <code>x += 1</code> muda</li>
+        <li><code>if x &gt; 3 do … else … end</code></li>
+        <li><code>for i, v in lista do … end</code></li>
+        <li><code>fn soma(a, b) do a + b end</code></li>
+        <li><code>`Olá, {nome}!`</code> texto com valores</li>
+        <li><code>lista |&gt; filter(f) |&gt; sum</code></li>
+        <li><code>money(19.9)</code> → R$ 19,90</li>
+      </ul>
+    </div>
+  </aside>
+</main>
+
+<script>
+const TOKEN = "{{token}}";
+const $ = s => document.querySelector(s);
+const EXEMPLO = {
+  nep: `# Bem-vindo ao Nepenthes! Aperte Rodar (Ctrl+Enter).
+let nome = input("Qual o seu nome? ")
+if not nome do nome = "mundo" end
+print(\`Olá, {nome}!\`)
+
+let compras = [
+  {item: "Pão", preco: 6.5, qtd: 4},
+  {item: "Café", preco: 18.9, qtd: 1},
+  {item: "Queijo", preco: 42, qtd: 0.5},
+]
+fn total(c) do c.preco * c.qtd end
+
+for c in compras do
+  print(`{c.item}: {money(total(c))}`)
+end
+print("Total:", compras |> map(total) |> sum |> money)
+`,
+  lua: `-- Lua 5.4 rodando dentro do Nepenthes
+local frutas = {"maçã", "banana", "uva"}
+for i, f in ipairs(frutas) do
+  print(i, f:upper())
+end
+print(string.format("Total: %d frutas", #frutas))
+`};
+const ed = $("#codigo"), linhas = $("#linhas");
+let ultimoErro = "";
+
+async function api(caminho, dados) {
+  const r = await fetch(caminho, {method: "POST", headers: {"X-Central": TOKEN, "Content-Type": "application/json"}, body: JSON.stringify(dados || {})});
+  let d = {};
+  try { d = await r.json(); } catch (_) {}
+  if (!r.ok) throw new Error(d.erro || "erro " + r.status);
+  return d;
+}
+function ext() { return $("#lingua").value; }
+function nomeArquivo() {
+  let n = $("#nome").value.trim().replace(/\.(nep|lua)$/i, "").replace(/[^\p{L}\p{N}_\- ]/gu, "-").slice(0, 56) || "meu-programa";
+  return n + "." + ext();
+}
+function numerar() {
+  const n = ed.value.split("\n").length;
+  let s = "";
+  for (let i = 1; i <= n; i++) s += i + "\n";
+  linhas.textContent = s;
+  linhas.scrollTop = ed.scrollTop;
+}
+ed.addEventListener("input", () => { numerar(); guardarRascunho(); });
+ed.addEventListener("scroll", () => { linhas.scrollTop = ed.scrollTop; });
+ed.addEventListener("keydown", e => {
+  if (e.key === "Tab" && !e.ctrlKey && !e.altKey) {
+    e.preventDefault();
+    const a = ed.selectionStart, b = ed.selectionEnd;
+    ed.setRangeText("  ", a, b, "end");
+    numerar();
+  } else if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+    // mantém o recuo da linha de cima (e recua mais depois de "do")
+    const a = ed.selectionStart, ini = ed.value.lastIndexOf("\n", a - 1) + 1;
+    const linha = ed.value.slice(ini, a), rec = linha.match(/^\s*/)[0];
+    const mais = /(\bdo|\bthen|\belse|\bfunction\b.*\))\s*$/.test(linha) ? "  " : "";
+    e.preventDefault();
+    ed.setRangeText("\n" + rec + mais, a, ed.selectionEnd, "end");
+    numerar();
+  }
+});
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); rodar(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) { e.preventDefault(); salvar(); }
+});
+function guardarRascunho() { try { localStorage.setItem("nep-rascunho", JSON.stringify({nome: $("#nome").value, lingua: ext(), codigo: ed.value})); } catch (_) {} }
+function porCodigo(texto) { ed.value = texto; numerar(); guardarRascunho(); }
+
+function mostrar(r) {
+  const s = $("#saida"), est = $("#estado");
+  s.textContent = "";
+  const ok = !r.erro && r.codigo === 0;
+  if (r.saida) s.append(document.createTextNode(r.saida));
+  if (r.erro) { const e = document.createElement("span"); e.className = "err"; e.textContent = (r.saida ? "\n" : "") + r.erro; s.append(e); }
+  if (!r.saida && !r.erro) { const v = document.createElement("span"); v.className = "vazio"; v.textContent = ok ? "(o programa não mostrou nada)" : ""; s.append(v); }
+  if (r.cortou) s.append(document.createTextNode("\n… (a saída foi cortada)"));
+  est.hidden = false;
+  est.className = "estado " + (ok ? "ok" : "erro");
+  est.textContent = ok ? "Rodou" : "Deu erro";
+  $("#tempo").textContent = r.ms != null ? (r.ms < 1000 ? r.ms + " ms" : (r.ms / 1000).toFixed(1) + " s") : "";
+  ultimoErro = ok ? "" : ((r.erro || "") + "\n" + (r.saida || "")).trim().slice(-1500);
+  $("#ia-consertar").hidden = ok;
+}
+async function rodar() {
+  const b = $("#rodar");
+  b.disabled = true;
+  $("#saida").innerHTML = '<span class="vazio">Rodando…</span>';
+  try {
+    const r = await api("/api/programa/rodar", {nome: nomeArquivo(), codigo: ed.value, entrada: $("#entrada").value});
+    mostrar(r);
+    listar();
+  } catch (x) { mostrar({erro: x.message, codigo: -1}); }
+  b.disabled = false;
+}
+async function salvar() {
+  try { await api("/api/programa/salvar", {nome: nomeArquivo(), codigo: ed.value}); aviso("Salvo como " + nomeArquivo()); listar(); }
+  catch (x) { aviso(x.message, true); }
+}
+function aviso(t, erro) { const m = $("#ia-msg"); m.textContent = t; m.className = erro ? "erro" : ""; }
+
+async function pedirIA(consertar) {
+  const pedido = $("#pedido").value.trim();
+  if (!consertar && !pedido) { aviso("Escreva o que o programa deve fazer.", true); $("#pedido").focus(); return; }
+  const bs = [$("#ia-escrever"), $("#ia-consertar")];
+  bs.forEach(b => b.disabled = true);
+  const m = $("#ia-msg"); m.className = "";
+  m.innerHTML = '<span class="girando"></span> A IA está escrevendo. Sem placa de vídeo leva de 30 segundos a uns minutos.';
+  try {
+    const temCodigo = consertar || /\S/.test(ed.value) && !Object.values(EXEMPLO).includes(ed.value) && pedido.length < 200 && /\b(mude|troque|acrescente|adicione|mostre também|coloque|tire|corrija|melhore)\b/i.test(pedido);
+    const r = await api("/api/programa/ia", {pedido, codigo: temCodigo ? ed.value : "", erro: consertar ? ultimoErro : "", lua: ext() === "lua"});
+    porCodigo(r.codigo);
+    aviso((r.explicacao ? r.explicacao + " " : "") + (r.ok ? "Pronto no editor. Aperte Rodar." : r.aviso), !r.ok);
+    if (!consertar && pedido && /^meu-programa/.test($("#nome").value)) $("#nome").value = pedido.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "meu-programa";
+  } catch (x) {
+    aviso("A IA não respondeu: " + x.message, true);
+    verIA();
+  }
+  bs.forEach(b => b.disabled = false);
+}
+$("#ia-escrever").onclick = () => pedirIA(false);
+$("#ia-consertar").onclick = () => pedirIA(true);
+$("#chips").onclick = e => { if (e.target.tagName === "BUTTON") { $("#pedido").value = e.target.textContent; $("#pedido").focus(); } };
+$("#rodar").onclick = rodar;
+$("#salvar").onclick = salvar;
+$("#novo").onclick = () => { $("#nome").value = "meu-programa"; porCodigo(EXEMPLO[ext()]); $("#saida").innerHTML = '<span class="vazio">Aperte Rodar (ou Ctrl+Enter) para ver o resultado aqui.</span>'; $("#estado").hidden = true; $("#ia-consertar").hidden = true; };
+$("#lingua").onchange = () => { if (!/\S/.test(ed.value) || Object.values(EXEMPLO).includes(ed.value)) porCodigo(EXEMPLO[ext()]); else guardarRascunho(); };
+$("#abrir-pasta").onclick = () => api("/api/programa/pasta").catch(x => aviso(x.message, true));
+$("#ia-baixar").onclick = async () => { await fetch("/api/ia/baixar", {method: "POST", headers: {"X-Central": TOKEN, "Content-Type": "application/json"}, body: "{}"}); verIA(); };
+
+async function abrir(nome) {
+  try {
+    const r = await api("/api/programa/abrir", {nome});
+    $("#nome").value = nome.replace(/\.(nep|lua)$/, "");
+    $("#lingua").value = nome.endsWith(".lua") ? "lua" : "nep";
+    porCodigo(r.codigo);
+  } catch (x) { aviso(x.message, true); }
+}
+let iaTimer;
+function mostrarIA(ia) {
+  const txt = {ausente: "Ainda não baixada (uns 2 GB, uma vez só).", baixando: "Baixando a IA…", pronto: "Pronta, neste computador.", ligando: "Ligando…", ligado: "Ligada, neste computador.", erro: "Não disponível: " + (ia.erro || "")};
+  $("#ia-estado").textContent = (ia.modelo ? ia.modelo + ": " : "") + (txt[ia.fase] || ia.fase);
+  $("#ia-ponto").className = "ponto" + (ia.fase === "ligado" || ia.fase === "pronto" ? " on" : "");
+  $("#ia-baixar").hidden = ia.fase !== "ausente" && ia.fase !== "erro";
+  $("#ia-barra").hidden = ia.fase !== "baixando";
+  if (ia.total) $("#ia-barra i").style.width = (100 * ia.baixado / ia.total) + "%";
+  clearTimeout(iaTimer);
+  if (ia.fase === "baixando" || ia.fase === "ligando") iaTimer = setTimeout(verIA, 1500);
+}
+async function listar() {
+  try {
+    const r = await api("/api/programa/lista");
+    const ul = $("#lista"); ul.textContent = "";
+    if (!r.programas.length) { const li = document.createElement("li"); li.className = "cola"; li.textContent = "Nenhum ainda. Ao rodar ou salvar, ele aparece aqui."; ul.append(li); }
+    r.programas.forEach(p => {
+      const li = document.createElement("li"), b = document.createElement("button"), s = document.createElement("small");
+      b.type = "button"; b.append(document.createTextNode(p.nome)); s.textContent = p.alterado; b.append(s);
+      b.onclick = () => abrir(p.nome); li.append(b); ul.append(li);
+    });
+    $("#pasta-txt").textContent = "Ficam em " + r.pasta;
+    return r;
+  } catch (x) { return null; }
+}
+async function verIA() { const r = await listar(); if (r) mostrarIA(r.ia); }
+
+let rasc = null;
+try { rasc = JSON.parse(localStorage.getItem("nep-rascunho") || "null"); } catch (_) {}
+if (rasc && rasc.codigo) { $("#nome").value = rasc.nome || "meu-programa"; $("#lingua").value = rasc.lingua === "lua" ? "lua" : "nep"; ed.value = rasc.codigo; numerar(); }
+else porCodigo(EXEMPLO.nep);
+verIA();
+</script>
+</body>
+</html>

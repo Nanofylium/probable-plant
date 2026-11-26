@@ -7,6 +7,7 @@ func (g *ger) css() string {
 	var b strings.Builder
 	b.WriteString(`    /* O tema Nepenthes faz o grosso; aqui só o que é deste site. */
     .marca span { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: color-mix(in srgb, var(--nep-cor) 14%, #fff); border: 1px solid color-mix(in srgb, var(--nep-cor) 30%, #fff); font-size: 1.15rem; }
+    .marca img.logo { height: 42px; width: auto; max-width: 150px; object-fit: contain; border-radius: 8px; display: block; }
     .topo-faixa { background: var(--nep-escuro); color: color-mix(in srgb, #fff 75%, var(--nep-cor)); font-size: .85rem; padding: 7px var(--nep-margem); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 18px; }
     .topo-faixa a { color: #fff; text-decoration: none; font-weight: 600; }
     .topo-acoes { display: inline-flex; gap: 16px; align-items: center; }

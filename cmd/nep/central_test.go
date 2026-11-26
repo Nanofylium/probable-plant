@@ -112,27 +112,37 @@ func TestCentral(t *testing.T) {
 
 }
 
-func TestCentralAbreDiretoNoAssistente(t *testing.T) {
+func TestCentralComecaPerguntando(t *testing.T) {
 	c := novaCentral(t.TempDir())
 	c.extras = nil
 	defer c.pararTudo()
-	u := c.paginaInicial()
-	if !strings.HasPrefix(u, "http://localhost:80") || u == "http://localhost:8000/" {
-		t.Fatalf("sem sites devia abrir o assistente: %s", u)
+	if u := c.paginaInicial(); u != "http://localhost:8000/comecar" {
+		t.Fatalf("os dois cliques deviam perguntar: %s", u)
 	}
+	w := pedidoCentral(c, "GET", "/comecar", nil, "", false)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "Programar") || !strings.Contains(w.Body.String(), "Criar um site") {
+		t.Fatal(w.Code, w.Body.String()[:200])
+	}
+	// "Criar um site": abre a tela do assistente numa pasta nova
+	ir := func() string {
+		w := pedidoCentral(c, "POST", "/api/comecar-site", []byte(`{}`), "application/json", true)
+		var r struct{ URL string }
+		json.Unmarshal(w.Body.Bytes(), &r)
+		if w.Code != 200 || !strings.HasPrefix(r.URL, "http://localhost:80") {
+			t.Fatal(w.Code, w.Body)
+		}
+		return r.URL
+	}
+	u := ir()
 	ss := c.listar()
 	if len(ss) != 1 || !ss[0].Novo || ss[0].Nome != "meu-site" {
 		t.Fatalf("%+v", ss)
 	}
-	// de novo: reaproveita a mesma pasta
-	if c.paginaInicial() != u || len(c.listar()) != 1 {
+	if ir() != u || len(c.listar()) != 1 {
 		t.Fatal("devia reaproveitar o assistente aberto")
 	}
-	// com um site pronto, abre a Central
-	if w := pedidoCentral(c, "POST", "/api/modelo", []byte(`{"modelo":"blog"}`), "application/json", true); w.Code != 200 {
-		t.Fatal(w.Body)
-	}
-	if c.paginaInicial() != "http://localhost:8000/" {
-		t.Fatal("com site pronto devia abrir a Central")
+	// sem a chave da página, nada
+	if w := pedidoCentral(c, "POST", "/api/comecar-site", []byte(`{}`), "application/json", false); w.Code != 403 {
+		t.Fatal("sem token devia recusar", w.Code)
 	}
 }

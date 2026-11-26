@@ -88,7 +88,7 @@ go build -o nep ./cmd/nep
 | Mac (Apple Silicon) | `nep-macos-arm64` |
 | Mac (Intel) | `nep-macos-amd64` |
 
-**Dois cliques** no executável do Windows abrem a **Central do Nepenthes** no navegador: meus sites (com painel e banco de dados), criar site descrevendo o negócio, assistente com IA, modelos prontos, **Nepenthes DB** (PostgreSQL 16 sem Docker, um botão), **Análises** (SQL e gráficos) e a IA local, tudo num arquivo só. O Nepenthes fica num ícone perto do relógio, pode abrir junto com o Windows e cria um atalho na área de trabalho. Em outros sistemas: `nep central`.
+**Dois cliques** no executável do Windows perguntam, a cada uso, se você quer **criar um site** (a IA pergunta sobre o negócio e recebe logo, fotos e redes sociais) ou **programar** (editor de Nepenthes e Lua com botão Rodar e a IA local que escreve e conserta o código). A **Central do Nepenthes** fica a um clique: meus sites (com painel e banco de dados), criar site descrevendo o negócio, assistente com IA, modelos prontos, **Nepenthes DB** (PostgreSQL 16 sem Docker, um botão), **Análises** (SQL e gráficos) e a IA local, tudo num arquivo só. O Nepenthes fica num ícone perto do relógio, pode abrir junto com o Windows e cria um atalho na área de trabalho. Em outros sistemas: `nep central`.
 
 No Linux/Mac: `chmod +x nep-*` e, no Mac, na primeira vez, clique com o botão direito > Abrir (o executável ainda não é assinado).
 

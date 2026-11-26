@@ -851,9 +851,7 @@ func (g *ger) rodape() string {
 	ultima := `      <div>
         <h4>Siga</h4>
         <nav menu-editavel="redes">
-          <a href="https://instagram.com/«insta»">Instagram</a>
-          <a href="«whats»">WhatsApp</a>
-        </nav>
+«redes»        </nav>
       </div>`
 	if g.tem("newsletter") {
 		ultima = `      <div>

@@ -35,9 +35,11 @@ type Plano struct {
 	Visual       string // família de aparência (ver Visuais)
 	VisualPedido bool   // a pessoa pediu o visual com palavras
 
-	Fotos     []Foto // fotos de verdade (do Instagram): capa e galeria
+	Fotos     []Foto // fotos de verdade (enviadas ou do Instagram): capa e galeria
 	Instagram string // @ do Instagram, sem o @
 	WhatsApp  string // link do WhatsApp (da bio do Instagram), se houver
+	Logo      string // /_nep/arquivo/p-....png enviado na tela (vazio = ícone do ramo)
+	Redes     []Rede // Facebook, TikTok, YouTube, LinkedIn, X (além do Instagram)
 
 	// dados de contato que a pessoa digitou na tela (vazio = texto de exemplo)
 	Telefone, Email, Endereco, Horario string
@@ -51,6 +53,13 @@ type Foto struct {
 	Tamanho int64
 	Legenda string
 	Link    string // o post no Instagram, se veio pela API
+	Album   string // categoria na galeria (vazio = "Instagram")
+}
+
+// Rede é um perfil do negócio numa rede social.
+type Rede struct {
+	Nome string `json:"nome"`
+	URL  string `json:"url"`
 }
 
 // ModulosTodos, na ordem em que aparecem no site.

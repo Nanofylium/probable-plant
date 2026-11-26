@@ -1,6 +1,7 @@
 package gerador
 
 import (
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -16,6 +17,60 @@ type Dados struct {
 	Endereco  string `json:"endereco"`
 	Horario   string `json:"horario"`
 	Instagram string `json:"instagram"`
+	Facebook  string `json:"facebook"`
+	TikTok    string `json:"tiktok"`
+	YouTube   string `json:"youtube"`
+	LinkedIn  string `json:"linkedin"`
+	X         string `json:"x"`
+}
+
+// redesConhecidas: nome, endereço do perfil (para quem digita só o @) e os
+// domínios aceitos num link colado.
+var redesConhecidas = []struct {
+	Nome, Base string
+	Dominios   []string
+}{
+	{"Facebook", "https://facebook.com/", []string{"facebook.com", "fb.com"}},
+	{"TikTok", "https://www.tiktok.com/@", []string{"tiktok.com"}},
+	{"YouTube", "https://www.youtube.com/@", []string{"youtube.com", "youtu.be"}},
+	{"LinkedIn", "https://www.linkedin.com/company/", []string{"linkedin.com"}},
+	{"X", "https://x.com/", []string{"x.com", "twitter.com"}},
+}
+
+var reUsuarioRede = regexp.MustCompile(`^@?([\p{L}\p{N}._-]{1,60})$`)
+
+// LinkRede transforma o que a pessoa digitou (@perfil, perfil ou um link) no
+// endereço do perfil. Link de outro site não vale (vazio).
+func LinkRede(nome, v string) string {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return ""
+	}
+	for _, r := range redesConhecidas {
+		if r.Nome != nome {
+			continue
+		}
+		if m := reUsuarioRede.FindStringSubmatch(v); m != nil {
+			return r.Base + m[1]
+		}
+		u := v
+		if !strings.Contains(u, "://") {
+			u = "https://" + u
+		}
+		pu, err := url.Parse(u)
+		if err != nil || pu.Scheme != "https" && pu.Scheme != "http" || pu.User != nil || len(u) > 200 {
+			return ""
+		}
+		h := strings.TrimPrefix(strings.ToLower(pu.Hostname()), "www.")
+		h = strings.TrimPrefix(h, "m.")
+		for _, d := range r.Dominios {
+			if h == d || strings.HasSuffix(h, "."+d) {
+				pu.Scheme = "https"
+				return pu.String()
+			}
+		}
+	}
+	return ""
 }
 
 // Tipos são os ramos que a tela oferece para escolher (vazio = o Nepenthes
@@ -80,6 +135,11 @@ func UsarDados(p *Plano, d Dados) {
 	p.Horario = curto(d.Horario, 120)
 	if i := strings.Trim(strings.TrimSpace(d.Instagram), "@/ "); i != "" && regexp.MustCompile(`^[A-Za-z0-9._]{1,30}$`).MatchString(i) {
 		p.Instagram = i
+	}
+	for _, r := range [][2]string{{"Facebook", d.Facebook}, {"TikTok", d.TikTok}, {"YouTube", d.YouTube}, {"LinkedIn", d.LinkedIn}, {"X", d.X}} {
+		if u := LinkRede(r[0], r[1]); u != "" {
+			p.Redes = append(p.Redes, Rede{Nome: r[0], URL: u})
+		}
 	}
 }
 
