@@ -684,6 +684,40 @@ Ideias do Payload CMS (MIT), escritas de novo em Go e na linguagem Nepenthes. Ne
 - Se o arquivo já declara um tipo com o mesmo nome, vale o do arquivo.
 - Tirar o tipo não apaga os itens.
 
+### 10.24 O dono cuida do site pelo WhatsApp
+
+Em `/_admin/whatsapp` (só o dono) há um simulador com cara de WhatsApp e a ligação com o WhatsApp oficial (Cloud API da Meta).
+
+**O que o dono manda:**
+- **Item novo:** "chegou bolo de cenoura, R$ 12", com foto ou não.
+  - Vai para o tipo de conteúdo que tem preço e foto (ou o último usado).
+  - A foto é reduzida e gravada sem os dados do celular.
+  - Se falta um campo obrigatório, o item fica fora do site e o site pergunta. A resposta vem como "categoria: Doces".
+- **Preço:** "brigadeiro agora R$ 5" ou "o brigadeiro subiu pra 5 conto".
+- **Sumir e voltar:** "acabou o bolo de cenoura" / "voltou o bolo de cenoura" (o item só deixa de ser publicado).
+- **Aviso:** "amanhã fecho às 14h", "aviso: …" ou mensagens com promoção ou desconto.
+  - Viram uma faixa no topo de todas as páginas, com botão de fechar.
+  - A faixa vale até o fim do dia ("hoje"), de amanhã ("amanhã"), daqui a 7 dias ("semana") ou, nos outros casos, daqui a 2 dias.
+  - "tirar aviso" apaga.
+- **Horário:** "horário: …" muda os textos editáveis e os campos de `<global>` que tenham "horario" no nome.
+- **Lista:** "lista" mostra os itens.
+- **Desfazer:** "desfazer" volta o último passo (até 20). Um item criado vai para a lixeira.
+
+**Quem entende as mensagens:**
+- Regras do Nepenthes, sem internet.
+- Frases que elas não entendem vão para a IA (do servidor ou a local), que só pode escolher uma dessas ações.
+- Quando o nome bate só em parte ("acabou o bolo"), o site pergunta "Você quis dizer…" antes de mexer.
+
+**WhatsApp oficial:** a Meta chama `/_nep/whatsapp`.
+- No GET, confere o token de verificação gerado no painel.
+- No POST, confere o `X-Hub-Signature-256` com a chave secreta do app.
+- Só aceita os números do dono cadastrados. Celulares brasileiros batem com ou sem o nono dígito.
+- Ignora mensagens repetidas.
+- Baixa a foto pela API e responde pela API.
+- Token e chave secreta ficam só nos dados do site. O painel nunca os mostra de volta.
+
+A conversa (simulador e WhatsApp) aparece no painel.
+
 ## 11. Lua 5.4 na mesma máquina virtual
 
 O `nep` roda programas Lua 5.4: `nep jogo.lua [args]`. O código Lua é lido por um leitor próprio e compilado para o mesmo bytecode do Nepenthes, então os dois se misturam:

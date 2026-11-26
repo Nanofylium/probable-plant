@@ -88,6 +88,8 @@ go build -o nep ./cmd/nep
 | Mac (Apple Silicon) | `nep-macos-arm64` |
 | Mac (Intel) | `nep-macos-amd64` |
 
+**WhatsApp:** o dono manda "chegou bolo de cenoura, R$ 12" com uma foto e o item aparece no site. "acabou o bolo de cenoura" tira o item, "amanhã fecho às 14h" vira um aviso no topo e "desfazer" volta o último passo. Há um simulador em `/_admin/whatsapp` e a ligação com a API oficial da Meta. Detalhes em SPEC 10.24.
+
 **Tipos, API e globais (ideias do Payload CMS):** em `/_admin/tipos` uma frase vira um tipo de conteúdo completo: formulário, páginas e API. Todo `<conteudo>` ganha `/api/<nome>` com filtros, ordem e páginas, e escrita com chave feita em `/_admin/api`. Também há relações entre tipos (`data-relacao`), ganchos `antes`/`depois` e `<global>` para dados do site inteiro. Detalhes em SPEC 10.23.
 
 **Construtor de páginas:** no painel (`/_admin/paginas`), qualquer página do site pode ser montada arrastando blocos, como no Wix, sem perder o código do Nepenthes (GrapesJS, BSD).

@@ -328,6 +328,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rq.site = site
+	if rq.path == "/_nep/whatsapp" { // mensagens do dono pelo WhatsApp oficial
+		s.zapWebhook(rq)
+		return
+	}
 	if rq.r.Method == "GET" || rq.r.Method == "HEAD" {
 		switch rq.path {
 		case "/sitemap.xml":
@@ -622,6 +626,7 @@ func (s *Server) inject(rq *request, out string) string {
 	inicio, _ := s.temaTags(cfg, out)
 	out = noComecoDoHead(out, inicio)
 	out = noFimDoHead(out, s.visualTag(cfg))
+	out = s.comAviso(out) // aviso mandado pelo WhatsApp
 	tags := s.seoTags(rq, out)
 	mv := strings.ToLower(strings.TrimSpace(cfg["movimento"]))
 	if mv != "" && mv != "false" && mv != "0" && mv != "nao" && mv != "não" {
