@@ -5,8 +5,12 @@
 //     programa llama-server, que fala a mesma API de chat que o resto do nep;
 //   - modelo: IBM Granite 3.3 2B Instruct (licença Apache 2.0), 1,5 GB.
 //
-// Nada disso vai dentro do executável: na primeira vez que alguém pede, o nep
-// baixa o motor do seu sistema e o modelo dos Releases do probable-plant
+// No Windows (amd64) o motor vai dentro do próprio Nepenthes.exe: é um
+// llama-server compilado com MinGW e ligado de forma estática, que não
+// depende do "Visual C++ Redistributable" (sem ele, o pacote oficial do
+// llama.cpp para Windows nem abre). Ele é posto na pasta da IA na primeira vez
+// que o Nepenthes abre (Instalar). Nos outros sistemas, na primeira vez que
+// alguém pede, o nep baixa o motor do seu sistema e o modelo dos Releases do probable-plant
 // (ou, se lá não estiver, das fontes originais: GitHub do llama.cpp e Hugging
 // Face da IBM), confere o SHA-256 de cada arquivo e guarda tudo em
 // <pasta de cache>/nepenthes/ia (ou em NEP_IA_LOCAL). Depois roda sem internet.
@@ -68,7 +72,48 @@ var fontes = func(nome string) []string {
 }
 
 // Suportado diz se há motor para este sistema.
-func Suportado() bool { _, ok := motores[runtime.GOOS+"/"+runtime.GOARCH]; return ok }
+func Suportado() bool {
+	_, ok := motores[runtime.GOOS+"/"+runtime.GOARCH]
+	return ok || len(motorEmbutido) > 0
+}
+
+// Embutido diz se o motor vem dentro do executável.
+func Embutido() bool { return len(motorEmbutido) > 0 }
+
+// prepararMotor põe o llama-server embutido na pasta da IA (se ainda não
+// estiver lá) e tira o pacote oficial antigo, que precisava do Visual C++.
+func prepararMotor() error {
+	if len(motorEmbutido) == 0 {
+		return nil
+	}
+	if _, err := os.Stat(exe()); err == nil {
+		return nil
+	}
+	if err := os.MkdirAll(Pasta(), 0o755); err != nil {
+		return err
+	}
+	tmp := filepath.Join(Pasta(), "motor-embutido.zip")
+	if err := os.WriteFile(tmp, motorEmbutido, 0o644); err != nil {
+		return err
+	}
+	defer os.Remove(tmp)
+	if err := extrair(tmp, Pasta()); err != nil {
+		os.RemoveAll(dirMotor())
+		return fmt.Errorf("não consegui preparar o motor da IA: %v", err)
+	}
+	os.RemoveAll(filepath.Join(Pasta(), "llama-"+Versao))
+	return nil
+}
+
+// Instalar deixa a IA pronta assim que o Nepenthes abre: o motor (embutido)
+// na hora e o modelo baixando em segundo plano, uma vez só.
+func Instalar() {
+	if err := prepararMotor(); err != nil {
+		muda(func(e *Estado) { e.Fase, e.Erro = "erro", err.Error() })
+		return
+	}
+	Baixar()
+}
 
 // Pasta onde motor e modelo ficam guardados.
 func Pasta() string {
@@ -100,7 +145,16 @@ var (
 	ligando chan struct{}
 )
 
-func dirMotor() string      { return filepath.Join(Pasta(), "llama-"+Versao) }
+// motorEmbutido é o .zip do llama-server que vai dentro do executável (só no
+// Windows amd64; ver motor_windows_amd64.go). Vazio nos outros sistemas.
+var motorEmbutido []byte
+
+func dirMotor() string {
+	if len(motorEmbutido) > 0 {
+		return filepath.Join(Pasta(), "motor-"+Versao+"-nep")
+	}
+	return filepath.Join(Pasta(), "llama-"+Versao)
+}
 func caminhoModelo() string { return filepath.Join(Pasta(), modeloArquivo) }
 
 func exe() string {
@@ -165,8 +219,11 @@ func Baixar() {
 // BaixarAgora baixa e espera (para o comando `nep ia baixar`).
 func BaixarAgora(progresso func(baixado, total int64)) error {
 	m, ok := motores[runtime.GOOS+"/"+runtime.GOARCH]
-	if !ok {
+	if !ok && len(motorEmbutido) == 0 {
 		return fmt.Errorf("não há motor do llama.cpp para %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+	if err := prepararMotor(); err != nil {
+		return err
 	}
 	if err := os.MkdirAll(Pasta(), 0o755); err != nil {
 		return err
@@ -407,6 +464,9 @@ func URL(ctx context.Context) (string, error) {
 		return URL(ctx)
 	}
 	if !instalado() {
+		prepararMotor() // o motor embutido pode ter sido apagado da pasta
+	}
+	if !instalado() {
 		mu.Unlock()
 		return "", errors.New("a IA do Nepenthes ainda não foi baixada")
 	}
@@ -451,6 +511,7 @@ func ligar(ctx context.Context) (string, *exec.Cmd, chan struct{}, error) {
 		"-c", "8192", "--parallel", "1", "--no-webui")
 	cmd.Dir = dirMotor()
 	cmd.Stdout, cmd.Stderr = log, log
+	esconderJanela(cmd)
 	if err := cmd.Start(); err != nil {
 		return "", nil, nil, fmt.Errorf("não consegui ligar o llama-server: %v", err)
 	}
@@ -461,7 +522,7 @@ func ligar(ctx context.Context) (string, *exec.Cmd, chan struct{}, error) {
 	for {
 		select {
 		case <-fim:
-			return "", nil, nil, fmt.Errorf("o llama-server parou ao ligar (veja %s)", filepath.Join(Pasta(), "llama-server.log"))
+			return "", nil, nil, porQueParou(cmd)
 		case <-limite:
 			cmd.Process.Kill()
 			return "", nil, nil, errors.New("o llama-server demorou demais para carregar o modelo")
@@ -512,4 +573,45 @@ func Buscar(enderecos []string, sha, destino string, conta func(int64)) error {
 		erros = append(erros, err.Error())
 	}
 	return fmt.Errorf("não consegui baixar %s (%s)", filepath.Base(destino), strings.Join(erros, "; "))
+}
+
+// porQueParou explica, em português, por que o llama-server fechou ao ligar,
+// com o fim do registro dele.
+func porQueParou(cmd *exec.Cmd) error {
+	arq := filepath.Join(Pasta(), "llama-server.log")
+	motivo := ""
+	if cmd.ProcessState != nil {
+		switch uint32(cmd.ProcessState.ExitCode()) {
+		case 0xC0000135:
+			motivo = "faltou uma biblioteca do Windows (DLL) para o motor"
+		case 0xC000001D:
+			motivo = "o processador não aceitou as instruções do motor"
+		case 0xC0000005:
+			motivo = "o motor travou (acesso inválido à memória)"
+		case 0xC0000017, 0xC000012D:
+			motivo = "faltou memória para carregar o modelo (feche outros programas)"
+		}
+		if motivo == "" && cmd.ProcessState.ExitCode() != 0 {
+			motivo = fmt.Sprintf("código de saída %d (0x%X)", cmd.ProcessState.ExitCode(), uint32(cmd.ProcessState.ExitCode()))
+		}
+	}
+	fim := ""
+	if b, err := os.ReadFile(arq); err == nil {
+		linhas := strings.Split(strings.TrimSpace(string(b)), "\n")
+		if len(linhas) > 6 {
+			linhas = linhas[len(linhas)-6:]
+		}
+		fim = strings.TrimSpace(strings.Join(linhas, " | "))
+		if len(fim) > 600 {
+			fim = fim[len(fim)-600:]
+		}
+	}
+	msg := "o llama-server parou ao ligar"
+	if motivo != "" {
+		msg += ": " + motivo
+	}
+	if fim != "" {
+		msg += ". Últimas linhas: " + fim
+	}
+	return fmt.Errorf("%s (registro completo em %s)", msg, arq)
 }

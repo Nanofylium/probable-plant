@@ -496,6 +496,11 @@ func modoCentral(abrir bool) int {
 	if c.db.cfg.Ligar {
 		go c.db.Ligar()
 	}
+	// a IA do Nepenthes faz parte da instalação: o motor já vem no .exe e o
+	// modelo começa a baixar na primeira vez (uma vez só)
+	if os.Getenv("NEP_SEM_IA") == "" {
+		go ialocal.Instalar()
+	}
 	// na primeira vez, um atalho na área de trabalho
 	marca := filepath.Join(c.base, ".atalho")
 	if _, err := os.Stat(marca); err != nil {
